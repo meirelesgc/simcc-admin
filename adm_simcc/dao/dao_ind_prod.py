@@ -8,7 +8,6 @@ adm_database = Connection()
 
 
 def insert_ind_prod(weights: Weights):
-
     SCRIPT_SQL = f"""SELECT COUNT(*) FROM weights WHERE institution_id = '{
         weights.institution_id}'"""
 
@@ -36,7 +35,8 @@ def insert_ind_prod(weights: Weights):
                 software = '{weights.SOFTWARE}',
                 patent_granted = '{weights.PATENT_GRANTED}',
                 patent_not_granted = '{weights.PATENT_NOT_GRANTED}',
-                report = '{weights.REPORT}'
+                report = '{weights.REPORT}',
+                type_ = '{weights.type_}'
             WHERE institution_id = '{weights.institution_id}';
         """
         adm_database.exec(SCRIPT_SQL=SCRIPT_SQL)
@@ -65,7 +65,8 @@ def insert_ind_prod(weights: Weights):
             software,
             patent_granted,
             patent_not_granted,
-            report)
+            report,
+            type_)
         VALUES (
             '{weights.institution_id}',
             {weights.A1},
@@ -88,11 +89,12 @@ def insert_ind_prod(weights: Weights):
             '{weights.SOFTWARE}',
             '{weights.PATENT_NOT_GRANTED}',
             '{weights.PATENT_GRANTED}',
-            '{weights.REPORT}'
+            '{weights.REPORT}',
+            '{weights.type_}'
             );
         """
 
-    adm_database.exec(SCRIPT_SQL=SCRIPT_SQL)
+    adm_database.exec(SCRIPT_SQL)
 
 
 def ind_prod_basic_query(institution_id):

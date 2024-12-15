@@ -24,3 +24,4 @@ class Weights(BaseModel):
     F3: float = 0
     F4: float = 0
     F5: float = 0
+    type_: str

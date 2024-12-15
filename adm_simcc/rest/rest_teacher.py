@@ -1,5 +1,6 @@
-import psycopg2
 from http import HTTPStatus
+
+import psycopg2
 from flask import Blueprint, jsonify, request
 
 from ..dao import dao_teacher
@@ -16,7 +17,9 @@ def teacher_insert():
         dao_teacher.ufmg_researcher_insert(teachers)
         return jsonify({"message": "ok"}), HTTPStatus.CREATED
     except psycopg2.errors.UniqueViolation:
-        return jsonify({"message": "Docente já cadastrado"}), HTTPStatus.CONFLICT
+        return jsonify(
+            {"message": "Docente já cadastrado"}
+        ), HTTPStatus.CONFLICT
 
 
 @rest_teacher.route("/docentes", methods=["GET"])

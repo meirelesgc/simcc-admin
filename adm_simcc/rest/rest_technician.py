@@ -1,5 +1,6 @@
-import psycopg2
 from http import HTTPStatus
+
+import psycopg2
 from flask import Blueprint, jsonify, request
 
 from ..dao import dao_technician

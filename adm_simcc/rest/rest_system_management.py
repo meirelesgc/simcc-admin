@@ -1,11 +1,10 @@
 import json
 import os
 import subprocess
-import requests
 from http import HTTPStatus
 
 import psycopg2
-from flask import Blueprint, jsonify, request, send_file
+from flask import Blueprint, jsonify, request
 from pydantic import ValidationError
 
 from ..dao import dao_system

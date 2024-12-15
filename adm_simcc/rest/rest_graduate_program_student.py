@@ -4,7 +4,7 @@ import psycopg2
 from flask import Blueprint, jsonify, request
 
 from ..dao import dao_graduate_program_student
-from ..models.student import GraduateProgramStudent, ListGraduateProgramStudent
+from ..models.student import ListGraduateProgramStudent
 
 rest_graduate_program_student = Blueprint(
     "rest_graduate_program_student", __name__, url_prefix="/studentRest"

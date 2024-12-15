@@ -1,4 +1,5 @@
 from http import HTTPStatus
+
 from flask import Blueprint, jsonify, request
 
 from ..dao import dao_departament
@@ -44,26 +45,23 @@ def departament_researcher_query():
     return jsonify(researchers), HTTPStatus.OK
 
 
-@rest_departament.route('/departamentos/disciplinas', methods=['POST'])
+@rest_departament.route("/departamentos/disciplinas", methods=["POST"])
 def departament_insert_discipline():
     disciplines = request.get_json()
     disciplines = ListDiscipline(list_discipline=disciplines)
     dao_departament.departament_insert_discipline(disciplines)
-    return jsonify('OK'), HTTPStatus.CREATED
+    return jsonify("OK"), HTTPStatus.CREATED
 
 
-@rest_departament.route('/departamentos/disciplinas', methods=['GET'])
+@rest_departament.route("/departamentos/disciplinas", methods=["GET"])
 def departament_query_discipline():
-    dep_id = request.args.get('dep_id')
+    dep_id = request.args.get("dep_id")
     disciplines = dao_departament.departament_query_discipline(dep_id)
     return jsonify(disciplines), HTTPStatus.OK
 
 
-@rest_departament.route(
-    "/departamentos/disciplinas/semestres", methods=["GET"])
+@rest_departament.route("/departamentos/disciplinas/semestres", methods=["GET"])
 def departament_query_discipline_semester():
-    dep_id = request.args.get('dep_id')
+    dep_id = request.args.get("dep_id")
     semesters = dao_departament.departament_query_discipline_semester(dep_id)
     return jsonify(semesters), HTTPStatus.OK
-
-
