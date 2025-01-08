@@ -29,26 +29,6 @@ def create_user():
         ), HTTPStatus.CONFLICT
 
 
-# @rest_system.route("/s/ufmg/user", methods=["GET"])
-# def create_ufmg_user():
-#     try:
-#         all_headers = dict(request.headers)
-#         user = {
-#             "displayName": all_headers["Shib-Person-Commonname"],
-#             "email": all_headers["Shib-Person-Mail"],
-#             "uid": all_headers["Shib-Person-Uid"],
-#             "provider": "shib",
-#         }
-#         user = UserModel(**user)
-#         dao_system.create_user(user)
-#         user = dao_system.select_user(user.uid)
-#         return jsonify(user), HTTPStatus.CREATED
-
-#     except psycopg2.errors.UniqueViolation:
-#         user = dao_system.select_user(user.uid)
-#         return jsonify(user), HTTPStatus.OK
-
-
 @rest_system.route("/s/user", methods=["GET"])
 def select_user():
     uid = request.args.get("uid")

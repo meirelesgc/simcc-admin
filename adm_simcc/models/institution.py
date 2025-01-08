@@ -6,6 +6,7 @@ class Institution(BaseModel):
     name: str
     acronym: str
     lattes_id: str
+    image: str
 
 
 class ListInstitutions(BaseModel):

@@ -140,29 +140,28 @@ def list_all_users():
 
 
 def update_user(user):
-
     SCRIPT_SQL = """
     UPDATE users
-    SET 
+    SET
     """
 
-    if linkedin := user.get('linkedin'):
+    if user.get("linkedin"):
         SCRIPT_SQL += "linkedin = %(linkedin)s,"
-    if lattes_id := user.get('lattes_id'):
+    if user.get("lattes_id"):
         SCRIPT_SQL += "lattes_id = %(lattes_id)s,"
-    if institution_id := user.get('institution_id'):
+    if user.get("institution_id"):
         SCRIPT_SQL += "institution_id = %(institution_id)s,"
-    if verify := user.get('verify'):
+    if user.get("verify"):
         SCRIPT_SQL += "verify = %(verify)s,"
-    if email := user.get('email'):
+    if user.get("email"):
         SCRIPT_SQL += "email = %(email)s,"
-    if photo_url := user.get('photo_url'):
+    if user.get("photo_url"):
         SCRIPT_SQL += "photo_url = %(photo_url)s,"
-    if provider := user.get('provider'):
+    if user.get("provider"):
         SCRIPT_SQL += "provider = %(provider)s,"
 
-    SCRIPT_SQL = f' {SCRIPT_SQL[:-1]} '
-    SCRIPT_SQL +=  "WHERE uid = %(uid)s"
+    SCRIPT_SQL = f" {SCRIPT_SQL[:-1]} "
+    SCRIPT_SQL += "WHERE uid = %(uid)s"
 
     adm_database.exec(SCRIPT_SQL, user)
 
