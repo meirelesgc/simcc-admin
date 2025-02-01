@@ -6,6 +6,7 @@ class Researcher(BaseModel):
     name: str
     lattes_id: str
     institution_id: UUID4
+    status: bool = True
 
 
 class ListResearchers(BaseModel):

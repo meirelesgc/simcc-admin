@@ -9,8 +9,19 @@ from ..models.researcher import (
 )
 
 adm_database = Connection()
-# simcc_database = Connection(database=os.environ["SIMCC_DATABASE"])
 CNPq = Client("http://servicosweb.cnpq.br/srvcurriculo/WSCurriculo?wsdl")
+
+
+def researcher_update(researcher):
+    SCRIPT_SQL = """
+        UPDATE researcher SET
+            name = %(name)s,
+            lattes_id = %(lattes_id)s,
+            institution_id = %(institution_id)s,
+            status = %(status)s
+        WHERE researcher_id = %(researcher_id)s;
+        """
+    adm_database.exec(SCRIPT_SQL, researcher)
 
 
 def researcher_insert(ListResearchers: ListResearchers):
@@ -19,14 +30,14 @@ def researcher_insert(ListResearchers: ListResearchers):
     for researcher in ListResearchers.researcher_list:
         parameters.append((
             researcher.researcher_id, researcher.name, researcher.lattes_id,
-            researcher.institution_id
+            researcher.institution_id, researcher.status
         ))
     # fmt: on
 
     SCRIPT_SQL = """
         INSERT INTO researcher
-        (researcher_id, name, lattes_id, institution_id)
-        VALUES (%s, %s, %s, %s);
+        (researcher_id, name, lattes_id, institution_id, status)
+        VALUES (%s, %s, %s, %s, %s);
         """
     adm_database.execmany(SCRIPT_SQL, parameters)
 
@@ -83,7 +94,8 @@ def researcher_basic_query(
             r.name,
             r.lattes_id,
             r.institution_id,
-            r.created_at
+            r.created_at,
+            r.status
         FROM
             researcher r
         WHERE
@@ -112,6 +124,7 @@ def researcher_basic_query(
             "lattes_id",
             "institution_id",
             "created_at",
+            "status",
         ],
     )
     SCRIPT_SQL = """
@@ -145,14 +158,11 @@ def researcher_count(institution_id: UUID4 = None):
 def researcher_query_name(researcher_name: str):
     parameters = [researcher_name]
     SCRIPT_SQL = """
-    SELECT
-        researcher_id
-    FROM
-        researcher as r
-    WHERE
-        similarity(unaccent(LOWER(%s)), unaccent(LOWER(r.name))) > 0.4
-    LIMIT 1;
-    """
+        SELECT researcher_id
+        FROM researcher as r
+        WHERE similarity(unaccent(LOWER(%s)), unaccent(LOWER(r.name))) > 0.4
+        LIMIT 1;
+        """
 
     registry = adm_database.select(SCRIPT_SQL, parameters)
 
@@ -165,12 +175,9 @@ def researcher_query_name(researcher_name: str):
 def researcher_search_id(lattes_id):
     parameters = [lattes_id]
     SCRIPT_SQL = """
-        SELECT
-            researcher_id
-        FROM
-            researcher
-        WHERE
-            lattes_id = %s
+        SELECT researcher_id
+        FROM researcher
+        WHERE lattes_id = %s
         """
     researcher_id = adm_database.select(SCRIPT_SQL, parameters)
 
@@ -197,11 +204,9 @@ def researcher_departament_insert(
 
 def researcher_departament_basic_query(researcher_id):
     SCRIPT_SQL = """
-        SELECT
-            dep_id, org_cod, dep_nom, dep_des, dep_email, dep_site, dep_sigla, 
+        SELECT dep_id, org_cod, dep_nom, dep_des, dep_email, dep_site, dep_sigla,
             dep_tel
-        FROM
-            ufmg.departament dp
+        FROM ufmg.departament dp
             LEFT JOIN ufmg.departament_researcher dpr ON dpr.dep_id = dp.dep_id
         WHERE
             dpr.researcher_id = %s;

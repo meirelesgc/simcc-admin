@@ -27,6 +27,13 @@ def researcher_insert():
         ), HTTPStatus.CONFLICT
 
 
+@rest_researcher.route("/Update", methods=["PUT"])
+def researcher_update():
+    researcher = request.get_json()
+    dao_researcher.researcher_update(researcher)
+    return jsonify({"message": "ok"}), HTTPStatus.OK
+
+
 @rest_researcher.route("/Delete", methods=["DELETE"])
 def researcher_delete():
     researcher_id = request.args.get("researcher_id")
