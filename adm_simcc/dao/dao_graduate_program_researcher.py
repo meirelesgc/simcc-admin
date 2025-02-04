@@ -1,5 +1,6 @@
+from uuid import UUID
+
 import pandas as pd
-from pydantic import UUID4
 
 from ..dao import Connection
 from ..models.graduate_program_resarcher import ListResearcher
@@ -87,7 +88,7 @@ def graduate_program_researcher_update(
 
 
 def graduate_program_researcher_delete(
-    lattes_id: UUID4, graduate_program_id: UUID4
+    lattes_id: UUID, graduate_program_id: UUID
 ):
     parameters = [lattes_id, graduate_program_id]
     SCRIPT_SQL = """
@@ -102,7 +103,7 @@ def graduate_program_researcher_delete(
 
 
 def graduate_program_researcher_count(
-    institution_id: UUID4 = None, graduate_program_id: UUID4 = None
+    institution_id: UUID = None, graduate_program_id: UUID = None
 ):
     parameters = list()
 
@@ -142,7 +143,7 @@ def graduate_program_researcher_count(
 
 
 def graduate_program_researcher_basic_query(
-    graduate_program_id: UUID4, type_: str = None
+    graduate_program_id: UUID, type_: str = None
 ):
     parameters = [graduate_program_id]
 

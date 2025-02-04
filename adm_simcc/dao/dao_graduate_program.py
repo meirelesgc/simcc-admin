@@ -5,8 +5,7 @@ pd.set_option("future.no_silent_downcasting", True)
 from pydantic import UUID4
 
 from ..dao import Connection
-from ..models.graduate_program import ListGraduateProgram, GraduateProgram
-
+from ..models.graduate_program import GraduateProgram, ListGraduateProgram
 
 adm_database = Connection()
 
@@ -45,8 +44,13 @@ def graduate_program_update(graduate_program_id: UUID4):
 
 
 def graduate_program_basic_query(institution_id: UUID4):
-    parameters = [institution_id]
-    SCRIPT_SQL = """
+    filter_institution = str()
+    parameters = []
+    if institution_id:
+        filter_institution = "AND gp.institution_id = %s"
+        parameters.append(institution_id)
+
+    SCRIPT_SQL = f"""
         SELECT
             gp.graduate_program_id,
             gp.code,
@@ -68,8 +72,8 @@ def graduate_program_basic_query(institution_id: UUID4):
             graduate_program gp
         LEFT JOIN
             graduate_program_researcher gr ON gp.graduate_program_id = gr.graduate_program_id
-        WHERE
-            gp.institution_id = %s
+        WHERE 1 = 1
+            {filter_institution}
         GROUP BY
             gp.graduate_program_id, gp
         """
@@ -97,7 +101,7 @@ def graduate_program_basic_query(institution_id: UUID4):
         ],
     )
 
-    SCRIPT_SQL = f"""
+    SCRIPT_SQL = """
         SELECT 
             graduate_program_id,
             COUNT(researcher_id) as qtr_discente
@@ -109,7 +113,8 @@ def graduate_program_basic_query(institution_id: UUID4):
     registry = adm_database.select(SCRIPT_SQL)
 
     qtd_discentes = pd.DataFrame(
-        registry, columns=["graduate_program_id", "qtd_discente"])
+        registry, columns=["graduate_program_id", "qtd_discente"]
+    )
 
     data_frame = pd.merge(
         data_frame,
@@ -123,9 +128,7 @@ def graduate_program_basic_query(institution_id: UUID4):
 
 
 def graduate_program_delete(graudate_program_id: UUID4):
-    parameters = [
-        graudate_program_id, graudate_program_id, graudate_program_id
-    ]
+    parameters = [graudate_program_id, graudate_program_id, graudate_program_id]
     SCRIPT_SQL = """
         DELETE FROM graduate_program_student
         WHERE graduate_program_id = %s;

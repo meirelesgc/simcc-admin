@@ -67,7 +67,10 @@ def researcher_basic_query(
     lattes_id: str = None,
 ):
     parameters = list()
-    filter_name = filter_limit = filter_institution = filter_lattes_id = str()
+    filter_name = str()
+    filter_limit = str()
+    filter_institution = str()
+    filter_lattes_id = str()
 
     if institution_id:
         filter_institution = """
@@ -114,6 +117,8 @@ def researcher_basic_query(
             r.created_at DESC
             {filter_limit};
         """
+
+    print(SCRIPT_SQL)
     registry = adm_database.select(SCRIPT_SQL, parameters)
 
     data_frame = pd.DataFrame(
@@ -127,16 +132,9 @@ def researcher_basic_query(
             "status",
         ],
     )
-    SCRIPT_SQL = """
-        SELECT
-            r.lattes_id,
-            r.last_update
-        FROM
-            researcher r
-        """
 
     data_frame = data_frame.drop(columns=["created_at"])
-    return data_frame.fillna("Não esta atualizado").to_dict(orient="records")
+    return data_frame.to_dict(orient="records")
 
 
 def researcher_count(institution_id: UUID4 = None):

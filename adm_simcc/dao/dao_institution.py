@@ -90,16 +90,15 @@ def institution_full_query(institution_id: UUID4 = None):
 
 
 def institution_basic_query(institution_id: UUID4):
+    if institution_id:
+        filter_institution = f"AND institution_id = '{institution_id}'"
+    else:
+        filter_institution = str()
+
     SCRIPT_SQL = f"""
-        SELECT
-            institution_id,
-            name,
-            acronym,
-            lattes_id
-            FROM
-            institution
-        WHERE
-            institution_id = '{institution_id}'
+        SELECT institution_id, name, acronym, lattes_id FROM institution
+        WHERE 1 = 1
+            {filter_institution}
         """
 
     registry = adm_database.select(SCRIPT_SQL=SCRIPT_SQL)
@@ -108,18 +107,20 @@ def institution_basic_query(institution_id: UUID4):
         registry, columns=["institution_id", "name", "acronym", "lattes_id"]
     )
 
-    # to_dict retorna uma lista, e eu so quero o primeiro valor
-    return data_frame.to_dict(orient="records")[0]
+    if institution_id:
+        print(data_frame)
+        return data_frame.to_dict(orient="records")[0]
+    return data_frame.to_dict(orient="records")
 
 
 def institution_query_name(institution_name: str):
     SCRIPT_SQL = f"""
-    SELECT
-        institution_id
-    FROM
-        institution as i
-    WHERE
-        similarity(unaccent(LOWER('{institution_name.replace("'", "''")}')), unaccent(LOWER(i.name))) > 0.4
+    SELECT institution_id
+    FROM institution as i
+    WHERE 1 = 1
+        similarity(
+        unaccent(
+        LOWER('{institution_name.replace("'", "''")}')), unaccent(LOWER(i.name))) > 0.4
     LIMIT 1;
     """
 

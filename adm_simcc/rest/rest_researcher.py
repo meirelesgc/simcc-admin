@@ -38,7 +38,7 @@ def researcher_update():
 def researcher_delete():
     researcher_id = request.args.get("researcher_id")
     dao_researcher.researcher_delete(researcher_id)
-    return jsonify(), HTTPStatus.NO_CONTENT
+    return jsonify(""), HTTPStatus.NO_CONTENT
 
 
 @rest_researcher.route("/Query", methods=["GET"])
