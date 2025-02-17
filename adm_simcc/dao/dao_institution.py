@@ -85,6 +85,18 @@ def institution_full_query(institution_id: UUID4 = None):
             "count_t",
         ],
     )
+    if not institution_id:
+        data_frame = data_frame[
+            [
+                "count_r",
+                "count_gp",
+                "count_gpr",
+                "count_gps",
+                "count_d",
+                "count_t",
+            ]
+        ].sum()
+        return [data_frame.to_dict()]
 
     return data_frame.fillna(0).to_dict(orient="records")
 
