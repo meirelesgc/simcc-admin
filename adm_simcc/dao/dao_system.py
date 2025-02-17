@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 import pandas as pd
 
 from ..dao import Connection
@@ -23,7 +25,7 @@ def create_user(User: UserModel):
     adm_database.exec(
         SCRIPT_SQL,
         [
-            User.displayName,
+            User.displayName if User.displayName else uuid4(),
             User.email,
             User.uid,
             str(User.photoURL) or str(),

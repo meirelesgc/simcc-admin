@@ -25,7 +25,6 @@ def ufmg_researcher_insert(ListTeachers: ListTeachers):
             """
 
         researcher_id = adm_database.select(SCRIPT_SQL, [teacher.nome])
-        print(researcher_id)
         if researcher_id:
             researcher_id = researcher_id[0][0]
 

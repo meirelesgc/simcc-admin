@@ -30,7 +30,7 @@ def researcher_insert():
 @rest_researcher.route("/Update", methods=["PUT"])
 def researcher_update():
     researcher = request.get_json()
-    dao_researcher.researcher_update(researcher)
+    dao_researcher.researcher_update(researcher[0])
     return jsonify({"message": "ok"}), HTTPStatus.OK
 
 
@@ -85,7 +85,6 @@ def researcher_departament_insert():
 @rest_researcher.route("/departament", methods=["DELETE"])
 def researcher_departament_delete():
     researcher = request.get_json()
-    print(researcher)
     dao_researcher.researcher_departament_delete(researcher)
     return jsonify({"message": "ok"}), HTTPStatus.NO_CONTENT
 

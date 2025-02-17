@@ -118,7 +118,6 @@ def researcher_basic_query(
             {filter_limit};
         """
 
-    print(SCRIPT_SQL)
     registry = adm_database.select(SCRIPT_SQL, parameters)
 
     data_frame = pd.DataFrame(

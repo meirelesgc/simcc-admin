@@ -4,7 +4,7 @@ from pydantic import BaseModel, EmailStr, Field, HttpUrl
 
 
 class UserModel(BaseModel):
-    displayName: str
+    displayName: str | None
     email: EmailStr
     uid: str = None
     photoURL: Optional[HttpUrl] = None

@@ -108,7 +108,6 @@ def institution_basic_query(institution_id: UUID4):
     )
 
     if institution_id:
-        print(data_frame)
         return data_frame.to_dict(orient="records")[0]
     return data_frame.to_dict(orient="records")
 

@@ -15,7 +15,6 @@ def graduate_program_insert(ListGraduateProgram: ListGraduateProgram):
 
     # fmt: off
     for program in ListGraduateProgram.graduate_program_list:
-        print(program)
         parameters.append((
             program.graduate_program_id, program.code, program.name,
             program.area, program.modality, program.type, program.rating,

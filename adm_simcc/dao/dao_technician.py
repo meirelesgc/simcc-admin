@@ -1,6 +1,11 @@
 import pandas as pd
+
 from ..dao import Connection
-from ..models.technician import ListTechnician, ListTechnicianDepartament, ListRole
+from ..models.technician import (
+    ListRole,
+    ListTechnician,
+    ListTechnicianDepartament,
+)
 
 adm_database = Connection()
 
@@ -31,7 +36,6 @@ def technician_insert(ListTechnician: ListTechnician):
             f"{year}.{semester}"
         ))
         # fmt: on
-    print(parameters[0])
     SCRIPT_SQL = """
     INSERT INTO UFMG.technician
     (matric, ins_ufmg, nome, genero, deno_sit, rt, classe, cargo, nivel, ref,
@@ -41,7 +45,6 @@ def technician_insert(ListTechnician: ListTechnician):
 
 
 def technician_basic_query(year, semester, departament):
-
     parameters = list()
 
     if year or semester:
@@ -123,23 +126,24 @@ def technician_insert_role(ListRole: ListRole):
 
 
 def technician_query_role():
-    SCRIPT_SQL = '''
+    SCRIPT_SQL = """
         SELECT
             role,
             technician_id
         FROM
             technician_role
-        '''
+        """
 
     registry = adm_database.select(SCRIPT_SQL)
 
-    data_frame = pd.Dataframe(registry, columns=['role', 'technician_id'])
+    data_frame = pd.Dataframe(registry, columns=["role", "technician_id"])
 
-    return data_frame.to_dict(orient='records')
+    return data_frame.to_dict(orient="records")
 
 
 def departament_technician_insert(
-        ListTechnicianDepartament: ListTechnicianDepartament):
+    ListTechnicianDepartament: ListTechnicianDepartament,
+):
     parameters = list()
 
     for technician in ListTechnicianDepartament.list_technician:
@@ -159,7 +163,8 @@ def departament_technician_delete(technician):
     """
 
     adm_database.exec(
-        SCRIPT_SQL, [technician[0]['technician_id'], technician[0]['dep_id']])
+        SCRIPT_SQL, [technician[0]["technician_id"], technician[0]["dep_id"]]
+    )
 
 
 def technician_departament_basic_query(researcher_id):
@@ -184,15 +189,17 @@ def technician_departament_basic_query(researcher_id):
 
     registry = adm_database.select(SCRIPT_SQL, researcher_id)
 
-    data_frame = pd.Dataframe(registry,
-                              columns=[
-                                  'dep_id',
-                                  'org_cod',
-                                  'dep_nom',
-                                  'dep_des',
-                                  'dep_email',
-                                  'dep_site',
-                                  'dep_sigla',
-                                  'dep_tel'
-                              ])
-    return data_frame.to_dict(orient='records')
+    data_frame = pd.Dataframe(
+        registry,
+        columns=[
+            "dep_id",
+            "org_cod",
+            "dep_nom",
+            "dep_des",
+            "dep_email",
+            "dep_site",
+            "dep_sigla",
+            "dep_tel",
+        ],
+    )
+    return data_frame.to_dict(orient="records")
