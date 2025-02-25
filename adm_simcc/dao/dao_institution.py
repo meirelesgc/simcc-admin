@@ -10,14 +10,14 @@ adm_database = Connection()
 def institution_insert(ListInstitutions: ListInstitutions):
     values_str = str()
     for institution in ListInstitutions.institution_list:
-        values_str += f"""('{institution.institution_id}', '{institution.name}', '{institution.acronym}', '{institution.lattes_id}', '{institution.image}'),"""
+        values_str += f"""('{institution.institution_id}', '{institution.name}', '{institution.acronym}'),"""
 
     # Criação do script de insert.
     # Unifiquei em um unico comando para facilitar
     # o retorno da mensagem de erro
     SCRIPT_SQL = f"""
         INSERT INTO public.institution
-        (institution_id, name, acronym, lattes_id, image)
+        (institution_id, name, acronym)
         VALUES {values_str[:-1]};
         """
 

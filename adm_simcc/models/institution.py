@@ -5,8 +5,6 @@ class Institution(BaseModel):
     institution_id: UUID4
     name: str
     acronym: str
-    lattes_id: str
-    image: str
 
 
 class ListInstitutions(BaseModel):
