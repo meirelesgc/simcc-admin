@@ -154,8 +154,7 @@ def update_institution(institution: Institution):
     SCRIPT_SQL = """
         UPDATE institution SET
             name = %(name)s,
-            acronym = %(acronym)s,
-            lattes_id = %(lattes_id)s
+            acronym = %(acronym)s
         WHERE institution_id = %(institution_id)s;
         """
     adm_database.exec(SCRIPT_SQL, institution.model_dump())
