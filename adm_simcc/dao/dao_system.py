@@ -410,3 +410,24 @@ def add_group_producion(producion):
         VALUES (%(group_id)s, %(type)s, %(production_id)s);
         """
     adm_database.exec(SCRIPT_SQL, producion)
+
+
+def list_feedback():
+    SCRIPT_SQL = """
+        SELECT id, name,  email,  rating,  description, created_at
+        FROM public.feedback;
+        """
+    registry = adm_database.select(SCRIPT_SQL)
+    dataframe = pd.DataFrame(
+        registry,
+        columns=["id", "name", "email", "rating", "description", "created_at"],
+    )
+    return dataframe.to_dict(orient="records")
+
+
+def delete_feedback(feedback_id):
+    SCRIPT_SQL = """
+        DELETE FROM public.feedback
+        WHERE id=%(feedback_id)s;
+        """
+    adm_database.exec(SCRIPT_SQL, {"feedback_id": feedback_id})

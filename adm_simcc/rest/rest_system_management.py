@@ -234,16 +234,24 @@ def feedback():
     try:
         feedback_data = FeedbackSchema(**request.json)
         dao_system.add_feedback(feedback_data)
-        return (
-            jsonify(
-                {
-                    "message": "Feedback recebido com sucesso!",
-                    "data": feedback_data.dict(),
-                }
-            ),
-            200,
-        )
+        response = {
+            "message": "Feedback recebido com sucesso!",
+            "data": feedback_data.model_dump(),
+        }
+        return jsonify(response), 200
     except ValidationError as e:
-        return jsonify(
-            {"message": "Validation error", "errors": e.errors()}
-        ), 400
+        response = {"message": "Validation error", "errors": e.errors()}
+        return jsonify(response), 400
+
+
+@rest_system.route("/s/feedback", methods=["GET"])
+def list_feedback():
+    response = dao_system.list_feedback()
+    return response
+
+
+@rest_system.route("/s/feedback", methods=["DELETE"])
+def delete_feedback():
+    feedback_id = request.args.get("feedback_id")
+    dao_system.delete_feedback(feedback_id)
+    return jsonify({"message": "Feedback deleted"}), 204
