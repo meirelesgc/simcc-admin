@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS public.researcher(
 );
 CREATE TABLE IF NOT EXISTS public.graduate_program(
       graduate_program_id uuid NOT NULL DEFAULT uuid_generate_v4(),
-      code VARCHAR(100),
+      code VARCHAR(100) UNIQUE,
       name VARCHAR(100) NOT NULL,
       area VARCHAR(100) NOT NULL,
       modality VARCHAR(100) NOT NULL,
