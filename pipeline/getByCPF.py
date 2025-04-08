@@ -29,7 +29,7 @@ def get_lattes_id(cpf, nome, data_nascimento=None):
         print(f"Erro ao buscar ID para {nome}: {e}")
         return None
 
-df = pd.read_excel('MPU (1).xlsx')
+df = pd.read_excel('MPUBA25.03.2025.xlsx')
 
 with engine.connect() as conn:
     trans = conn.begin() 
