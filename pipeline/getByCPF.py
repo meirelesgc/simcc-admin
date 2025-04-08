@@ -53,7 +53,7 @@ with engine.connect() as conn:
         for _, row in df.iterrows():
             name = row['NOME EMPR./CANDIDATO']
             cpf = str(row['NÚMERO DO CPF']).replace('.', '').replace('-', '').strip()
-            institution_acronym = row['EMPRESA'].strip().lower()
+            institution_acronym = str(row['EMPRESA']).strip().lower()
 
             id_lattes = get_lattes_id(cpf, name)
             if not id_lattes:
