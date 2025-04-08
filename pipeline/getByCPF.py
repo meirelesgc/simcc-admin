@@ -67,6 +67,12 @@ with engine.connect() as conn:
 
             id_institution = institution_map.get(institution_acronym)
 
+            if id_institution is None:
+                print(f"Instituição não encontrada para: {institution_acronym} ({name})")
+                with open("falha_instituicao.txt", "a", encoding="utf-8") as f:
+                    f.write(f"{name} - Instituição não encontrada: {institution_acronym}\n")
+                continue  
+
             query = select(researcher_table).where(researcher_table.c.lattes_id == str(id_lattes))
             result = conn.execute(query).fetchone()
 
