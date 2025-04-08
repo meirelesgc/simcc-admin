@@ -37,7 +37,7 @@ def get_lattes_id(cpf, nome, data_nascimento=None):
         return None
 
 # Carrega o Excel
-df = pd.read_excel('MPUBA25.03.2025.xlsx')
+df = pd.read_excel('UFSB.xlsx')
 
 with engine.connect() as conn:
     trans = conn.begin()
