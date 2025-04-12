@@ -7,6 +7,7 @@ class Researcher(BaseModel):
     lattes_id: str
     institution_id: UUID4
     status: bool = True
+    cpf: str = None
 
 
 class ListResearchers(BaseModel):

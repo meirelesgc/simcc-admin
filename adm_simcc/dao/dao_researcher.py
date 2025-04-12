@@ -1,15 +1,19 @@
+import httpx
 import pandas as pd
 from pydantic import UUID4
 from zeep import Client
 
+from ..config import settings
 from ..dao import Connection
 from ..models.researcher import (
     ListResearcherDepartament,
     ListResearchers,
 )
 
+PROXY = settings.ALTERNATIVE_CNPQ_SERVICE
+
 adm_database = Connection()
-CNPq = Client("http://servicosweb.cnpq.br/srvcurriculo/WSCurriculo?wsdl")
+client = Client("http://servicosweb.cnpq.br/srvcurriculo/WSCurriculo?wsdl")
 
 
 def researcher_update(researcher):
@@ -24,16 +28,56 @@ def researcher_update(researcher):
     adm_database.exec(SCRIPT_SQL, researcher)
 
 
+def cpf_to_lattes(cpf: str):
+    cpf = cpf.strip().replace("-", "").replace(".", "")
+    if not cpf.isdigit():
+        raise ValueError(
+            "O CPF deve ser uma string válida contendo apenas números ou formatos com hífen/ponto."
+        )
+    try:
+        if PROXY:
+            PROXY_URL = (
+                f"https://simcc.uesc.br/v3/api/getIdentificadorCNPq?cpf={cpf}"
+            )
+            response = httpx.get(PROXY_URL, verify=False, timeout=None).json()
+            if response:
+                return response
+            raise RuntimeError("Identificador não encontrado via proxy.")
+        return client.service.getIdentificadorCNPq(
+            cpf=cpf, nomeCompleto="", dataNascimento=""
+        )
+    except Exception as e:
+        raise RuntimeError(f"Erro ao buscar o identificador CNPq: {e}")
+
+
+def validate_lattes(lattes_id):
+    try:
+        if PROXY:
+            PROXY_URL = f"https://simcc.uesc.br/v3/api/getDataAtualizacaoCV?lattes_id={lattes_id}"
+            response = httpx.get(PROXY_URL, verify=False, timeout=None).json()
+            return bool(response)
+        response = client.service.getDataAtualizacaoCV(lattes_id)
+        return bool(response)
+    except Exception as e:
+        print(f"Erro ao validar o Lattes ID: {e}")
+        return False
+
+
 def researcher_insert(ListResearchers: ListResearchers):
     parameters = list()
     # fmt: off
     for researcher in ListResearchers.researcher_list:
+        if researcher.cpf:
+            researcher.lattes_id = cpf_to_lattes(researcher.cpf)
+
+        if not validate_lattes(researcher.lattes_id):
+            raise RuntimeError(f"Erro ao buscar o identificador CNPq: {researcher.lattes_id}")
         parameters.append((
             researcher.researcher_id, researcher.name, researcher.lattes_id,
             researcher.institution_id, researcher.status
         ))
-    # fmt: on
 
+    # fmt: on
     SCRIPT_SQL = """
         INSERT INTO researcher
         (researcher_id, name, lattes_id, institution_id, status)

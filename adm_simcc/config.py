@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     ADM_PASSWORD: str = "postgres"
     ADM_PORT: int = 5432
 
+    ALTERNATIVE_CNPQ_SERVICE: bool = False
     HOP_LOCK_FILE_PATH: Optional[str] = None
     HOP_LOG_FILE_PATH: Optional[str] = None
 

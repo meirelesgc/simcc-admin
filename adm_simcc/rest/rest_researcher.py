@@ -23,8 +23,12 @@ def researcher_insert():
         return jsonify({"message": "ok"}), HTTPStatus.CREATED
     except psycopg2.errors.UniqueViolation:
         return jsonify(
-            {"message": "pesquisador ja cadastrado"}
+            {"message": "pesquisador já cadastrado"}
         ), HTTPStatus.CONFLICT
+    except Exception as e:
+        return jsonify(
+            {"message": f"Erro inesperado: {str(e)}"}
+        ), HTTPStatus.INTERNAL_SERVER_ERROR
 
 
 @rest_researcher.route("/Update", methods=["PUT"])
