@@ -18,6 +18,7 @@ class GraduateProgram(BaseModel):
     site: Optional[str] = None
     description: Optional[str]
     visible: bool = False
+    menagers: Optional[list[str]] = []
 
 
 class ListGraduateProgram(BaseModel):
