@@ -42,12 +42,19 @@ def graduate_program_update(graduate_program_id: UUID4):
     adm_database.exec(SCRIPT_SQL, parameters)
 
 
-def graduate_program_basic_query(institution_id: UUID4):
+def graduate_program_basic_query(institution_id: UUID4, user_id: UUID4):
+    parameters = {}
     filter_institution = str()
-    parameters = []
     if institution_id:
-        filter_institution = "AND gp.institution_id = %s"
-        parameters.append(institution_id)
+        filter_institution = "AND gp.institution_id = %(institution_id)s"
+        parameters["institution_id"] = institution_id
+
+    join_menager = str()
+    filter_menager = str()
+    if user_id:
+        join_menager = "JOIN users u ON u.email = ANY(gp.menagers)"
+        filter_menager = "AND u.user_id = %(user_id)s"
+        parameters["user_id"] = user_id
 
     SCRIPT_SQL = f"""
         SELECT
@@ -72,8 +79,10 @@ def graduate_program_basic_query(institution_id: UUID4):
             graduate_program gp
         LEFT JOIN
             graduate_program_researcher gr ON gp.graduate_program_id = gr.graduate_program_id
+            {join_menager}
         WHERE 1 = 1
             {filter_institution}
+            {filter_menager}
         GROUP BY
             gp.graduate_program_id, gp
         """

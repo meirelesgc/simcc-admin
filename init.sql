@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS public.graduate_program(
       description TEXT,
       visible bool DEFAULT FALSE,
       site TEXT,
+      menagers TEXT[],
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       PRIMARY KEY (graduate_program_id),
