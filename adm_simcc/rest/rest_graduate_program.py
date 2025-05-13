@@ -52,7 +52,10 @@ def graduate_program_delete():
 @rest_graduate_program.route("/Query", methods=["GET"])
 def graduate_program_basic_query():
     institution_id = request.args.get("institution_id")
-    graduate_programs = dao.graduate_program_basic_query(institution_id)
+    user_id = request.args.get("user_id")
+    graduate_programs = dao.graduate_program_basic_query(
+        institution_id, user_id
+    )
     return jsonify(graduate_programs), HTTPStatus.OK
 
 

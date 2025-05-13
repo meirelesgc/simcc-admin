@@ -42,12 +42,19 @@ def graduate_program_update(graduate_program_id: UUID4):
     adm_database.exec(SCRIPT_SQL, parameters)
 
 
-def graduate_program_basic_query(institution_id: UUID4):
+def graduate_program_basic_query(institution_id: UUID4, user_id: UUID4):
+    parameters = {}
     filter_institution = str()
-    parameters = []
     if institution_id:
-        filter_institution = "AND gp.institution_id = %s"
-        parameters.append(institution_id)
+        filter_institution = "AND gp.institution_id = %(institution_id)s"
+        parameters["institution_id"] = institution_id
+
+    join_menager = str()
+    filter_menager = str()
+    if user_id:
+        join_menager = "JOIN users u ON u.email = ANY(gp.menagers)"
+        filter_menager = "AND u.user_id = %(user_id)s"
+        parameters["user_id"] = user_id
 
     SCRIPT_SQL = f"""
         SELECT
@@ -65,14 +72,17 @@ def graduate_program_basic_query(institution_id: UUID4):
             gp.city,
             gp.visible,
             gp.site,
+            gp.menagers,
             COUNT(CASE WHEN gr.type_ = 'PERMANENTE' THEN 1 END) as qtd_permanente,
             COUNT(CASE WHEN gr.type_ = 'COLABORADOR' THEN 1 END) as qtd_colaborador
         FROM
             graduate_program gp
         LEFT JOIN
             graduate_program_researcher gr ON gp.graduate_program_id = gr.graduate_program_id
+            {join_menager}
         WHERE 1 = 1
             {filter_institution}
+            {filter_menager}
         GROUP BY
             gp.graduate_program_id, gp
         """
@@ -95,6 +105,7 @@ def graduate_program_basic_query(institution_id: UUID4):
             "city",
             "visible",
             "site",
+            "menagers",
             "qtd_permanente",
             "qtd_colaborador",
         ],
@@ -151,6 +162,7 @@ def graduate_program_fix(program: GraduateProgram):
         program.city, program.url_image,
         program.acronym, program.description,
         program.visible, program.site,
+        program.menagers,
         program.graduate_program_id,
     )
     # fmt: on
@@ -158,7 +170,8 @@ def graduate_program_fix(program: GraduateProgram):
         UPDATE graduate_program SET
         code = %s, name = %s, area = %s, modality = %s, type = %s,
         rating = %s, institution_id = %s, city = %s, url_image = %s,
-        acronym = %s, description = %s, visible = %s, site = %s
+        acronym = %s, description = %s, visible = %s, site = %s,
+        menagers = %s
         WHERE graduate_program_id = %s;
         """
     adm_database.exec(SCRIPT_SQL, parameters)
