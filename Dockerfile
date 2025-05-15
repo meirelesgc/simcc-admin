@@ -14,4 +14,4 @@ RUN pip install poetry && \
 
 EXPOSE 8080
 
-CMD ["gunicorn", "-b", "0.0.0.0:8080", "adm_simcc:create_app()", "--reload", "--log-level", "info", "--access-logfile", "files/access.log", "--error-logfile", "files/error.log", "--workers", "4"]
+CMD ["gunicorn", "-b", "0.0.0.0:8080", "adm_simcc:create_app()"]
