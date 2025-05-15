@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS public.researcher(
       lattes_id VARCHAR(20),
       institution_id uuid NOT NULL,
       extra_field VARCHAR(255),
+      status BOOL NOT NULL DEFAULT True,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       PRIMARY KEY (lattes_id, institution_id),
