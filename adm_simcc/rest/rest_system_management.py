@@ -1,6 +1,5 @@
 import json
 import os
-import subprocess
 from http import HTTPStatus
 
 import psycopg2
@@ -169,64 +168,6 @@ def unassign_user():
     technician = request.get_json()
     dao_system.unassign_user(technician)
     return jsonify("OK"), HTTPStatus.NO_CONTENT
-
-
-@rest_system.route("/s/hop", methods=["POST"])
-def hop():
-    try:
-        if os.path.exists(HOP_LOCK_FILE_PATH):
-            response = {
-                "status": "error",
-                "message": "A previous execution is still in progress. Please try again later.",
-            }
-            return jsonify(response), HTTPStatus.TOO_MANY_REQUESTS
-
-        with open(HOP_LOCK_FILE_PATH, "w") as lock_file:
-            lock_file.write("locked")
-
-        subprocess.Popen([HOP_ROUTINE_PATH], shell=True)
-
-        response = {
-            "status": "success",
-            "message": "Apache Hop execution started successfully.",
-        }
-        return jsonify(response), HTTPStatus.OK
-
-    except Exception as e:
-        if os.path.exists(HOP_LOCK_FILE_PATH):
-            os.remove(HOP_LOCK_FILE_PATH)
-
-        response = {
-            "status": "error",
-            "message": f"An error occurred: {str(e)}",
-        }
-        return jsonify(response), HTTPStatus.INTERNAL_SERVER_ERROR
-
-
-@rest_system.route("/s/hop", methods=["GET"])
-def get_last_log_line():
-    try:
-        if not os.path.exists(HOP_LOG_FILE_PATH):
-            return (
-                jsonify({"status": "error", "message": "Log file not found."}),
-                HTTPStatus.NOT_FOUND,
-            )
-
-        with open(HOP_LOG_FILE_PATH, "r") as log_file:
-            lines = log_file.readlines()
-            last_line = lines[-1].strip() if lines else "Log file is empty."
-
-        return jsonify(
-            {"status": "success", "message": last_line}
-        ), HTTPStatus.OK
-
-    except Exception as e:
-        return (
-            jsonify(
-                {"status": "error", "message": f"An error occurred: {str(e)}"}
-            ),
-            HTTPStatus.INTERNAL_SERVER_ERROR,
-        )
 
 
 @rest_system.route("/s/feedback", methods=["POST"])
