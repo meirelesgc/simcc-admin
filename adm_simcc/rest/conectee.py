@@ -88,6 +88,8 @@ def teacher_insert():
 @conectee.route("/v2/ufmg/researcher", methods=["POST"])
 def post_ufmg_researcher():
     researcher = request.get_json()
+    if not isinstance(list, researcher):
+        researcher = [researcher]
     result = dao_conectee.post_ufmg_researcher(researcher)
     return jsonify(result), HTTPStatus.CREATED
 
