@@ -1,7 +1,9 @@
 from http import HTTPStatus
 
+import pandas as pd
 import psycopg2
 from flask import Blueprint, jsonify, request
+from werkzeug.utils import secure_filename
 
 from ..dao import dao_conectee, dao_technician
 from ..models.departament import ListDiscipline
@@ -83,6 +85,37 @@ def teacher_insert():
         ), HTTPStatus.CONFLICT
 
 
+@conectee.route("/v2/ufmg/researcher", methods=["POST"])
+def post_ufmg_researcher():
+    researcher = request.get_json()
+    result = dao_conectee.post_ufmg_researcher(researcher)
+    return jsonify(result), HTTPStatus.CREATED
+
+
+@conectee.route("/v2/ufmg/researcher/upload", methods=["POST"])
+def post_ufmg_researcher_upload():
+    file = request.files.get("file")
+
+    if file is None or file.filename == str():
+        return {"error": "Nenhum arquivo enviado"}, 400
+
+    filename = secure_filename(file.filename)
+
+    try:
+        if filename.endswith(".csv"):
+            df = pd.read_csv(file)
+        elif filename.endswith(".xls") or filename.endswith(".xlsx"):
+            df = pd.read_excel(file)
+        else:
+            return {"error": "Formato de arquivo não suportado"}, 400
+    except Exception as e:
+        return {"error": f"Erro ao ler o arquivo: {str(e)}"}, 400
+
+    data = df.to_dict(orient="records")
+    result = dao_conectee.post_ufmg_researcher(data)
+    return jsonify(result), HTTPStatus.CREATED
+
+
 @conectee.route("/docentes", methods=["GET"])
 def teacher_query():
     year = request.args.get("year")
@@ -150,3 +183,6 @@ def technician_departament_basic_query():
         technician_id, dep_id
     )
     return jsonify(technician), HTTPStatus.OK
+
+
+# @conectee.route('/v2/')

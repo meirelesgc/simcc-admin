@@ -74,7 +74,7 @@ def save_directory():
 @rest_system.route("/s/directory", methods=["GET"])
 def get_directory():
     try:
-        with open("files/directory.json", "r") as file:
+        with open("files/directory.json", "r", encoding="utf-8") as file:
             data = json.load(file)
             directory_path = data.get("directory")
         if not directory_path:

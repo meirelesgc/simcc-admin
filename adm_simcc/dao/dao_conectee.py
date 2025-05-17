@@ -1,10 +1,186 @@
+import re
+import unicodedata
+
 import pandas as pd
+from numpy import nan
 
 from ..dao import Connection
 from ..models.teachers import ListRole, ListTeachers
 from ..models.technician import ListTechnician, ListTechnicianDepartament
 
 adm_database = Connection()
+
+
+def normalize(df: pd.DataFrame) -> pd.DataFrame:
+    def norm(texto):
+        texto = unicodedata.normalize("NFKD", texto)
+        texto = texto.encode("ASCII", "ignore").decode("utf-8")
+        texto = texto.lower()
+        texto = re.sub(r"\s+", "_", texto)
+        texto = re.sub(r"[^a-z0-9_]", "", texto)
+        return texto
+
+    df.columns = [norm(col) for col in df.columns]
+    return df
+
+
+def normalize_researchers(df: pd.DataFrame) -> pd.DataFrame:
+    mapping = {
+        "nome": "full_name",
+        "genero": "gender",
+        "sit": "status_code",
+        "rt": "work_regime",
+        "clas": "job_class",
+        "denocarg": "job_title",
+        "denoclasse": "job_rank",
+        "ref": "job_reference_code",
+        "denotit": "academic_degree",
+        "dtingorg": "organization_entry_date",
+        "dataprog": "last_promotion_date",
+        "denosit": "employment_status_description",
+        "denosetor": "department_name",
+        "cat": "career_category",
+        "unid": "academic_unit",
+        "grexc": "unit_code",
+        "fun": "function_code",
+        "funniv": "position_code",
+        "dtchefinic": "leadership_start_date",
+        "dtcheffim": "leadership_end_date",
+        "nomefunc": "current_function_name",
+        "exercfunc": "function_location",
+        "matric": "registration_number",
+        "inscufmg": "ufmg_registration_number",
+        "semester": "semester_reference",
+    }
+    df = df.copy()
+    df.rename(
+        columns={k: v for k, v in mapping.items() if k in df.columns},
+        inplace=True,
+    )
+    if "job_class" in df.columns:
+        df["job_class"] = pd.to_numeric(df["job_class"], errors="coerce")
+    for col in [
+        "organization_entry_date",
+        "last_promotion_date",
+        "leadership_start_date",
+        "leadership_end_date",
+    ]:
+        if col in df.columns:
+            df[col] = pd.to_datetime(df[col], errors="coerce").dt.date
+    return df
+
+
+def get_researcher_id(name):
+    SCRIPT_SQL = """
+        SELECT researcher_id
+        FROM researcher
+        WHERE name ILIKE %(name)s
+        """
+    result = adm_database.select(SCRIPT_SQL, {"name": name})
+    if result:
+        return result[0][0]
+
+
+def post_ufmg_researcher(researcher):
+    researcher = pd.DataFrame(researcher)
+    researcher = normalize(researcher)
+    researcher = normalize_researchers(researcher)
+    researcher["researcher_id"] = researcher["full_name"].apply(
+        get_researcher_id
+    )
+
+    expected_columns = [
+        "researcher_id",
+        "full_name",
+        "gender",
+        "status_code",
+        "work_regime",
+        "job_class",
+        "job_title",
+        "job_rank",
+        "job_reference_code",
+        "academic_degree",
+        "organization_entry_date",
+        "last_promotion_date",
+        "employment_status_description",
+        "department_name",
+        "career_category",
+        "academic_unit",
+        "unit_code",
+        "function_code",
+        "position_code",
+        "leadership_start_date",
+        "leadership_end_date",
+        "current_function_name",
+        "function_location",
+        "registration_number",
+        "ufmg_registration_number",
+        "semester_reference",
+    ]
+
+    for col in expected_columns:
+        if col not in researcher.columns:
+            researcher[col] = None
+
+    researcher = researcher.replace(nan, None)
+    researcher = researcher.replace({pd.NaT: None})
+
+    not_found = researcher[researcher["researcher_id"].isna()]
+    researcher = researcher.dropna(subset=["researcher_id"])
+
+    SCRIPT_SQL = """
+        INSERT INTO ufmg.researcher(researcher_id, full_name, gender,
+            status_code, work_regime, job_class, job_title, job_rank,
+            job_reference_code, academic_degree, organization_entry_date,
+            last_promotion_date, employment_status_description, department_name,
+            career_category, academic_unit, unit_code, function_code,
+            position_code, leadership_start_date, leadership_end_date,
+            current_function_name, function_location, registration_number,
+            ufmg_registration_number, semester_reference)
+        VALUES (%(researcher_id)s, %(full_name)s, %(gender)s,
+            %(status_code)s, %(work_regime)s, %(job_class)s, %(job_title)s,
+            %(job_rank)s, %(job_reference_code)s, %(academic_degree)s,
+            %(organization_entry_date)s, %(last_promotion_date)s,
+            %(employment_status_description)s, %(department_name)s,
+            %(career_category)s, %(academic_unit)s, %(unit_code)s,
+            %(function_code)s, %(position_code)s, %(leadership_start_date)s,
+            %(leadership_end_date)s, %(current_function_name)s,
+            %(function_location)s, %(registration_number)s,
+            %(ufmg_registration_number)s, %(semester_reference)s)
+        ON CONFLICT (researcher_id) DO UPDATE
+        SET
+            full_name                       = EXCLUDED.full_name,
+            gender                          = EXCLUDED.gender,
+            status_code                     = EXCLUDED.status_code,
+            work_regime                     = EXCLUDED.work_regime,
+            job_class                       = EXCLUDED.job_class,
+            job_title                       = EXCLUDED.job_title,
+            job_rank                        = EXCLUDED.job_rank,
+            job_reference_code              = EXCLUDED.job_reference_code,
+            academic_degree                 = EXCLUDED.academic_degree,
+            organization_entry_date         = EXCLUDED.organization_entry_date,
+            last_promotion_date             = EXCLUDED.last_promotion_date,
+            employment_status_description   = EXCLUDED.employment_status_description,
+            department_name                 = EXCLUDED.department_name,
+            career_category                 = EXCLUDED.career_category,
+            academic_unit                   = EXCLUDED.academic_unit,
+            unit_code                       = EXCLUDED.unit_code,
+            function_code                   = EXCLUDED.function_code,
+            position_code                   = EXCLUDED.position_code,
+            leadership_start_date           = EXCLUDED.leadership_start_date,
+            leadership_end_date             = EXCLUDED.leadership_end_date,
+            current_function_name           = EXCLUDED.current_function_name,
+            function_location               = EXCLUDED.function_location,
+            registration_number             = EXCLUDED.registration_number,
+            ufmg_registration_number        = EXCLUDED.ufmg_registration_number,
+            semester_reference              = EXCLUDED.semester_reference;
+        """  # noqa: E501
+
+    adm_database.execmany(SCRIPT_SQL, researcher.to_dict(orient="records"))
+    return {
+        "success": researcher.to_dict(orient="records"),
+        "not_found": not_found.to_dict(orient="records"),
+    }
 
 
 def technician_insert(ListTechnician: ListTechnician):
