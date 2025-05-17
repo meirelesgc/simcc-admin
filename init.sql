@@ -160,24 +160,39 @@ CREATE TABLE IF NOT EXISTS public.feedback (
 
 CREATE SCHEMA IF NOT EXISTS UFMG;
 
-CREATE TABLE IF NOT EXISTS UFMG.researcher (
-      id uuid,
-      researcher_id uuid,
-      matric character varying(200),
-      inscUFMG character varying(200),
-      nome character varying(200),
-      genero character varying(40),
-      situacao character varying(40),
-      rt character varying(40),
-      clas character varying(200),
-      cargo character varying(40),
-      classe character varying(40),
-      ref character varying(200),
-      titulacao character varying(40),
-      entradaNaUFMG DATE,
-      progressao DATE,
-      semester character varying(6),
-      FOREIGN KEY (researcher_id) REFERENCES public.researcher (researcher_id)
+CREATE TABLE IF NOT EXISTS ufmg.researcher (
+    researcher_id UUID PRIMARY KEY REFERENCES public.researcher(researcher_id),
+    
+    -- Campos comuns
+    full_name VARCHAR(255),
+    gender VARCHAR(255),
+    status_code VARCHAR(255),
+    work_regime VARCHAR(255),
+    job_class INTEGER,
+    job_title VARCHAR(255),
+    job_rank VARCHAR(255),
+    job_reference_code VARCHAR(255),
+    academic_degree VARCHAR(255),
+    organization_entry_date DATE,
+    last_promotion_date DATE,
+    
+    -- Novos campos
+    employment_status_description VARCHAR(255),
+    department_name VARCHAR(255),
+    career_category VARCHAR(255),
+    academic_unit VARCHAR(255),
+    unit_code VARCHAR(255),
+    function_code VARCHAR(255),
+    position_code VARCHAR(255),
+    leadership_start_date DATE,
+    leadership_end_date DATE,
+    current_function_name VARCHAR(255),
+    function_location VARCHAR(255),
+    
+    -- Campos que estavam só na tabela antiga
+    registration_number VARCHAR(200),           
+    ufmg_registration_number VARCHAR(200),      
+    semester_reference VARCHAR(6)               
 );
 CREATE TABLE IF NOT EXISTS UFMG.technician (
       technician_id uuid NOT NULL DEFAULT uuid_generate_v4(),
