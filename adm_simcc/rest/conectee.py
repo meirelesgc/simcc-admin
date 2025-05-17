@@ -3,7 +3,7 @@ from http import HTTPStatus
 import psycopg2
 from flask import Blueprint, jsonify, request
 
-from ..dao import dao_departament, dao_teacher, dao_technician
+from ..dao import dao_conectee, dao_technician
 from ..models.departament import ListDiscipline
 from ..models.teachers import ListTeachers
 from ..models.technician import ListTechnician, ListTechnicianDepartament
@@ -15,21 +15,21 @@ conectee = Blueprint("conectee", __name__)
 def departament_insert():
     departaments = request.form.to_dict()
     departaments_file = request.files
-    dao_departament.departament_insert(departaments, departaments_file)
+    dao_conectee.departament_insert(departaments, departaments_file)
     return jsonify("OK"), HTTPStatus.CREATED
 
 
 @conectee.route("/departamentos", methods=["GET"])
 def departament_basic_query():
     dep_id = request.args.get("dep_id")
-    departaments = dao_departament.departament_basic_query(dep_id)
+    departaments = dao_conectee.departament_basic_query(dep_id)
     return jsonify(departaments), HTTPStatus.OK
 
 
 @conectee.route("/departamentos", methods=["DELETE"])
 def departament_delete():
     dep_id = request.args.get("dep_id")
-    dao_departament.departament_delete(dep_id)
+    dao_conectee.departament_delete(dep_id)
     return jsonify("OK"), HTTPStatus.NO_CONTENT
 
 
@@ -37,14 +37,14 @@ def departament_delete():
 def departament_update():
     departament = request.form.to_dict()
     departaments_file = request.files
-    dao_departament.departament_update(departament, departaments_file)
+    dao_conectee.departament_update(departament, departaments_file)
     return jsonify("OK"), HTTPStatus.OK
 
 
 @conectee.route("/departamentos/researcher", methods=["GET"])
 def departament_researcher_query():
     dep_id = request.args.get("dep_id")
-    researchers = dao_departament.departament_researcher_query(dep_id)
+    researchers = dao_conectee.departament_researcher_query(dep_id)
     return jsonify(researchers), HTTPStatus.OK
 
 
@@ -52,21 +52,21 @@ def departament_researcher_query():
 def departament_insert_discipline():
     disciplines = request.get_json()
     disciplines = ListDiscipline(list_discipline=disciplines)
-    dao_departament.departament_insert_discipline(disciplines)
+    dao_conectee.departament_insert_discipline(disciplines)
     return jsonify("OK"), HTTPStatus.CREATED
 
 
 @conectee.route("/departamentos/disciplinas", methods=["GET"])
 def departament_query_discipline():
     dep_id = request.args.get("dep_id")
-    disciplines = dao_departament.departament_query_discipline(dep_id)
+    disciplines = dao_conectee.departament_query_discipline(dep_id)
     return jsonify(disciplines), HTTPStatus.OK
 
 
 @conectee.route("/departamentos/disciplinas/semestres", methods=["GET"])
 def departament_query_discipline_semester():
     dep_id = request.args.get("dep_id")
-    semesters = dao_departament.departament_query_discipline_semester(dep_id)
+    semesters = dao_conectee.departament_query_discipline_semester(dep_id)
     return jsonify(semesters), HTTPStatus.OK
 
 
@@ -75,7 +75,7 @@ def teacher_insert():
     try:
         teachers = request.get_json()
         teachers = ListTeachers(list_teachers=teachers)
-        dao_teacher.ufmg_researcher_insert(teachers)
+        dao_conectee.ufmg_researcher_insert(teachers)
         return jsonify({"message": "ok"}), HTTPStatus.CREATED
     except psycopg2.errors.UniqueViolation:
         return jsonify(
@@ -87,13 +87,13 @@ def teacher_insert():
 def teacher_query():
     year = request.args.get("year")
     semester = request.args.get("semester")
-    teachers = dao_teacher.reacher_basic_query(year, semester)
+    teachers = dao_conectee.reacher_basic_query(year, semester)
     return jsonify(teachers), HTTPStatus.OK
 
 
 @conectee.route("/docentes/semestres", methods=["GET"])
 def teacher_query_semester():
-    semesters = dao_teacher.teacher_query_semester()
+    semesters = dao_conectee.teacher_query_semester()
     return jsonify(semesters), HTTPStatus.OK
 
 
