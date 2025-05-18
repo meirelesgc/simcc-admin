@@ -7,7 +7,6 @@ from werkzeug.utils import secure_filename
 
 from ..dao import dao_conectee, dao_technician
 from ..models.departament import ListDiscipline
-from ..models.teachers import ListTeachers
 from ..models.technician import ListTechnician, ListTechnicianDepartament
 
 conectee = Blueprint("conectee", __name__)
@@ -70,19 +69,6 @@ def departament_query_discipline_semester():
     dep_id = request.args.get("dep_id")
     semesters = dao_conectee.departament_query_discipline_semester(dep_id)
     return jsonify(semesters), HTTPStatus.OK
-
-
-@conectee.route("/docentes", methods=["POST"])
-def teacher_insert():
-    try:
-        teachers = request.get_json()
-        teachers = ListTeachers(list_teachers=teachers)
-        dao_conectee.ufmg_researcher_insert(teachers)
-        return jsonify({"message": "ok"}), HTTPStatus.CREATED
-    except psycopg2.errors.UniqueViolation:
-        return jsonify(
-            {"message": "Docente já cadastrado"}
-        ), HTTPStatus.CONFLICT
 
 
 @conectee.route("/v2/ufmg/researcher", methods=["DELETE"])
