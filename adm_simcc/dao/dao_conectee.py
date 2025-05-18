@@ -7,7 +7,7 @@ from numpy import nan
 
 from ..dao import Connection
 from ..models.teachers import ListRole
-from ..models.technician import ListTechnician, ListTechnicianDepartament
+from ..models.technician import ListTechnicianDepartament
 
 adm_database = Connection()
 
@@ -376,63 +376,44 @@ def post_ufmg_researcher(researcher):
     }
 
 
-def technician_insert(ListTechnician: ListTechnician):
-    SCRIPT_SQL = """
-        DELETE FROM UFMG.departament_technician
-        WHERE technician_id IN
-        (SELECT technician_id FROM
-        UFMG.technician WHERE semester = %s);
-
-        DELETE FROM UFMG.technician
-        WHERE semester = %s;
-        """
-    year = ListTechnician.list_technician[0].year_charge
-    semester = ListTechnician.list_technician[0].semester
-    adm_database.exec(SCRIPT_SQL, [f"{year}.{semester}", f"{year}.{semester}"])
-    parameters = list()
-
-    for technician in ListTechnician.list_technician:
-        # fmt: off
-        parameters.append((
-            technician.matric, technician.insUFMG, technician.nome,
-            technician.genero, technician.denoSit, technician.rt,
-            technician.classe, technician.cargo, technician.nivel,
-            technician.ref, technician.titulacao, technician.setor,
-            technician.detalheSetor, technician.dtIngOrg, technician.dataProg,
-            f"{year}.{semester}"
-        ))
-        # fmt: on
-    SCRIPT_SQL = """
-    INSERT INTO UFMG.technician
-    (matric, ins_ufmg, nome, genero, deno_sit, rt, classe, cargo, nivel, ref,
-    titulacao, setor, detalhe_setor, dting_org, data_prog, semester)
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
-    adm_database.execmany(SCRIPT_SQL, parameters)
-
-
 def technician_basic_query(year, semester, departament):
     parameters = list()
 
     if year or semester:
         parameters.append(f"{year}.{semester}")
         filter_semester = """
-            AND semester = %s
+            AND semester_reference = %s
             """
     else:
         filter_semester = """
-            AND semester = (SELECT MAX(semester) FROM UFMG.technician)
+            AND semester_reference = (SELECT MAX(semester_reference)
+            FROM ufmg.technician)
             """
 
     SCRIPT_SQL = f"""
         SELECT
-            technician_id, matric, ins_ufmg, nome, genero, deno_sit, rt, classe,
-            cargo, nivel, ref, titulacao, setor, detalhe_setor, dting_org,
-            data_prog, semester
+            technician_id,
+            registration_number,
+            ufmg_registration_number,
+            full_name,
+            gender,
+            status_code,
+            work_regime,
+            job_class,
+            job_title,
+            job_rank,
+            job_reference_code,
+            academic_degree,
+            department_name,
+            academic_unit,
+            organization_entry_date,
+            last_promotion_date,
+            semester_reference
         FROM
-            UFMG.technician
+            ufmg.technician
         WHERE
-        1 = 1
-        {filter_semester}
+            1 = 1
+            {filter_semester}
         """
 
     registry = adm_database.select(SCRIPT_SQL, parameters)
@@ -441,22 +422,22 @@ def technician_basic_query(year, semester, departament):
         registry,
         columns=[
             "technician_id",
-            "matric",
-            "ins_ufmg",
-            "nome",
-            "genero",
-            "deno_sit",
-            "rt",
-            "classe",
-            "cargo",
-            "nivel",
-            "ref",
-            "titulacao",
-            "setor",
-            "detalhe_setor",
-            "dting_org",
-            "data_prog",
-            "semester",
+            "registration_number",
+            "ufmg_registration_number",
+            "full_name",
+            "gender",
+            "status_code",
+            "work_regime",
+            "job_class",
+            "job_title",
+            "job_rank",
+            "job_reference_code",
+            "academic_degree",
+            "department_name",
+            "academic_unit",
+            "organization_entry_date",
+            "last_promotion_date",
+            "semester_reference",
         ],
     )
     return data_frame.to_dict(orient="records")
@@ -465,11 +446,11 @@ def technician_basic_query(year, semester, departament):
 def technician_query_semester():
     SCRIPT_SQL = """
     SELECT
-        SUBSTRING(semester, 1, 4) AS year,
-        SUBSTRING(semester, 6, 1) AS semester
+        SUBSTRING(semester_reference, 1, 4) AS year,
+        SUBSTRING(semester_reference, 6, 1) AS semester
     FROM
         ufmg.technician
-    GROUP BY semester;
+    GROUP BY semester_reference;
     """
     registry = adm_database.select(SCRIPT_SQL)
 

@@ -1,13 +1,11 @@
 from http import HTTPStatus
 
 import pandas as pd
-import psycopg2
 from flask import Blueprint, jsonify, request
 from werkzeug.utils import secure_filename
 
 from ..dao import dao_conectee, dao_technician
 from ..models.departament import ListDiscipline
-from ..models.technician import ListTechnician, ListTechnicianDepartament
 
 conectee = Blueprint("conectee", __name__)
 
@@ -175,19 +173,6 @@ def teacher_query_semester():
     return jsonify(semesters), HTTPStatus.OK
 
 
-@conectee.route("/tecnicos", methods=["POST"])
-def technician_insert():
-    try:
-        technician = request.get_json()
-        technician = ListTechnician(list_technician=technician)
-        dao_technician.technician_insert(technician)
-        return jsonify({"message": "ok"}), HTTPStatus.CREATED
-    except psycopg2.errors.UniqueViolation:
-        return jsonify(
-            {"message": "Tecnico já cadastrado"}
-        ), HTTPStatus.CONFLICT
-
-
 @conectee.route("/tecnicos", methods=["GET"])
 def technician_basic_query():
     year = request.args.get("year")
@@ -203,14 +188,6 @@ def technician_basic_query():
 def technician_query_semester():
     semesters = dao_technician.technician_query_semester()
     return jsonify(semesters), HTTPStatus.OK
-
-
-@conectee.route("/tecnicos/departament", methods=["POST"])
-def departament_technician_insert():
-    technician = request.get_json()
-    technician = ListTechnicianDepartament(technician_departament=technician)
-    dao_technician.departament_technician_insert(technician)
-    return jsonify({"message": "ok"}), HTTPStatus.CREATED
 
 
 @conectee.route("/tecnicos/departament", methods=["DELETE"])
