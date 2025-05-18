@@ -12,6 +12,26 @@ from ..models.technician import ListTechnician, ListTechnicianDepartament
 adm_database = Connection()
 
 
+def delete_ufmg_researcher(id):
+    delete_filter = "WHERE researcher_id = %(id)s" if id else str()
+
+    SCRIPT_SQL = f"""
+        DELETE FROM ufmg.researcher
+        {delete_filter}
+        """
+    adm_database.exec(SCRIPT_SQL, {"id": id})
+
+
+def delete_ufmg_technician(id):
+    delete_filter = "WHERE technician_id = %(id)s" if id else str()
+
+    SCRIPT_SQL = f"""
+        DELETE FROM ufmg.technician
+        {delete_filter}
+        """
+    adm_database.exec(SCRIPT_SQL, {"id": id})
+
+
 def normalize_technicians(df: pd.DataFrame) -> pd.DataFrame:
     mapping = {
         "matric": "registration_number",

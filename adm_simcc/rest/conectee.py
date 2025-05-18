@@ -85,6 +85,13 @@ def teacher_insert():
         ), HTTPStatus.CONFLICT
 
 
+@conectee.route("/v2/ufmg/researcher", methods=["DELETE"])
+def delete_ufmg_researcher():
+    id = request.args.get("id")
+    dao_conectee.delete_ufmg_researcher(id)
+    return {"message": "success"}
+
+
 @conectee.route("/v2/ufmg/researcher", methods=["POST"])
 def post_ufmg_researcher():
     researcher = request.get_json()
@@ -159,6 +166,13 @@ def post_ufmg_technician():
         technician = [technician]
     result = dao_conectee.post_ufmg_technician(technician)
     return jsonify(result), HTTPStatus.CREATED
+
+
+@conectee.route("/v2/ufmg/technician", methods=["DELETE"])
+def delete_ufmg_technician():
+    id = request.args.get("id")
+    dao_conectee.delete_ufmg_technician(id)
+    return {"message": "success"}
 
 
 @conectee.route("/docentes", methods=["GET"])
