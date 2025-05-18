@@ -88,7 +88,7 @@ def teacher_insert():
 @conectee.route("/v2/ufmg/researcher", methods=["POST"])
 def post_ufmg_researcher():
     researcher = request.get_json()
-    if not isinstance(list, researcher):
+    if not isinstance(researcher, list):
         researcher = [researcher]
     result = dao_conectee.post_ufmg_researcher(researcher)
     return jsonify(result), HTTPStatus.CREATED
@@ -116,6 +116,16 @@ def post_ufmg_researcher_upload():
     data = df.to_dict(orient="records")
     result = dao_conectee.post_ufmg_researcher(data)
     return jsonify(result), HTTPStatus.CREATED
+
+
+@conectee.route("/v2/ufmg/technician", methods=["POST"])
+def post_ufmg_technician():
+    technician = request.get_json()
+    if not isinstance(technician, list):
+        technician = [technician]
+    result = dao_conectee.post_ufmg_technician(technician)
+    return []
+    # return jsonify(result), HTTPStatus.CREATED
 
 
 @conectee.route("/docentes", methods=["GET"])

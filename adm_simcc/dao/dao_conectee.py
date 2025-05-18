@@ -1,5 +1,6 @@
 import re
 import unicodedata
+from uuid import uuid4
 
 import pandas as pd
 from numpy import nan
@@ -9,6 +10,176 @@ from ..models.teachers import ListRole, ListTeachers
 from ..models.technician import ListTechnician, ListTechnicianDepartament
 
 adm_database = Connection()
+
+
+def normalize_technicians(df: pd.DataFrame) -> pd.DataFrame:
+    mapping = {
+        "matric": "registration_number",
+        "insufmg": "ufmg_registration_number",
+        "nome": "full_name",
+        "genero": "gender",
+        "denosit": "employment_status_description",
+        "rt": "work_regime",
+        "classe": "job_class",
+        "cargo": "job_title",
+        "nivel": "job_rank",
+        "ref": "job_reference_code",
+        "titulacao": "academic_degree",
+        "setor": "department_name",
+        "detalhesetor": "function_location",
+        "dtingorg": "organization_entry_date",
+        "dataprog": "last_promotion_date",
+        "year_charge": "year_charge",
+        "semester": "semester_reference",
+        "sexo": "gender",
+        "sit": "status_code",
+        "clas": "job_class",
+        "denocarg": "job_title",
+        "denoclasse": "job_rank",
+        "denotit": "academic_degree",
+        "denosetor": "department_name",
+        "cat": "career_category",
+        "unid": "academic_unit",
+        "grexc": "unit_code",
+        "fun": "function_code",
+        "funniv": "position_code",
+        "dtchefinic": "leadership_start_date",
+        "dtcheffim": "leadership_end_date",
+        "nomefunc": "current_function_name",
+        "exercfunc": "function_location",
+        "ins_ufmg": "ufmg_registration_number",
+    }
+    df = df.copy()
+    df.rename(
+        columns={k: v for k, v in mapping.items() if k in df.columns},
+        inplace=True,
+    )
+    if "job_class" in df.columns:
+        df["job_class"] = pd.to_numeric(df["job_class"], errors="coerce")
+    for col in [
+        "organization_entry_date",
+        "last_promotion_date",
+        "leadership_start_date",
+        "leadership_end_date",
+    ]:
+        if col in df.columns:
+            df[col] = pd.to_datetime(
+                df[col], errors="coerce", dayfirst=True
+            ).dt.date
+    return df
+
+
+def get_technician_id(full_name):
+    SCRIPT_SQL = """
+        SELECT technician_id
+        FROM ufmg.technician
+        WHERE full_name ILIKE %(full_name)s
+        """
+    result = adm_database.select(SCRIPT_SQL, {"full_name": full_name})
+    if result:
+        return result[0][0]
+
+
+def post_ufmg_technician(technician):
+    technician = pd.DataFrame(technician)
+    technician = normalize(technician)
+    technician = normalize_technicians(technician)
+    technician["technician_id"] = technician["full_name"].apply(
+        get_technician_id
+    )
+    expected_columns = [
+        "technician_id",
+        "full_name",
+        "gender",
+        "status_code",
+        "work_regime",
+        "job_class",
+        "job_title",
+        "job_rank",
+        "job_reference_code",
+        "academic_degree",
+        "organization_entry_date",
+        "last_promotion_date",
+        "employment_status_description",
+        "department_name",
+        "career_category",
+        "academic_unit",
+        "unit_code",
+        "function_code",
+        "position_code",
+        "leadership_start_date",
+        "leadership_end_date",
+        "current_function_name",
+        "function_location",
+        "registration_number",
+        "ufmg_registration_number",
+        "semester_reference",
+    ]
+    for col in expected_columns:
+        if col not in technician.columns:
+            technician[col] = None
+    technician = technician.replace(nan, None)
+    technician = technician.replace({pd.NaT: None})
+
+    not_found = technician[technician["technician_id"].isna()]
+    technician = technician.dropna(subset=["technician_id"])
+
+    not_found["technician_id"] = [str(uuid4()) for _ in range(len(not_found))]
+
+    SCRIPT_SQL = """
+        INSERT INTO ufmg.technician(technician_id, full_name, gender,
+            status_code, work_regime, job_class, job_title, job_rank,
+            job_reference_code, academic_degree, organization_entry_date,
+            last_promotion_date, employment_status_description, department_name,
+            career_category, academic_unit, unit_code, function_code,
+            position_code, leadership_start_date, leadership_end_date,
+            current_function_name, function_location, registration_number,
+            ufmg_registration_number, semester_reference)
+        VALUES (%(technician_id)s, %(full_name)s, %(gender)s,
+            %(status_code)s, %(work_regime)s, %(job_class)s, %(job_title)s,
+            %(job_rank)s, %(job_reference_code)s, %(academic_degree)s,
+            %(organization_entry_date)s, %(last_promotion_date)s,
+            %(employment_status_description)s, %(department_name)s,
+            %(career_category)s, %(academic_unit)s, %(unit_code)s,
+            %(function_code)s, %(position_code)s, %(leadership_start_date)s,
+            %(leadership_end_date)s, %(current_function_name)s,
+            %(function_location)s, %(registration_number)s,
+            %(ufmg_registration_number)s, %(semester_reference)s)
+        ON CONFLICT (technician_id) DO UPDATE
+        SET
+            full_name                       = EXCLUDED.full_name,
+            gender                          = EXCLUDED.gender,
+            status_code                     = EXCLUDED.status_code,
+            work_regime                     = EXCLUDED.work_regime,
+            job_class                       = EXCLUDED.job_class,
+            job_title                       = EXCLUDED.job_title,
+            job_rank                        = EXCLUDED.job_rank,
+            job_reference_code              = EXCLUDED.job_reference_code,
+            academic_degree                 = EXCLUDED.academic_degree,
+            organization_entry_date         = EXCLUDED.organization_entry_date,
+            last_promotion_date             = EXCLUDED.last_promotion_date,
+            employment_status_description   = EXCLUDED.employment_status_description,
+            department_name                 = EXCLUDED.department_name,
+            career_category                 = EXCLUDED.career_category,
+            academic_unit                   = EXCLUDED.academic_unit,
+            unit_code                       = EXCLUDED.unit_code,
+            function_code                   = EXCLUDED.function_code,
+            position_code                   = EXCLUDED.position_code,
+            leadership_start_date           = EXCLUDED.leadership_start_date,
+            leadership_end_date             = EXCLUDED.leadership_end_date,
+            current_function_name           = EXCLUDED.current_function_name,
+            function_location               = EXCLUDED.function_location,
+            registration_number             = EXCLUDED.registration_number,
+            ufmg_registration_number        = EXCLUDED.ufmg_registration_number,
+            semester_reference              = EXCLUDED.semester_reference;
+    """  # noqa: E501
+
+    adm_database.execmany(SCRIPT_SQL, technician.to_dict(orient="records"))
+    adm_database.execmany(SCRIPT_SQL, not_found.to_dict(orient="records"))
+    return {
+        "success": technician.to_dict(orient="records"),
+        "not_found": not_found.to_dict(orient="records"),
+    }
 
 
 def normalize(df: pd.DataFrame) -> pd.DataFrame:
@@ -66,7 +237,9 @@ def normalize_researchers(df: pd.DataFrame) -> pd.DataFrame:
         "leadership_end_date",
     ]:
         if col in df.columns:
-            df[col] = pd.to_datetime(df[col], errors="coerce").dt.date
+            df[col] = pd.to_datetime(
+                df[col], errors="coerce", dayfirst=True
+            ).dt.date
     return df
 
 
