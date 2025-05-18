@@ -118,14 +118,47 @@ def post_ufmg_researcher_upload():
     return jsonify(result), HTTPStatus.CREATED
 
 
+@conectee.route("/v2/ufmg/technician/upload", methods=["POST"])
+def post_ufmg_technician_upload():
+    file = request.files.get("file")
+
+    if file is None or file.filename == str():
+        return {"error": "Nenhum arquivo enviado"}, 400
+
+    filename = secure_filename(file.filename)
+
+    try:
+        if filename.endswith(".csv"):
+            df = pd.read_csv(file)
+        elif filename.endswith(".xls") or filename.endswith(".xlsx"):
+            xls = pd.ExcelFile(file)
+            sheet_name = None
+
+            if "Tecnico Administrativo" in xls.sheet_names:
+                sheet_name = "Tecnico Administrativo"
+            elif len(xls.sheet_names) >= 2:
+                sheet_name = xls.sheet_names[1]
+            else:
+                sheet_name = xls.sheet_names[0]
+
+            df = pd.read_excel(xls, sheet_name=sheet_name)
+        else:
+            return {"error": "Formato de arquivo não suportado"}, 400
+    except Exception as e:
+        return {"error": f"Erro ao ler o arquivo: {str(e)}"}, 400
+
+    data = df.to_dict(orient="records")
+    result = dao_conectee.post_ufmg_technician(data)
+    return jsonify(result), HTTPStatus.CREATED
+
+
 @conectee.route("/v2/ufmg/technician", methods=["POST"])
 def post_ufmg_technician():
     technician = request.get_json()
     if not isinstance(technician, list):
         technician = [technician]
     result = dao_conectee.post_ufmg_technician(technician)
-    return []
-    # return jsonify(result), HTTPStatus.CREATED
+    return jsonify(result), HTTPStatus.CREATED
 
 
 @conectee.route("/docentes", methods=["GET"])

@@ -177,8 +177,8 @@ def post_ufmg_technician(technician):
     adm_database.execmany(SCRIPT_SQL, technician.to_dict(orient="records"))
     adm_database.execmany(SCRIPT_SQL, not_found.to_dict(orient="records"))
     return {
-        "success": technician.to_dict(orient="records"),
-        "not_found": not_found.to_dict(orient="records"),
+        "update": technician.to_dict(orient="records"),
+        "insert": not_found.to_dict(orient="records"),
     }
 
 
