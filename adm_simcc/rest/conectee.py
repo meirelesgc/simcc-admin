@@ -205,6 +205,3 @@ def technician_departament_basic_query():
         technician_id, dep_id
     )
     return jsonify(technician), HTTPStatus.OK
-
-
-# @conectee.route('/v2/')

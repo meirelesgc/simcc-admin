@@ -18,6 +18,8 @@ rest_researcher = Blueprint(
 def researcher_insert():
     try:
         researcher_list = request.get_json()
+        if not isinstance(researcher_list, list):
+            researcher_list = [researcher_list]
         list_instance = ListResearchers(researcher_list=researcher_list)
         dao_researcher.researcher_insert(list_instance)
         return jsonify({"message": "ok"}), HTTPStatus.CREATED
@@ -26,6 +28,7 @@ def researcher_insert():
             {"message": "pesquisador já cadastrado"}
         ), HTTPStatus.CONFLICT
     except Exception as e:
+        print(e)
         return jsonify(
             {"message": f"Erro inesperado: {str(e)}"}
         ), HTTPStatus.INTERNAL_SERVER_ERROR
