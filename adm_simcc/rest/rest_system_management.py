@@ -15,6 +15,48 @@ HOP_LOG_FILE_PATH = os.getenv("HOP_LOG_FILE_PATH")
 HOP_ROUTINE_PATH = os.getenv("HOP_ROUTINE_PATH")
 
 
+@rest_system.route("/s/ufmg/user", methods=["GET", "POST"])
+def meu_endpoint():
+    headers = request.headers
+
+    dados = {
+        "user": {
+            "nome": headers.get("Shib-Person-CommonName"),
+            "email": headers.get("Shib-Person-Mail"),
+            "uid": headers.get("Shib-Person-UID"),
+            "sobrenome": headers.get("Shib-Person-surname"),
+            "sexo": headers.get("Shib-brPerson-Sexo"),
+            "data_nascimento": headers.get("Shib-brPerson-DataNascimento"),
+            "registro": headers.get("Shib-brPerson-AlunoRegistro"),
+            "nivel_curso": headers.get("Shib-brPerson-CursoNivel"),
+            "status_email": headers.get("Shib-ufmgPerson-Status"),
+        },
+        "auth": {
+            "remote_user": headers.get("REMOTE_USER"),
+            "auth_type": headers.get("AUTH_TYPE"),
+            "metodo": headers.get("Shib-Authentication-Method"),
+            "instant": headers.get("Shib-Authentication-Instant"),
+            "provedor_id": headers.get("Shib-Identity-Provider"),
+            "session_id": headers.get("Shib-Session-ID"),
+            "session_expires": headers.get("Shib-Session-Expires"),
+            "session_inatividade": headers.get("Shib-Session-Inactivity"),
+        },
+        "institution": {
+            "org_dn": headers.get("Shib-EP-OrgDN"),
+            "org_unit_dn": headers.get("Shib-EP-OrgUnitDN"),
+            "afiliacao": headers.get("Shib-EP-Affiliation"),
+            "afiliacao_primaria": headers.get("Shib-EP-PrimaryAffiliation"),
+        },
+        "network": {
+            "ip_real": headers.get("X-Real-IP"),
+            "ip_forwarded": headers.get("X-Forwarded-For"),
+            "user_agent": headers.get("User-Agent"),
+        },
+    }
+
+    return jsonify(dados)
+
+
 @rest_system.route("/s/user", methods=["POST"])
 def create_user():
     try:
