@@ -124,17 +124,26 @@ CREATE TABLE IF NOT EXISTS public.incite_graduate_program_researcher(
       FOREIGN KEY (incite_graduate_program_id) REFERENCES incite_graduate_program (incite_graduate_program_id)
 );
 CREATE TABLE IF NOT EXISTS public.users (
-      user_id uuid NOT NULL DEFAULT uuid_generate_v4(),
-      display_name VARCHAR(255) NOT NULL,
-      email VARCHAR(255) UNIQUE NOT NULL,
-      uid VARCHAR(255) UNIQUE NOT NULL,
-      photo_url TEXT,
-      lattes_id VARCHAR(255),
-      institution_id uuid,
-      provider VARCHAR(255),
-      linkedin VARCHAR(255),
-      verify bool DEFAULT FALSE,
-      PRIMARY KEY (user_id)
+    user_id uuid NOT NULL DEFAULT uuid_generate_v4(),
+    display_name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    uid VARCHAR(255) UNIQUE NOT NULL,
+    photo_url TEXT,
+    lattes_id VARCHAR(255),
+    institution_id uuid,
+    provider VARCHAR(255),
+    linkedin VARCHAR(255),
+    verify bool DEFAULT FALSE,
+    shib_id VARCHAR(255),        
+    shib_code VARCHAR(255),      
+    birth_date VARCHAR(10),      
+    course_level VARCHAR(255),   
+    first_name VARCHAR(255),     
+    registration VARCHAR(255),   
+    gender VARCHAR(50),          
+    last_name VARCHAR(255),      
+    email_status VARCHAR(50),    
+    PRIMARY KEY (user_id)
 );
 CREATE TABLE IF NOT EXISTS public.users_roles (
       role_id UUID NOT NULL,

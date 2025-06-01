@@ -1,6 +1,7 @@
 from uuid import uuid4
 
 import pandas as pd
+from pydantic import HttpUrl
 
 from ..dao import Connection
 from ..models import FeedbackSchema, UserModel
@@ -11,43 +12,59 @@ adm_database = Connection()
 def create_user(User: UserModel):
     SCRIPT_SQL = """
     SELECT lattes_id FROM researcher WHERE
-    unaccent(name) ILIKE unaccent(%s) LIMIT 1;
+    unaccent(name) ILIKE unaccent(%(display_name)s) LIMIT 1;
     """
 
-    lattes_id = adm_database.select(SCRIPT_SQL, [User.displayName])
+    params = {"display_name": User.displayName}
+    lattes_id = adm_database.select(SCRIPT_SQL, params)
 
     if lattes_id:
         User.lattes_id = lattes_id[0][0]
+
     SCRIPT_SQL = """
-        INSERT INTO users (display_name, email, uid, photo_url, linkedin, provider, lattes_id)
-        VALUES (%s, %s, %s, %s, %s, %s, %s);
+        INSERT INTO users (display_name, email, uid, photo_url, linkedin,
+            provider, lattes_id, birth_date, course_level, first_name,
+            registration, gender, last_name, email_status)
+        VALUES (%(displayName)s, %(email)s, %(uid)s, %(photoURL)s, %(linkedin)s,
+            %(provider)s, %(lattes_id)s, %(birth_date)s, %(course_level)s,
+            %(first_name)s, %(registration)s, %(gender)s, %(last_name)s,
+            %(email_status)s);
         """
-    adm_database.exec(
-        SCRIPT_SQL,
-        [
-            User.displayName if User.displayName else uuid4(),
-            User.email,
-            User.uid,
-            str(User.photoURL) or str(),
-            User.linkedin or str(),
-            User.provider or str(),
-            User.lattes_id or str(),
-        ],
-    )
+    params = User.model_dump()
+
+    for key, value in params.items():
+        if value is None:
+            params[key] = ""
+        elif isinstance(value, HttpUrl):
+            params[key] = str(value)
+
+    if params["displayName"] == str():
+        params["displayName"] = str(uuid4())
+
+    adm_database.exec(SCRIPT_SQL, params)
 
 
 def select_user(uid):
     SCRIPT_SQL = """
         SELECT
             u.user_id,
-            display_name,
-            email,
-            uid,
-            photo_url,
-            linkedin,
-            provider,
+            u.display_name,
+            u.email,
+            u.uid,
+            u.photo_url,
+            u.linkedin,
+            u.provider,
             u.lattes_id,
             u.institution_id,
+            u.shib_id,
+            u.shib_code,
+            u.birth_date,
+            u.course_level,
+            u.first_name,
+            u.registration,
+            u.gender,
+            u.last_name,
+            u.email_status,
             rr.name,
             u.verify
         FROM users u
@@ -55,10 +72,23 @@ def select_user(uid):
         WHERE uid = %s
         GROUP BY
             u.user_id,
-            display_name,
-            email, uid,
-            photo_url,
+            u.display_name,
+            u.email,
+            u.uid,
+            u.photo_url,
+            u.linkedin,
+            u.provider,
+            u.lattes_id,
             u.institution_id,
+            u.shib_id,
+            u.shib_code,
+            u.birth_date,
+            u.course_level,
+            u.first_name,
+            u.registration,
+            u.gender,
+            u.last_name,
+            u.email_status,
             rr.name;
         """
     registry = adm_database.select(SCRIPT_SQL, [uid])
@@ -75,6 +105,15 @@ def select_user(uid):
             "provider",
             "lattes_id",
             "institution_id",
+            "shib_id",
+            "shib_code",
+            "birth_date",
+            "course_level",
+            "first_name",
+            "registration",
+            "gender",
+            "last_name",
+            "email_status",
             "researcger_name",
             "verify",
         ],
@@ -94,21 +133,49 @@ def select_user(uid):
 
 def list_all_users():
     SCRIPT_SQL = """
-        SELECT 
+        SELECT
             u.user_id,
-            display_name,
-            email,
-            uid,
-            photo_url,
-            linkedin,
-            provider,
+            u.display_name,
+            u.email,
+            u.uid,
+            u.photo_url,
+            u.linkedin,
+            u.provider,
             u.lattes_id,
             u.institution_id,
+            u.shib_id,
+            u.shib_code,
+            u.birth_date,
+            u.course_level,
+            u.first_name,
+            u.registration,
+            u.gender,
+            u.last_name,
+            u.email_status,
             rr.name,
             u.verify
         FROM users u
         LEFT JOIN researcher rr ON rr.lattes_id = u.lattes_id
-        GROUP BY u.user_id, display_name, email, uid, photo_url, u.institution_id, rr.name;
+        GROUP BY
+            u.user_id,
+            u.display_name,
+            u.email,
+            u.uid,
+            u.photo_url,
+            u.linkedin,
+            u.provider,
+            u.lattes_id,
+            u.institution_id,
+            u.shib_id,
+            u.shib_code,
+            u.birth_date,
+            u.course_level,
+            u.first_name,
+            u.registration,
+            u.gender,
+            u.last_name,
+            u.email_status,
+            rr.name;
         """
     registry = adm_database.select(SCRIPT_SQL)
 
@@ -124,6 +191,15 @@ def list_all_users():
             "provider",
             "lattes_id",
             "institution_id",
+            "shib_id",
+            "shib_code",
+            "birth_date",
+            "course_level",
+            "first_name",
+            "registration",
+            "gender",
+            "last_name",
+            "email_status",
             "researcger_name",
             "verify",
         ],
@@ -147,20 +223,38 @@ def update_user(user):
     SET
     """
 
-    if user.get("linkedin"):
+    if "linkedin" in user:
         SCRIPT_SQL += "linkedin = %(linkedin)s,"
-    if user.get("lattes_id"):
+    if "lattes_id" in user:
         SCRIPT_SQL += "lattes_id = %(lattes_id)s,"
-    if user.get("institution_id"):
+    if "institution_id" in user:
         SCRIPT_SQL += "institution_id = %(institution_id)s,"
-    if user.get("verify"):
+    if "verify" in user:
         SCRIPT_SQL += "verify = %(verify)s,"
-    if user.get("email"):
+    if "email" in user:
         SCRIPT_SQL += "email = %(email)s,"
-    if user.get("photo_url"):
+    if "photo_url" in user:
         SCRIPT_SQL += "photo_url = %(photo_url)s,"
-    if user.get("provider"):
+    if "provider" in user:
         SCRIPT_SQL += "provider = %(provider)s,"
+    if "shib_id" in user:  # Adicionado
+        SCRIPT_SQL += "shib_id = %(shib_id)s,"
+    if "shib_code" in user:  # Adicionado
+        SCRIPT_SQL += "shib_code = %(shib_code)s,"
+    if "birth_date" in user:  # Adicionado
+        SCRIPT_SQL += "birth_date = %(birth_date)s,"
+    if "course_level" in user:  # Adicionado
+        SCRIPT_SQL += "course_level = %(course_level)s,"
+    if "first_name" in user:  # Adicionado
+        SCRIPT_SQL += "first_name = %(first_name)s,"
+    if "registration" in user:  # Adicionado
+        SCRIPT_SQL += "registration = %(registration)s,"
+    if "gender" in user:  # Adicionado
+        SCRIPT_SQL += "gender = %(gender)s,"
+    if "last_name" in user:  # Adicionado
+        SCRIPT_SQL += "last_name = %(last_name)s,"
+    if "email_status" in user:  # Adicionado
+        SCRIPT_SQL += "email_status = %(email_status)s,"
 
     SCRIPT_SQL = f" {SCRIPT_SQL[:-1]} "
     SCRIPT_SQL += "WHERE uid = %(uid)s"
@@ -171,13 +265,49 @@ def update_user(user):
 def list_users():
     SCRIPT_SQL = """
         SELECT
-            u.user_id, display_name, email,
+            u.user_id,
+            u.display_name,
+            u.email,
+            u.uid,
+            u.photo_url,
+            u.linkedin,
+            u.provider,
+            u.lattes_id,
+            u.institution_id,
+            u.shib_id,
+            u.shib_code,
+            u.birth_date,
+            u.course_level,
+            u.first_name,
+            u.registration,
+            u.gender,
+            u.last_name,
+            u.email_status,
             jsonb_agg(jsonb_build_object('role', rl.role, 'role_id', rl.id)) AS roles,
-            photo_url, verify
+            u.verify
         FROM users u
         LEFT JOIN users_roles ur ON u.user_id = ur.user_id
         LEFT JOIN roles rl ON rl.id = ur.role_id
-        GROUP BY u.user_id;
+        GROUP BY
+            u.user_id,
+            u.display_name,
+            u.email,
+            u.uid,
+            u.photo_url
+            u.linkedin,
+            u.provider,
+            u.lattes_id,
+            u.institution_id,
+            u.shib_id,
+            u.shib_code,
+            u.birth_date,
+            u.course_level,
+            u.first_name,
+            u.registration,
+            u.gender,
+            u.last_name,
+            u.email_status,
+            u.verify;
         """
     registry = adm_database.select(SCRIPT_SQL)
     data_frame = pd.DataFrame(
@@ -186,9 +316,22 @@ def list_users():
             "user_id",
             "display_name",
             "email",
-            "roles",
+            "uid",
             "photo_url",
-            "verify",
+            "linkedin",
+            "provider",
+            "lattes_id",
+            "institution_id",
+            "shib_id",
+            "shib_code",
+            "birth_date",
+            "course_level",
+            "first_name",
+            "registration",
+            "gender",
+            "last_name",
+            "email_status",
+            "rolesverify",
         ],
     )
 

@@ -16,7 +16,7 @@ HOP_ROUTINE_PATH = os.getenv("HOP_ROUTINE_PATH")
 
 
 @rest_system.route("/s/ufmg/user", methods=["GET", "POST"])
-def meu_endpoint():
+def get_ufmg_data():
     headers = request.headers
 
     dados = {

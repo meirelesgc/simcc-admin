@@ -4,15 +4,23 @@ from pydantic import BaseModel, EmailStr, Field, HttpUrl
 
 
 class UserModel(BaseModel):
-    displayName: str | None
+    displayName: Optional[str] = None
     email: EmailStr
-    uid: str = None
+    uid: str
     photoURL: Optional[HttpUrl] = None
     shib_id: Optional[str] = None
     shib_code: Optional[str] = None
     linkedin: Optional[str] = None
     provider: Optional[str] = None
     lattes_id: Optional[str] = None
+
+    birth_date: Optional[str] = None
+    course_level: Optional[str] = None
+    first_name: Optional[str] = None
+    registration: Optional[str] = None
+    gender: Optional[str] = None
+    last_name: Optional[str] = None
+    email_status: Optional[str] = None
 
 
 class FeedbackSchema(BaseModel):
