@@ -1,11 +1,13 @@
+from typing import Optional
+from uuid import UUID
+
 import pandas as pd
-
-pd.set_option("future.no_silent_downcasting", True)
-
-from pydantic import UUID4
 
 from ..dao import Connection
 from ..models.graduate_program import GraduateProgram, ListGraduateProgram
+
+pd.set_option("future.no_silent_downcasting", True)
+
 
 adm_database = Connection()
 
@@ -32,7 +34,7 @@ def graduate_program_insert(ListGraduateProgram: ListGraduateProgram):
     adm_database.execmany(SCRIPT_SQL, parameters)
 
 
-def graduate_program_update(graduate_program_id: UUID4):
+def graduate_program_update(graduate_program_id: UUID):
     parameters = [graduate_program_id]
     SCRIPT_SQL = """
         UPDATE graduate_program
@@ -42,14 +44,10 @@ def graduate_program_update(graduate_program_id: UUID4):
     adm_database.exec(SCRIPT_SQL, parameters)
 
 
-from typing import Optional
-from uuid import UUID4
-
-
 def graduate_program_basic_query(
-    institution_id: UUID4,
-    user_id: UUID4,
-    graduate_program_id: Optional[UUID4] = None,
+    institution_id: UUID,
+    user_id: UUID,
+    graduate_program_id: Optional[UUID] = None,
 ):
     parameters = {}
     filter_institution = str()
@@ -155,7 +153,7 @@ def graduate_program_basic_query(
     return data_frame.to_dict(orient="records")
 
 
-def graduate_program_delete(graudate_program_id: UUID4):
+def graduate_program_delete(graudate_program_id: UUID):
     parameters = [graudate_program_id, graudate_program_id, graudate_program_id]
     SCRIPT_SQL = """
         DELETE FROM graduate_program_student
