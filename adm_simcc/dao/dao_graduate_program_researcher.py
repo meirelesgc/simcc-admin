@@ -145,8 +145,11 @@ def graduate_program_researcher_count(
 def graduate_program_researcher_basic_query(
     graduate_program_id: UUID, type_: str = None
 ):
-    parameters = [graduate_program_id]
-
+    parameters = []
+    filter_program = str()
+    if graduate_program_id:
+        parameters.append(graduate_program_id)
+        filter_program = "gpr.graduate_program_id = %s"
     if type_:
         type_filter = "AND type_ = %s"
         parameters.append(type_)
@@ -162,7 +165,8 @@ def graduate_program_researcher_basic_query(
             graduate_program_researcher gpr
             JOIN researcher r ON r.researcher_id = gpr.researcher_id
         WHERE
-            gpr.graduate_program_id = %s
+            1 = 1
+            {filter_program}
             {type_filter}
         ORDER BY
             gpr.created_at DESC
