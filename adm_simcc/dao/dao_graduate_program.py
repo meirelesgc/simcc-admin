@@ -193,7 +193,7 @@ def graduate_program_fix(program: GraduateProgram):
     adm_database.exec(SCRIPT_SQL, parameters)
 
 
-def graduate_program_count(institution_id: UUID4 = None):
+def graduate_program_count(institution_id=None):
     parameters = list()
     filter_institution = str()
     if institution_id:
