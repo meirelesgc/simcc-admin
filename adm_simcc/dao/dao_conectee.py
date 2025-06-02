@@ -558,6 +558,11 @@ def departament_basic_query(dep_id):
         departament_filter = "WHERE dep_id = %s"
 
     SCRIPT_SQL = f"""
+        SELECT dep_id, ARRAY_AGG(r.name) AS researchers
+            FROM departament_researcher dr
+                LEFT JOIN researcher r ON dr.researcher_id = r.id
+            GROUP BY dep_id
+            HAVING COUNT(r.id) >= 1
         SELECT
             dep_id, org_cod, dep_nom, dep_des, dep_email, dep_site, dep_sigla,
             dep_tel, img_data
