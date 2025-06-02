@@ -561,15 +561,17 @@ def departament_basic_query(dep_id):
         WITH researchers AS (
                 SELECT dep_id, ARRAY_AGG(r.name) AS researchers
             FROM ufmg.departament_researcher dr
-                LEFT JOIN researcher r ON dr.researcher_id = r.id
+                LEFT JOIN researcher r ON dr.researcher_id = r.researcher_id
             GROUP BY dep_id
-            HAVING COUNT(r.id) >= 1
+            HAVING COUNT(r.researcher_id) >= 1
         )
         SELECT
-            dep_id, org_cod, dep_nom, dep_des, dep_email, dep_site, dep_sigla,
-            dep_tel, img_data
+            dp.dep_id, dp.org_cod, dp.dep_nom, dp.dep_des, dp.dep_email, dp.dep_site, dp.dep_sigla,
+            dp.dep_tel, dp.img_data, COALESCE(r.researchers, ARRAY[]::text[]) AS researchers
         FROM
-            UFMG.departament
+            UFMG.departament dp
+        LEFT JOIN researchers r
+            ON r.dep_id = dp.dep_id
         {departament_filter};
         """
     reg = adm_database.select(SCRIPT_SQL, [dep_id])
