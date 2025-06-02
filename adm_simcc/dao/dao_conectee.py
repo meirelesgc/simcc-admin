@@ -586,6 +586,7 @@ def departament_basic_query(dep_id):
         "dep_sigla",
         "dep_tel",
         "img_data",
+        "researchers",
     ]
     result = list()
     for row in reg:
