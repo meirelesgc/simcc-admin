@@ -217,7 +217,7 @@ def list_all_users():
     return data_frame.to_dict(orient="records")
 
 
-def update_user(user):
+def update_user(user):  # noqa: PLR0912
     SCRIPT_SQL = """
     UPDATE users
     SET
