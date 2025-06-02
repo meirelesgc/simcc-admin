@@ -53,8 +53,9 @@ def graduate_program_delete():
 def graduate_program_basic_query():
     institution_id = request.args.get("institution_id")
     user_id = request.args.get("user_id")
+    graduate_program_id = request.args.get("graduate_program_id")
     graduate_programs = dao.graduate_program_basic_query(
-        institution_id, user_id
+        institution_id, user_id, graduate_program_id
     )
     return jsonify(graduate_programs), HTTPStatus.OK
 

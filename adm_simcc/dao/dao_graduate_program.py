@@ -42,12 +42,27 @@ def graduate_program_update(graduate_program_id: UUID4):
     adm_database.exec(SCRIPT_SQL, parameters)
 
 
-def graduate_program_basic_query(institution_id: UUID4, user_id: UUID4):
+from typing import Optional
+from uuid import UUID4
+
+
+def graduate_program_basic_query(
+    institution_id: UUID4,
+    user_id: UUID4,
+    graduate_program_id: Optional[UUID4] = None,
+):
     parameters = {}
     filter_institution = str()
     if institution_id:
         filter_institution = "AND gp.institution_id = %(institution_id)s"
         parameters["institution_id"] = institution_id
+
+    filter_graduate_program = str()
+    if graduate_program_id:
+        filter_graduate_program = (
+            "AND gp.graduate_program_id = %(graduate_program_id)s"
+        )
+        parameters["graduate_program_id"] = graduate_program_id
 
     join_menager = str()
     filter_menager = str()
@@ -83,8 +98,11 @@ def graduate_program_basic_query(institution_id: UUID4, user_id: UUID4):
         WHERE 1 = 1
             {filter_institution}
             {filter_menager}
+            {filter_graduate_program}
         GROUP BY
-            gp.graduate_program_id, gp
+            gp.graduate_program_id, gp.code, gp.name, gp.area, gp.modality, gp.type, gp.rating,
+            gp.institution_id, gp.description, gp.url_image, gp.acronym, gp.city, gp.visible,
+            gp.site, gp.menagers
         """
 
     registry = adm_database.select(SCRIPT_SQL, parameters)
@@ -112,12 +130,12 @@ def graduate_program_basic_query(institution_id: UUID4, user_id: UUID4):
     )
 
     SCRIPT_SQL = """
-        SELECT 
+        SELECT
             graduate_program_id,
             COUNT(researcher_id) as qtr_discente
-        FROM 
-            graduate_program_student 
-        GROUP BY 
+        FROM
+            graduate_program_student
+        GROUP BY
             graduate_program_id
         """
     registry = adm_database.select(SCRIPT_SQL)
