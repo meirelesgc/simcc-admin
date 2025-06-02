@@ -560,7 +560,7 @@ def departament_basic_query(dep_id):
     SCRIPT_SQL = f"""
         WITH researchers AS (
                 SELECT dep_id, ARRAY_AGG(r.name) AS researchers
-            FROM departament_researcher dr
+            FROM ufmg.departament_researcher dr
                 LEFT JOIN researcher r ON dr.researcher_id = r.id
             GROUP BY dep_id
             HAVING COUNT(r.id) >= 1
