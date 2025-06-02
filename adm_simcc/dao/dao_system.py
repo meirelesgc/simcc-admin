@@ -24,11 +24,11 @@ def create_user(User: UserModel):
     SCRIPT_SQL = """
         INSERT INTO users (display_name, email, uid, photo_url, linkedin,
             provider, lattes_id, birth_date, course_level, first_name,
-            registration, gender, last_name, email_status)
+            registration, gender, last_name, email_status, visible_email)
         VALUES (%(displayName)s, %(email)s, %(uid)s, %(photoURL)s, %(linkedin)s,
             %(provider)s, %(lattes_id)s, %(birth_date)s, %(course_level)s,
             %(first_name)s, %(registration)s, %(gender)s, %(last_name)s,
-            %(email_status)s);
+            %(email_status)s, %(visible_email)s);
         """
     params = User.model_dump()
 
@@ -66,12 +66,14 @@ def select_user(uid):
             u.last_name,
             u.email_status,
             rr.name,
-            u.verify
+            u.verify,
+            u.visible_email
         FROM users u
         LEFT JOIN researcher rr ON rr.lattes_id = u.lattes_id
         WHERE uid = %s
         GROUP BY
             u.user_id,
+            u.visible_email,
             u.display_name,
             u.email,
             u.uid,
@@ -116,6 +118,7 @@ def select_user(uid):
             "email_status",
             "researcger_name",
             "verify",
+            "visible_email",
         ],
     )
 
@@ -153,7 +156,8 @@ def list_all_users():
             u.last_name,
             u.email_status,
             rr.name,
-            u.verify
+            u.verify,
+            u.visible_email
         FROM users u
         LEFT JOIN researcher rr ON rr.lattes_id = u.lattes_id
         GROUP BY
@@ -175,7 +179,9 @@ def list_all_users():
             u.gender,
             u.last_name,
             u.email_status,
-            rr.name;
+            rr.name,
+            u.verify,
+            u.visible_email;
         """
     registry = adm_database.select(SCRIPT_SQL)
 
@@ -202,6 +208,7 @@ def list_all_users():
             "email_status",
             "researcger_name",
             "verify",
+            "visible_email",
         ],
     )
 
@@ -255,6 +262,8 @@ def update_user(user):  # noqa: PLR0912
         SCRIPT_SQL += "last_name = %(last_name)s,"
     if "email_status" in user:  # Adicionado
         SCRIPT_SQL += "email_status = %(email_status)s,"
+    if "visible_email" in user:  # Adicionado
+        SCRIPT_SQL += "visible_email = %(visible_email)s,"
 
     SCRIPT_SQL = f" {SCRIPT_SQL[:-1]} "
     SCRIPT_SQL += "WHERE uid = %(uid)s"
@@ -284,7 +293,8 @@ def list_users():
             u.last_name,
             u.email_status,
             jsonb_agg(jsonb_build_object('role', rl.role, 'role_id', rl.id)) AS roles,
-            u.verify
+            u.verify,
+            u.visible_email
         FROM users u
         LEFT JOIN users_roles ur ON u.user_id = ur.user_id
         LEFT JOIN roles rl ON rl.id = ur.role_id
@@ -307,7 +317,8 @@ def list_users():
             u.gender,
             u.last_name,
             u.email_status,
-            u.verify;
+            u.verify,
+            u.visible_email;
         """
     registry = adm_database.select(SCRIPT_SQL)
     data_frame = pd.DataFrame(
@@ -331,7 +342,8 @@ def list_users():
             "gender",
             "last_name",
             "email_status",
-            "rolesverify",
+            "verify",
+            "visible_email",
         ],
     )
 

@@ -552,6 +552,44 @@ def technician_departament_basic_query(researcher_id):
     return data_frame.to_dict(orient="records")
 
 
+def technician_departament_basic_query(researcher_id):
+    SCRIPT_SQL = """
+    SELECT
+        d.dep_id,
+        org_cod,
+        dep_nom,
+        dep_des,
+        dep_email,
+        dep_site,
+        dep_sigla,
+        dep_tel,
+        img_data
+    FROM
+        ufmg.departament d
+        LEFT JOIN ufmg.departament_technician dtech
+        ON dtech.dep_id = d.dep_id
+    WHERE
+        dtech.technician_id = %s;
+    """
+
+    registry = adm_database.select(SCRIPT_SQL, researcher_id)
+
+    data_frame = pd.Dataframe(
+        registry,
+        columns=[
+            "dep_id",
+            "org_cod",
+            "dep_nom",
+            "dep_des",
+            "dep_email",
+            "dep_site",
+            "dep_sigla",
+            "dep_tel",
+        ],
+    )
+    return data_frame.to_dict(orient="records")
+
+
 def reacher_basic_query(year, semester):
     parameters = list()
     if year or semester:

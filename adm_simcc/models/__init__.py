@@ -21,6 +21,7 @@ class UserModel(BaseModel):
     gender: Optional[str] = None
     last_name: Optional[str] = None
     email_status: Optional[str] = None
+    visible_email: Optional[bool] = None
 
 
 class FeedbackSchema(BaseModel):
