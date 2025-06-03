@@ -79,7 +79,7 @@ def graduate_program_basic_query(
     join_menager = str()
     filter_menager = str()
     if user_id:
-        join_menager = "JOIN users u ON u.email = ANY(gp.menagers)"
+        join_menager = "INNER JOIN users u ON u.email = ANY(gp.menagers)"
         filter_menager = "AND u.user_id = %(user_id)s"
         parameters["user_id"] = user_id
 
@@ -96,9 +96,9 @@ def graduate_program_basic_query(
             graduate_program gp
         LEFT JOIN
             graduate_program_researcher gr ON gp.graduate_program_id = gr.graduate_program_id
+            {join_menager}
         WHERE 1 = 1
             {filter_institution}
-            {join_menager}
             {filter_graduate_program}
             {filter_menager}
         GROUP BY
