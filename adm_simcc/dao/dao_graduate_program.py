@@ -13,9 +13,6 @@ adm_database = Connection()
 
 
 def graduate_program_insert(list_graduate_program: ListGraduateProgram):
-    """
-    Insere uma lista de novos programas de pós-graduação no banco de dados.
-    """
     parameters = []
     # fmt: off
     for program in list_graduate_program.graduate_program_list:
@@ -87,25 +84,54 @@ def graduate_program_basic_query(
         parameters["user_id"] = user_id
 
     SCRIPT_SQL = f"""
-        SELECT
-            gp.graduate_program_id, gp.code, gp.name, gp.name_en, gp.basic_area,
-            gp.cooperation_project, gp.area, gp.modality, gp.type, gp.rating,
-            gp.institution_id, gp.state, gp.city, gp.region, gp.url_image,
-            gp.acronym, gp.description, gp.visible, gp.site, gp.coordinator,
-            gp.email, gp.start, gp.phone, gp.periodicity, gp.created_at, gp.updated_at,
-            COUNT(CASE WHEN gr.type_ = 'PERMANENTE' THEN 1 END) as qtd_permanente,
-            COUNT(CASE WHEN gr.type_ = 'COLABORADOR' THEN 1 END) as qtd_colaborador
-        FROM
-            graduate_program gp
-        LEFT JOIN
-            graduate_program_researcher gr ON gp.graduate_program_id = gr.graduate_program_id
+        WITH permanent AS (
+            SELECT graduate_program_id, COUNT(*) AS qtd_permanente
+            FROM graduate_program_researcher
+            WHERE type_ = 'PERMANENTE'
+            GROUP BY graduate_program_id
+        ),
+        collaborators AS (
+            SELECT graduate_program_id, COUNT(*) AS qtd_colaborador
+            FROM graduate_program_researcher
+            WHERE type_ = 'COLABORADOR'
+            GROUP BY graduate_program_id
+        ),
+        students AS (
+            SELECT graduate_program_id, COUNT(*) AS qtd_estudantes
+            FROM graduate_program_student
+            GROUP BY graduate_program_id
+        ),
+        researchers AS (
+            SELECT graduate_program_id, ARRAY_AGG(r.name) AS researchers
+            FROM graduate_program_researcher gpr
+                LEFT JOIN researcher r ON gpr.researcher_id = r.researcher_id
+            GROUP BY graduate_program_id
+            HAVING COUNT(r.researcher_id) >= 1
+        )
+        SELECT gp.graduate_program_id, code, gp.name, gp.name_en, gp.basic_area,
+            gp.cooperation_project, UPPER(area) AS area, UPPER(modality) AS modality,
+            INITCAP(type) AS type, rating, i.institution_id, state, UPPER(city) AS city,
+            region, url_image, gp.acronym, gp.description, visible, site,
+            gp.coordinator, gp.email, gp.start, gp.phone, gp.periodicity,
+            qtd_permanente, qtd_colaborador, qtd_estudantes, i.name AS institution,
+            COALESCE(r.researchers, ARRAY[]::text[]) AS researchers, gp.menagers, gp.created_at,
+			gp.updated_at
+        FROM public.graduate_program gp
+            LEFT JOIN permanent p
+                ON gp.graduate_program_id = p.graduate_program_id
+            LEFT JOIN students s
+                ON gp.graduate_program_id = s.graduate_program_id
+            LEFT JOIN collaborators c
+                ON gp.graduate_program_id = c.graduate_program_id
+            LEFT JOIN institution i
+                ON i.institution_id = gp.institution_id
+            LEFT JOIN researchers r
+                ON r.graduate_program_id = gp.graduate_program_id
             {join_menager}
         WHERE 1 = 1
-            {filter_institution}
-            {filter_graduate_program}
             {filter_menager}
-        GROUP BY
-            gp.graduate_program_id
+            {filter_graduate_program}
+            {filter_institution}
     """
 
     registry = adm_database.select(SCRIPT_SQL, parameters)
@@ -134,11 +160,16 @@ def graduate_program_basic_query(
         "start",
         "phone",
         "periodicity",
-        "created_at",
-        "updated_at",
         "qtd_permanente",
         "qtd_colaborador",
+        "qtd_estudantes",
+        "institution",
+        "researchers",
+        "menagers",
+        "created_at",
+        "updated_at",
     ]
+
     data_frame = pd.DataFrame(registry, columns=columns)
 
     SCRIPT_SQL_STUDENTS = """

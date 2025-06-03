@@ -35,11 +35,10 @@ def departament_basic_query(
     SCRIPT_SQL = f"""
         SELECT
             d.dep_id, d.org_cod, d.dep_nom, d.dep_des, d.dep_email, d.dep_site,
-            d.dep_sigla, d.dep_tel, d.img_data, d.menagers, -- Adicione 'd.menagers' aqui
-            d.created_at, d.updated_at -- Supondo que essas colunas existam
+            d.dep_sigla, d.dep_tel, d.menagers
         FROM
             UFMG.departament d
-        {join_menager} 
+        {join_menager}
         WHERE 1 = 1
             {filter_departament_id}
             {filter_menager}
@@ -759,13 +758,13 @@ def departament_insert(departaments, file):
         departaments["dep_sigla"],
         departaments["dep_tel"],
         psycopg2.Binary(file["img_data"].read()),
-        menagers_db_format,  # Adicione os managers aqui
+        menagers_db_format,
     ]
     SCRIPT_SQL = """
         INSERT INTO UFMG.departament
             (dep_id, org_cod, dep_nom, dep_des, dep_email, dep_site, dep_sigla,
-             dep_tel, img_data, menagers) -- Adicione 'menagers' aqui
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) -- Adicione um placeholder para 'menagers'
+             dep_tel, img_data, menagers)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
     adm_database.exec(SCRIPT_SQL, parameters)
 
