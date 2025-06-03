@@ -46,54 +46,32 @@ def create_user(User: UserModel):
 
 def select_user(uid):
     SCRIPT_SQL = """
-        SELECT
-            u.user_id,
-            u.display_name,
-            u.email,
-            u.uid,
-            u.photo_url,
-            u.linkedin,
-            u.provider,
-            u.lattes_id,
-            u.institution_id,
-            u.shib_id,
-            u.shib_code,
-            u.birth_date,
-            u.course_level,
-            u.first_name,
-            u.registration,
-            u.gender,
-            u.last_name,
-            u.email_status,
-            rr.name,
-            u.verify,
-            u.visible_email
+        WITH dp_menager AS (
+            SELECT UNNEST(menagers) AS email , COUNT(*) AS among
+            FROM ufmg.departament
+            GROUP BY menagers
+        ),
+        gp_menager AS (
+            SELECT UNNEST(menagers) AS email , COUNT(*) AS among
+            FROM graduate_program
+            GROUP BY menagers
+        )
+        SELECT u.user_id, u.display_name, u.email, u.uid, u.photo_url, u.linkedin,
+            u.provider, u.lattes_id, u.institution_id, u.shib_id, u.shib_code,
+            u.birth_date, u.course_level, u.first_name, u.registration, u.gender, 
+            u.last_name, u.email_status, rr.name, u.verify, u.visible_email, 
+            gp.among, dp.among
         FROM users u
-        LEFT JOIN researcher rr ON rr.lattes_id = u.lattes_id
-        WHERE uid = %s
-        GROUP BY
-            u.user_id,
-            u.visible_email,
-            u.display_name,
-            u.email,
-            u.uid,
-            u.photo_url,
-            u.linkedin,
-            u.provider,
-            u.lattes_id,
-            u.institution_id,
-            u.shib_id,
-            u.shib_code,
-            u.birth_date,
-            u.course_level,
-            u.first_name,
-            u.registration,
-            u.gender,
-            u.last_name,
-            u.email_status,
-            rr.name;
+            LEFT JOIN researcher rr
+                ON rr.lattes_id = u.lattes_id
+            LEFT JOIN gp_menager gp
+                ON gp.email = u.email
+            LEFT JOIN dp_menager dp
+                ON dp.email = u.email
+        WHERE u.uid = %(uid)s
         """
-    registry = adm_database.select(SCRIPT_SQL, [uid])
+    registry = adm_database.select(SCRIPT_SQL, {"uid": uid})
+    print(SCRIPT_SQL, {"uid": uid})
 
     data_frame = pd.DataFrame(
         registry,
@@ -119,6 +97,8 @@ def select_user(uid):
             "researcger_name",
             "verify",
             "visible_email",
+            "gp_count",
+            "dp_count",
         ],
     )
 

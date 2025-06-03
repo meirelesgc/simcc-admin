@@ -740,16 +740,12 @@ def teacher_query_role():
 def departament_insert(departaments, file):
     parameters = list()
 
-    # Certifique-se de que 'menagers' está no dicionário e é uma lista,
-    # e converta para o formato que o psycopg2 espera para arrays (list).
-    # Se 'menagers' puder ser None, trate isso adequadamente.
     menagers = departaments.get("menagers")
     if menagers is None:
         menagers_db_format = None
     elif isinstance(menagers, list):
         menagers_db_format = menagers
     else:
-        # Se 'menagers' não for uma lista ou None, pode ser necessário um tratamento de erro ou conversão
         raise ValueError(
             "O campo 'menagers' deve ser uma lista de strings ou None."
         )
