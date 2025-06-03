@@ -555,7 +555,7 @@ def technician_departament_basic_query(researcher_id):
 def departament_basic_query(dep_id):
     departament_filter = str()
     if dep_id:
-        departament_filter = "WHERE dep_id = %s"
+        departament_filter = "WHERE dp.dep_id = %s"
 
     SCRIPT_SQL = f"""
         WITH researchers AS (
@@ -574,6 +574,7 @@ def departament_basic_query(dep_id):
             ON r.dep_id = dp.dep_id
         {departament_filter};
         """
+    print(SCRIPT_SQL, [dep_id])
     reg = adm_database.select(SCRIPT_SQL, [dep_id])
 
     columns = [
