@@ -33,12 +33,19 @@ def departament_basic_query(
         parameters["user_id"] = user_id
 
     SCRIPT_SQL = f"""
-        SELECT
-            d.dep_id, d.org_cod, d.dep_nom, d.dep_des, d.dep_email, d.dep_site,
-            d.dep_sigla, d.dep_tel, d.menagers
-        FROM
-            UFMG.departament d
-        {join_menager}
+        WITH researchers AS (
+            SELECT dep_id, ARRAY_AGG(r.name) AS researchers
+            FROM ufmg.departament_researcher dp
+                LEFT JOIN researcher r ON dp.researcher_id = r.researcher_id
+            GROUP BY dep_id
+            HAVING COUNT(r.researcher_id) >= 1
+        )
+        SELECT d.dep_id, d.org_cod, d.dep_nom, d.dep_des, d.dep_email, d.dep_site,
+            d.dep_sigla, d.dep_tel, d.menagers, COALESCE(r.researchers, ARRAY[]::text[]) AS researchers
+        FROM ufmg.departament d
+        LEFT JOIN researchers r
+            ON r.dep_id = d.dep_id
+            {join_menager}
         WHERE 1 = 1
             {filter_departament_id}
             {filter_menager}
@@ -55,11 +62,10 @@ def departament_basic_query(
         "dep_site",
         "dep_sigla",
         "dep_tel",
-        "img_data",
         "menagers",
-        "created_at",
-        "updated_at",
+        "researchers",
     ]
+
     data_frame = pd.DataFrame(registry, columns=columns)
 
     return data_frame.to_dict(orient="records")
