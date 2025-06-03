@@ -1,15 +1,69 @@
 import re
 import unicodedata
-from uuid import uuid4
+from typing import Optional
+from uuid import UUID, uuid4
 
 import pandas as pd
+import psycopg2
 from numpy import nan
 
 from ..dao import Connection
+from ..models.departament import ListDiscipline
 from ..models.teachers import ListRole
 from ..models.technician import ListTechnicianDepartament
 
 adm_database = Connection()
+
+
+def departament_basic_query(
+    dep_id: Optional[UUID] = None,
+    user_id: Optional[UUID] = None,
+):
+    parameters = {}
+    filter_departament_id = ""
+    if dep_id:
+        filter_departament_id = "AND d.dep_id = %(dep_id)s"
+        parameters["dep_id"] = dep_id
+
+    join_menager = ""
+    filter_menager = ""
+    if user_id:
+        join_menager = "INNER JOIN users u ON u.email = ANY(d.menagers)"
+        filter_menager = "AND u.user_id = %(user_id)s"
+        parameters["user_id"] = user_id
+
+    SCRIPT_SQL = f"""
+        SELECT
+            d.dep_id, d.org_cod, d.dep_nom, d.dep_des, d.dep_email, d.dep_site,
+            d.dep_sigla, d.dep_tel, d.img_data, d.menagers, -- Adicione 'd.menagers' aqui
+            d.created_at, d.updated_at -- Supondo que essas colunas existam
+        FROM
+            UFMG.departament d
+        {join_menager} 
+        WHERE 1 = 1
+            {filter_departament_id}
+            {filter_menager}
+    """
+
+    registry = adm_database.select(SCRIPT_SQL, parameters)
+
+    columns = [
+        "dep_id",
+        "org_cod",
+        "dep_nom",
+        "dep_des",
+        "dep_email",
+        "dep_site",
+        "dep_sigla",
+        "dep_tel",
+        "img_data",
+        "menagers",
+        "created_at",
+        "updated_at",
+    ]
+    data_frame = pd.DataFrame(registry, columns=columns)
+
+    return data_frame.to_dict(orient="records")
 
 
 def delete_ufmg_researcher(id):
@@ -552,52 +606,6 @@ def technician_departament_basic_query(researcher_id):
     return data_frame.to_dict(orient="records")
 
 
-def departament_basic_query(dep_id):
-    departament_filter = str()
-    if dep_id:
-        departament_filter = "WHERE dp.dep_id = %s"
-
-    SCRIPT_SQL = f"""
-        WITH researchers AS (
-                SELECT dep_id, ARRAY_AGG(r.name) AS researchers
-            FROM ufmg.departament_researcher dr
-                LEFT JOIN researcher r ON dr.researcher_id = r.researcher_id
-            GROUP BY dep_id
-            HAVING COUNT(r.researcher_id) >= 1
-        )
-        SELECT
-            dp.dep_id, dp.org_cod, dp.dep_nom, dp.dep_des, dp.dep_email, dp.dep_site, dp.dep_sigla,
-            dp.dep_tel, dp.img_data, COALESCE(r.researchers, ARRAY[]::text[]) AS researchers
-        FROM
-            UFMG.departament dp
-        LEFT JOIN researchers r
-            ON r.dep_id = dp.dep_id
-        {departament_filter};
-        """
-    print(SCRIPT_SQL, [dep_id])
-    reg = adm_database.select(SCRIPT_SQL, [dep_id])
-
-    columns = [
-        "dep_id",
-        "org_cod",
-        "dep_nom",
-        "dep_des",
-        "dep_email",
-        "dep_site",
-        "dep_sigla",
-        "dep_tel",
-        "img_data",
-        "researchers",
-    ]
-    result = list()
-    for row in reg:
-        row_dict = dict(zip(columns, row))
-        row_dict["img_data"] = None
-        result.append(row_dict)
-
-    return result
-
-
 def reacher_basic_query(year, semester):
     parameters = list()
     if year or semester:
@@ -720,5 +728,248 @@ def teacher_query_role():
     registry = adm_database.select(SCRIPT_SQL)
 
     data_frame = pd.Dataframe(registry, columns=["role", "technician_id"])
+
+    return data_frame.to_dict(orient="records")
+
+
+def departament_insert(departaments, file):
+    parameters = list()
+
+    # Certifique-se de que 'menagers' está no dicionário e é uma lista,
+    # e converta para o formato que o psycopg2 espera para arrays (list).
+    # Se 'menagers' puder ser None, trate isso adequadamente.
+    menagers = departaments.get("menagers")
+    if menagers is None:
+        menagers_db_format = None
+    elif isinstance(menagers, list):
+        menagers_db_format = menagers
+    else:
+        # Se 'menagers' não for uma lista ou None, pode ser necessário um tratamento de erro ou conversão
+        raise ValueError(
+            "O campo 'menagers' deve ser uma lista de strings ou None."
+        )
+
+    parameters = [
+        departaments["dep_id"],
+        departaments["org_cod"],
+        departaments["dep_nom"],
+        departaments["dep_des"],
+        departaments["dep_email"],
+        departaments["dep_site"],
+        departaments["dep_sigla"],
+        departaments["dep_tel"],
+        psycopg2.Binary(file["img_data"].read()),
+        menagers_db_format,  # Adicione os managers aqui
+    ]
+    SCRIPT_SQL = """
+        INSERT INTO UFMG.departament
+            (dep_id, org_cod, dep_nom, dep_des, dep_email, dep_site, dep_sigla,
+             dep_tel, img_data, menagers) -- Adicione 'menagers' aqui
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) -- Adicione um placeholder para 'menagers'
+        """
+    adm_database.exec(SCRIPT_SQL, parameters)
+
+
+def departament_delete(dep_id):
+    SCRIPT_SQL = """
+        DELETE FROM UFMG.departament_researcher
+        WHERE dep_id = %s;
+        DELETE FROM UFMG.departament
+        WHERE dep_id = %s;
+        """
+    adm_database.exec(SCRIPT_SQL, [dep_id, dep_id])
+
+
+def departament_update(departament, file):
+    parameters = list()
+    filter_image = str()
+
+    # Certifique-se de que 'menagers' está no dicionário e é uma lista,
+    # e converta para o formato que o psycopg2 espera para arrays (list).
+    menagers = departament.get("menagers")
+    if menagers is None:
+        menagers_db_format = None
+    elif isinstance(menagers, list):
+        menagers_db_format = menagers
+    else:
+        raise ValueError(
+            "O campo 'menagers' deve ser uma lista de strings ou None."
+        )
+
+    # fmt: off
+    parameters = [
+        departament["org_cod"], departament["dep_nom"],
+        departament["dep_des"], departament["dep_email"],
+        departament["dep_site"], departament["dep_sigla"],
+        departament["dep_tel"],
+        menagers_db_format,
+        departament["dep_id"],
+    ]
+    if file:
+        image = psycopg2.Binary(file["img_data"].read())
+        filter_image = "img_data = %s,"
+        parameters.insert(7, image)
+
+    # fmt: on
+    SCRIPT_SQL = f"""
+        UPDATE UFMG.departament
+        SET org_cod = %s,
+            dep_nom = %s,
+            dep_des = %s,
+            dep_email = %s,
+            dep_site = %s,
+            dep_sigla = %s,
+            {filter_image}
+            dep_tel = %s,
+            menagers = %s -- Adicione 'menagers' aqui
+        WHERE dep_id = %s
+        """
+    adm_database.exec(SCRIPT_SQL, parameters)
+
+
+def departament_researcher_query(dep_id):
+    SCRIPT_SQL = """
+    SELECT
+        r.researcher_id,
+        r.name,
+        r.lattes_id
+    FROM
+        researcher r
+    WHERE
+        r.researcher_id IN (SELECT
+                                researcher_id
+                            FROM
+                                ufmg.departament_researcher
+                            WHERE dep_id = %s)
+    """
+
+    registry = adm_database.select(SCRIPT_SQL, [dep_id])
+
+    data_frame = pd.DataFrame(
+        registry, columns=["researcher_id", "name", "lattes_id"]
+    )
+    return data_frame.to_dict(orient="records")
+
+
+def departament_insert_discipline(ListDiscipline: ListDiscipline):
+    parameters = list()
+
+    for discipline in ListDiscipline.list_discipline:
+        professors_id = list()
+        professors_name = list()
+        professors_workload = list()
+        for professor in discipline.professor:
+            SCRIPT_SQL = """
+            SELECT researcher_id FROM UFMG.researcher
+            WHERE inscufmg = %s
+            """
+            researcher_id = adm_database.select(SCRIPT_SQL, [professor.ufmg_id])
+            if researcher_id:
+                professors_id.append(researcher_id[0][0])
+            else:
+                professors_id.append(None)
+            professors_name.append(professor.name)
+            professors_workload.append(professor.responsibility)
+
+        parameters.append(
+            (
+                discipline.dep_id,
+                discipline.semester,
+                discipline.department,
+                discipline.academic_activity_code,
+                discipline.academic_activity_name,
+                discipline.academic_activity_ch,
+                discipline.demanding_courses,
+                discipline.oft,
+                discipline.id,
+                discipline.available_slots,
+                discipline.occupied_slots,
+                discipline.percent_occupied_slots,
+                discipline.schedule,
+                discipline.language,
+                professors_id,
+                professors_workload,
+                discipline.status,
+                professors_name,
+            )
+        )
+
+    SCRIPT_SQL = """
+        INSERT INTO UFMG.disciplines
+            (dep_id, semester, department, academic_activity_code,
+            academic_activity_name, academic_activity_ch,
+            demanding_courses, oft, id, available_slots, occupied_slots,
+            percent_occupied_slots, schedule, language, researcher_id,
+            workload, status, researcher_name)
+        VALUES
+            (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+        """
+    adm_database.execmany(SCRIPT_SQL, parameters)
+
+
+def departament_query_discipline(dep_id):
+    if dep_id:
+        filter_departament = "WHERE dep_id = %s"
+    else:
+        filter_departament = str()
+    SCRIPT_SQL = f"""
+        SELECT
+            semester, department, academic_activity_code,
+            academic_activity_name, academic_activity_ch,
+            demanding_courses, oft, id, available_slots, occupied_slots,
+            percent_occupied_slots, schedule, language, researcher_id,
+            workload, status, researcher_name
+        FROM
+            UFMG.disciplines
+        {filter_departament}
+        """
+
+    registry = adm_database.select(SCRIPT_SQL, [dep_id])
+
+    data_frame = pd.DataFrame(
+        registry,
+        columns=[
+            "semester",
+            "department",
+            "academic_activity_code",
+            "academic_activity_name",
+            "academic_activity_ch",
+            "demanding_courses",
+            "oft",
+            "id",
+            "available_slots",
+            "occupied_slots",
+            "percent_occupied_slots",
+            "schedule",
+            "language",
+            "researcher_id",
+            "workload",
+            "status",
+            "researcher_name",
+        ],
+    )
+
+    return data_frame.to_dict(orient="records")
+
+
+def departament_query_discipline_semester(dep_id):
+    if dep_id:
+        filter_departament = "WHERE dep_id = %s"
+    else:
+        filter_departament = str()
+
+    SCRIPT_SQL = f"""
+    SELECT
+        SUBSTRING(semester, 1, 4) AS year,
+        SUBSTRING(semester, 6, 1) AS semester
+    FROM
+        UFMG.disciplines
+    {filter_departament}
+    GROUP BY semester;
+    """
+
+    registry = adm_database.select(SCRIPT_SQL, [dep_id])
+
+    data_frame = pd.DataFrame(registry, columns=["year", "semester"])
 
     return data_frame.to_dict(orient="records")

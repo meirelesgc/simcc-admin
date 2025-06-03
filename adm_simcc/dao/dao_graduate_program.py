@@ -25,7 +25,8 @@ def graduate_program_insert(list_graduate_program: ListGraduateProgram):
             program.type, program.rating, program.institution_id, program.state, program.city,
             program.region, program.url_image, program.acronym, program.description,
             program.visible, program.site, program.coordinator, program.email, program.start,
-            program.phone, program.periodicity
+            program.phone, program.periodicity,
+            program.menagers  # Adicione o campo menagers aqui
         ))
     # fmt: on
 
@@ -34,10 +35,12 @@ def graduate_program_insert(list_graduate_program: ListGraduateProgram):
             graduate_program_id, code, name, name_en, basic_area, cooperation_project,
             area, modality, type, rating, institution_id, state, city, region,
             url_image, acronym, description, visible, site, coordinator, email,
-            start_date, phone, periodicity
+            start_date, phone, periodicity,
+            menagers -- Adicione o nome da coluna aqui
         ) VALUES (
             %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+            %s -- Adicione um placeholder para o novo campo
         );
     """
     adm_database.execmany(SCRIPT_SQL, parameters)
@@ -189,9 +192,6 @@ def graduate_program_delete(graduate_program_id: UUID):
 
 
 def graduate_program_fix(program: GraduateProgram):
-    """
-    Atualiza todas as informações de um programa de pós-graduação.
-    """
     # fmt: off
     parameters = (
         program.code, program.name, program.name_en, program.basic_area,
@@ -200,6 +200,7 @@ def graduate_program_fix(program: GraduateProgram):
         program.region, program.url_image, program.acronym, program.description,
         program.visible, program.site, program.coordinator, program.email,
         program.start, program.phone, program.periodicity,
+        program.menagers,  # Adicione o campo menagers aqui
         program.graduate_program_id,
     )
     # fmt: on
@@ -211,6 +212,7 @@ def graduate_program_fix(program: GraduateProgram):
             state = %s, city = %s, region = %s, url_image = %s, acronym = %s,
             description = %s, visible = %s, site = %s, coordinator = %s,
             email = %s, start = %s, phone = %s, periodicity = %s,
+            menagers = %s,
             updated_at = CURRENT_TIMESTAMP
         WHERE graduate_program_id = %s;
     """
@@ -218,9 +220,6 @@ def graduate_program_fix(program: GraduateProgram):
 
 
 def graduate_program_count(institution_id=None):
-    """
-    Conta o número de programas de pós-graduação, com filtro opcional por instituição.
-    """
     # Esta função não precisa de alterações, pois conta linhas inteiras.
     parameters = []
     filter_institution = ""

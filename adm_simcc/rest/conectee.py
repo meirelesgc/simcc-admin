@@ -21,7 +21,8 @@ def departament_insert():
 @conectee.route("/departamentos", methods=["GET"])
 def departament_basic_query():
     dep_id = request.args.get("dep_id")
-    departaments = dao_conectee.departament_basic_query(dep_id)
+    user_id = request.args.get("user_id")
+    departaments = dao_conectee.departament_basic_query(dep_id, user_id)
     return jsonify(departaments), HTTPStatus.OK
 
 
