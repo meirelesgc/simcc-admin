@@ -278,6 +278,7 @@ def normalize_researchers(df: pd.DataFrame) -> pd.DataFrame:
     mapping = {
         "nome": "full_name",
         "genero": "gender",
+        "sexo": "gender",
         "sit": "status_code",
         "rt": "work_regime",
         "clas": "job_class",
@@ -307,8 +308,6 @@ def normalize_researchers(df: pd.DataFrame) -> pd.DataFrame:
         columns={k: v for k, v in mapping.items() if k in df.columns},
         inplace=True,
     )
-    if "job_class" in df.columns:
-        df["job_class"] = pd.to_numeric(df["job_class"], errors="coerce")
     for col in [
         "organization_entry_date",
         "last_promotion_date",
@@ -337,6 +336,7 @@ def post_ufmg_researcher(researcher):
     researcher = pd.DataFrame(researcher)
     researcher = normalize(researcher)
     researcher = normalize_researchers(researcher)
+    print(researcher)
     researcher["researcher_id"] = researcher["full_name"].apply(
         get_researcher_id
     )
