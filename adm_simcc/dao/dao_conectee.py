@@ -133,8 +133,7 @@ def normalize_technicians(df: pd.DataFrame) -> pd.DataFrame:
         columns={k: v for k, v in mapping.items() if k in df.columns},
         inplace=True,
     )
-    if "job_class" in df.columns:
-        df["job_class"] = pd.to_numeric(df["job_class"], errors="coerce")
+
     for col in [
         "organization_entry_date",
         "last_promotion_date",
