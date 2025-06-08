@@ -59,15 +59,10 @@ def get_ufmg_data():
 
 @rest_system.route("/s/user", methods=["POST"])
 def create_user():
-    try:
-        user = request.get_json()
-        user = UserModel(**user[0])
-        dao_system.create_user(user)
-        return jsonify("OK"), HTTPStatus.CREATED
-    except psycopg2.errors.UniqueViolation:
-        return jsonify(
-            {"message": "discente já cadastrado"}
-        ), HTTPStatus.CONFLICT
+    user = request.get_json()
+    user = UserModel(**user[0])
+    user = dao_system.create_user(user)
+    return [user], HTTPStatus.CREATED
 
 
 @rest_system.route("/s/user", methods=["GET"])

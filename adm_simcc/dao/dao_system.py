@@ -10,26 +10,42 @@ adm_database = Connection()
 
 
 def create_user(User: UserModel):
+    user_columns = [
+        "user_id",
+        "display_name",
+        "email",
+        "uid",
+        "photo_url",
+        "lattes_id",
+        "institution_id",
+        "provider",
+        "linkedin",
+        "verify",
+    ]
+
     SCRIPT_SQL = """
-    SELECT lattes_id FROM researcher WHERE
+    SELECT user_id, display_name, email, uid, photo_url, lattes_id,
+           institution_id, provider, linkedin, verify
+    FROM users
+    WHERE unaccent(display_name) ILIKE unaccent(%(display_name)s)
+    LIMIT 1;
+    """
+    params = {"display_name": User.displayName}
+    existing_user = adm_database.select(SCRIPT_SQL, params)
+
+    if existing_user:
+        df = pd.DataFrame(existing_user, columns=user_columns)
+        return df.to_dict(orient="records")[0]
+
+    SCRIPT_SQL = """
+    SELECT lattes_id, institution_id FROM researcher WHERE
     unaccent(name) ILIKE unaccent(%(display_name)s) LIMIT 1;
     """
+    researcher = adm_database.select(SCRIPT_SQL, params)
 
-    params = {"display_name": User.displayName}
-    lattes_id = adm_database.select(SCRIPT_SQL, params)
+    if researcher:
+        User.lattes_id, User.institution_id = researcher[0]
 
-    if lattes_id:
-        User.lattes_id = lattes_id[0][0]
-
-    SCRIPT_SQL = """
-        INSERT INTO users (display_name, email, uid, photo_url, linkedin,
-            provider, lattes_id, birth_date, course_level, first_name,
-            registration, gender, last_name, email_status, visible_email)
-        VALUES (%(displayName)s, %(email)s, %(uid)s, %(photoURL)s, %(linkedin)s,
-            %(provider)s, %(lattes_id)s, %(birth_date)s, %(course_level)s,
-            %(first_name)s, %(registration)s, %(gender)s, %(last_name)s,
-            %(email_status)s, %(visible_email)s);
-        """
     params = User.model_dump()
 
     for key, value in params.items():
@@ -38,10 +54,31 @@ def create_user(User: UserModel):
         elif isinstance(value, HttpUrl):
             params[key] = str(value)
 
-    if params["displayName"] == str():
+    if not params["displayName"]:
         params["displayName"] = str(uuid4())
 
+    SCRIPT_SQL = """
+        INSERT INTO users (display_name, email, uid, photo_url, linkedin,
+            provider, lattes_id, birth_date, course_level, first_name,
+            registration, gender, last_name, email_status, visible_email,
+            institution_id)
+        VALUES (%(displayName)s, %(email)s, %(uid)s, %(photoURL)s, %(linkedin)s,
+            %(provider)s, %(lattes_id)s, %(birth_date)s, %(course_level)s,
+            %(first_name)s, %(registration)s, %(gender)s, %(last_name)s,
+            %(email_status)s, %(visible_email)s, %(institution_id)s);
+    """
     adm_database.exec(SCRIPT_SQL, params)
+
+    SCRIPT_SQL = """
+    SELECT user_id, display_name, email, uid, photo_url, lattes_id,
+           institution_id, provider, linkedin, verify
+    FROM users
+    WHERE uid = %(uid)s
+    LIMIT 1;
+    """
+    user_created = adm_database.select(SCRIPT_SQL, {"uid": params["uid"]})
+    df = pd.DataFrame(user_created, columns=user_columns)
+    return df.to_dict(orient="records")
 
 
 def select_user(uid):

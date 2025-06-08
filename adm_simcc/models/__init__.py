@@ -13,6 +13,7 @@ class UserModel(BaseModel):
     linkedin: Optional[str] = None
     provider: Optional[str] = None
     lattes_id: Optional[str] = None
+    institution_id: Optional[str] = None
 
     birth_date: Optional[str] = None
     course_level: Optional[str] = None
