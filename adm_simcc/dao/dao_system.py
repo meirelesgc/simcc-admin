@@ -45,6 +45,8 @@ def create_user(User: UserModel):
 
     if researcher:
         User.lattes_id, User.institution_id = researcher[0]
+    else:
+        User.lattes_id, User.institution_id = None, None
 
     params = User.model_dump()
 

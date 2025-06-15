@@ -1,3 +1,5 @@
+BEGIN;
+
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE EXTENSION IF NOT EXISTS unaccent;
@@ -26,31 +28,36 @@ CREATE TABLE IF NOT EXISTS public.researcher(
       PRIMARY KEY (lattes_id, institution_id),
       FOREIGN KEY (institution_id) REFERENCES institution (institution_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
-
 CREATE TABLE IF NOT EXISTS public.graduate_program(
-      graduate_program_id uuid NOT NULL DEFAULT uuid_generate_v4(),
-      code VARCHAR(100) UNIQUE,
-      name VARCHAR(100) NOT NULL,
-      area VARCHAR(100) NOT NULL,
-      modality VARCHAR(100) NOT NULL,
-      TYPE VARCHAR(100) NULL,
-      rating VARCHAR(5),
-      institution_id uuid NOT NULL,
-      state character varying(4) DEFAULT 'BA'::character varying,
-      city character varying(100) DEFAULT 'Salvador'::character varying,
-      region character varying(100) DEFAULT 'Nordeste'::character varying,
-      url_image VARCHAR(200) NULL,
-      acronym character varying(100),
-      description TEXT,
-      visible bool DEFAULT FALSE,
-      site TEXT,
-      menagers TEXT[],
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      PRIMARY KEY (graduate_program_id),
-      FOREIGN KEY (institution_id) REFERENCES institution (institution_id) ON DELETE CASCADE ON UPDATE CASCADE
+    graduate_program_id uuid NOT NULL DEFAULT uuid_generate_v4(),
+    code VARCHAR(100),
+    name VARCHAR(100) NOT NULL,
+    name_en VARCHAR(100),
+    basic_area VARCHAR(100), 
+    cooperation_project VARCHAR(100),
+    area VARCHAR(100) NOT NULL,
+    modality VARCHAR(100) NOT NULL,
+    TYPE VARCHAR(100) NULL,
+    rating VARCHAR(5),
+    institution_id uuid NOT NULL,
+    state character varying(4) DEFAULT 'BA'::character varying,
+    city character varying(100) DEFAULT 'Salvador'::character varying,
+    region character varying(100) DEFAULT 'Nordeste'::character varying,
+    url_image VARCHAR(200) NULL,
+    acronym character varying(100),
+    description TEXT,
+    visible bool DEFAULT FALSE,
+    site TEXT,
+    coordinator VARCHAR(100), 
+    email VARCHAR(100),
+    start DATE, 
+    phone VARCHAR(20), 
+    periodicity VARCHAR(50), 
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (graduate_program_id),
+    FOREIGN KEY (institution_id) REFERENCES institution (institution_id) ON UPDATE CASCADE ON DELETE CASCADE
 );
-
 CREATE TABLE IF NOT EXISTS public.graduate_program_researcher(
       graduate_program_id uuid NOT NULL,
       researcher_id uuid NOT NULL,
@@ -298,3 +305,7 @@ CREATE TABLE IF NOT EXISTS ufmg.disciplines (
       PRIMARY KEY (dep_id, id),
       FOREIGN KEY (dep_id) REFERENCES ufmg.departament (dep_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
+
+COMMIT;
+
+ROLLBACK;
