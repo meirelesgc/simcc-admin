@@ -1,7 +1,4 @@
-from uuid import uuid4
-
 import pandas as pd
-from pydantic import HttpUrl
 
 from ..dao import Connection
 from ..models import FeedbackSchema, UserModel
@@ -49,15 +46,6 @@ def create_user(User: UserModel):
         User.lattes_id, User.institution_id = None, None
 
     params = User.model_dump()
-
-    for key, value in params.items():
-        if value is None:
-            params[key] = ""
-        elif isinstance(value, HttpUrl):
-            params[key] = str(value)
-
-    if not params["displayName"]:
-        params["displayName"] = str(uuid4())
 
     SCRIPT_SQL = """
         INSERT INTO users (display_name, email, uid, photo_url, linkedin,
