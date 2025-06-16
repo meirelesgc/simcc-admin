@@ -4,6 +4,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 
 from .rest.conectee import conectee
+from .rest.guidance_tracking import guidance_tracking_bp
 from .rest.rest_graduate_program import rest_graduate_program
 from .rest.rest_graduate_program_student import rest_graduate_program_student
 from .rest.rest_gradute_program_researcher import (
@@ -30,6 +31,7 @@ def create_app():
     app.register_blueprint(rest_ind_prod)
     app.register_blueprint(rest_system)
     app.register_blueprint(conectee)
+    app.register_blueprint(guidance_tracking_bp)
 
     CORS(app)
 
