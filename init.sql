@@ -12,6 +12,22 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE EXTENSION IF NOT EXISTS unaccent;
 
+--- Gerenciamento da conta
+
+CREATE TYPE role_type AS ENUM ('ADMIN', 'DEFAULT');
+
+CREATE TABLE IF NOT EXISTS users (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    username VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    role role_type NOT NULL DEFAULT 'DEFAULT',
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    deleted_at TIMESTAMP
+);
+
+
 -- CREATE TYPE relationship AS ENUM ('COLABORADOR', 'PERMANENTE');
 
 CREATE TABLE public.institution (
@@ -193,6 +209,10 @@ CREATE TABLE public.institution (
 
 CREATE TRIGGER trg_updated_institution
 BEFORE UPDATE ON public.institution
+FOR EACH ROW EXECUTE FUNCTION trigger_set_timestamp();
+
+CREATE TRIGGER trg_updated_institution
+BEFORE UPDATE ON public.users
 FOR EACH ROW EXECUTE FUNCTION trigger_set_timestamp();
 
 -- CREATE TRIGGER trg_updated_researcher
