@@ -16,7 +16,7 @@ ORCID_OAUTH_URL = 'https://orcid.org/oauth/authorize'
 router = APIRouter()
 
 
-@router.post('/token/', response_model=user_models.Token)
+@router.post('/token', response_model=user_models.Token)
 async def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
     conn: Connection = Depends(get_conn),

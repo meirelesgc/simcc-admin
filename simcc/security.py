@@ -118,14 +118,14 @@ async def validate_orcid_code(code: str) -> dict:
         if not id_token or not access_token:
             raise HTTPException(
                 status_code=HTTPStatus.BAD_REQUEST,
-                detail='Token de ID ou de Acesso não encontrado na resposta do ORCID.',
+                detail='Token de ID ou de Acesso não encontrado na resposta do ORCID.',  # noqa: E501
             )
 
         jwks_response = await client.get(ORCID_JWKS_URL)
         if jwks_response.status_code != HTTPStatus.OK:
             raise HTTPException(
                 status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                detail='Não foi possível obter as chaves de validação do ORCID.',
+                detail='Não foi possível obter as chaves de validação do ORCID.',  # noqa: E501
             )
         jwks = jwks_response.json()
 
