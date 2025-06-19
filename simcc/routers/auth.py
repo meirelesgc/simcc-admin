@@ -39,7 +39,7 @@ async def orcid_login():
     return RedirectResponse(url=auth_url)
 
 
-@router.get('/orcid/callback')
+@router.get('/orcid/callback', response_model=user_models.Token)
 async def orcid_callback(code: str, conn: Connection = Depends(get_conn)):
     orcid_claims = await validate_orcid_code(code)
     user = await user_service.get_or_create_user_by_orcid(conn, orcid_claims)
@@ -47,7 +47,7 @@ async def orcid_callback(code: str, conn: Connection = Depends(get_conn)):
     return {'access_token': app_token, 'token_type': 'bearer'}
 
 
-@router.get('/shibboleth/login')
+@router.get('/shibboleth/login', response_model=user_models.Token)
 async def shibboleth_login(
     request: Request, conn: Connection = Depends(get_conn)
 ):
