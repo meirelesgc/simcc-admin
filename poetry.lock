@@ -776,20 +776,6 @@ MarkupSafe = ">=2.0"
 i18n = ["Babel (>=2.7)"]
 
 [[package]]
-name = "jwt"
-version = "1.3.1"
-description = "JSON Web Token library for Python 3."
-optional = false
-python-versions = ">= 3.6"
-groups = ["main"]
-files = [
-    {file = "jwt-1.3.1-py3-none-any.whl", hash = "sha256:61c9170f92e736b530655e75374681d4fcca9cfa8763ab42be57353b2b203494"},
-]
-
-[package.dependencies]
-cryptography = ">=3.1,<3.4.0 || >3.4.0"
-
-[[package]]
 name = "markdown-it-py"
 version = "3.0.0"
 description = "Python port of markdown-it. Markdown parsing, done right!"
@@ -2158,4 +2144,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<4.0"
-content-hash = "fed1748e4a1bbccaea86d983c561949b058dc28b1d8abd323e6d33c34ad5f854"
+content-hash = "064114ffd5d4971c91cbf68f72d58f526a26ce828cca04840d6ce34652ad16ea"
