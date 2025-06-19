@@ -8,6 +8,10 @@ class Settings(BaseSettings):
     HOST: str
     PORT: int
 
+    ORCID_CLIENT_ID: str = None
+    ORCID_REDIRECT_URI: str = None
+    ORCID_CLIENT_SECRET: str = None
+
     class Config:
         env_file = '.env'
         env_file_encoding = 'utf-8'

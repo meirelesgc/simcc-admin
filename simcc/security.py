@@ -3,11 +3,15 @@ from http import HTTPStatus
 from typing import List
 from zoneinfo import ZoneInfo
 
+import httpx
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
+from jose import JWTError
+from jose import jwt as jwtJose
 from jwt import DecodeError, ExpiredSignatureError, decode, encode
 from pwdlib import PasswordHash
 
+from simcc.config import Settings
 from simcc.core.connection import Connection
 from simcc.core.database import get_conn
 from simcc.models import user_models
@@ -17,6 +21,9 @@ ALGORITHM = 'HS256'
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 pwd_context = PasswordHash.recommended()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='token')
+
+ORCID_TOKEN_URL = 'https://orcid.org/oauth/token'
+ORCID_JWKS_URL = 'https://orcid.org/oauth/jwks'
 
 
 async def get_current_user(
@@ -81,3 +88,65 @@ def get_password_hash(password: str):
 
 def verify_password(plain_password: str, hashed_password: str):
     return pwd_context.verify(plain_password, hashed_password)
+
+
+async def validate_orcid_code(code: str) -> dict:
+    token_request_payload = {
+        'client_id': Settings().ORCID_CLIENT_ID,
+        'client_secret': Settings().ORCID_CLIENT_SECRET,
+        'grant_type': 'authorization_code',
+        'code': code,
+        'redirect_uri': Settings().ORCID_REDIRECT_URI,
+    }
+
+    async with httpx.AsyncClient() as client:
+        token_response = await client.post(
+            ORCID_TOKEN_URL,
+            data=token_request_payload,
+            headers={'Accept': 'application/json'},
+        )
+        if token_response.status_code != HTTPStatus.OK:
+            raise HTTPException(
+                status_code=HTTPStatus.BAD_REQUEST,
+                detail='Falha ao trocar o código de autorização com o ORCID.',
+            )
+
+        response_data = token_response.json()
+        id_token = response_data.get('id_token')
+        access_token = response_data.get('access_token')
+
+        if not id_token or not access_token:
+            raise HTTPException(
+                status_code=HTTPStatus.BAD_REQUEST,
+                detail='Token de ID ou de Acesso não encontrado na resposta do ORCID.',
+            )
+
+        jwks_response = await client.get(ORCID_JWKS_URL)
+        if jwks_response.status_code != HTTPStatus.OK:
+            raise HTTPException(
+                status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+                detail='Não foi possível obter as chaves de validação do ORCID.',
+            )
+        jwks = jwks_response.json()
+
+    try:
+        payload = jwtJose.decode(
+            id_token,
+            jwks,
+            algorithms=['RS256'],
+            audience=Settings().ORCID_CLIENT_ID,
+            issuer='https://orcid.org',
+            access_token=access_token,
+        )
+        return payload
+
+    except JWTError as e:
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail=f'Erro na validação do token ORCID: {e}',
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+            detail=f'Erro inesperado no processamento do token: {e}',
+        )

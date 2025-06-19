@@ -2,7 +2,6 @@ from http import HTTPStatus
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import OAuth2PasswordRequestForm
 
 from simcc.core.connection import Connection
 from simcc.core.database import get_conn
@@ -74,11 +73,3 @@ async def delete_user(
     conn: Connection = Depends(get_conn),
 ):
     return await user_service.delete_user(conn, id)
-
-
-@router.post('/token/', response_model=user_models.Token)
-async def login_for_access_token(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    conn: Connection = Depends(get_conn),
-):
-    return await user_service.login_for_access_token(conn, form_data)

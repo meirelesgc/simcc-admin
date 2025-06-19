@@ -63,3 +63,31 @@ async def login_for_access_token(
         'access_token': access_token,
         'token_type': 'bearer',
     }
+
+
+async def get_or_create_user_by_orcid(
+    conn: Connection, orcid_claims: dict
+) -> user_models.User:
+    orcid_id = orcid_claims.get('sub')
+    if not orcid_id:
+        raise Exception("Claim 'sub' (ORCID iD) não encontrado.")
+
+    SCRIPT_SQL = """
+        SELECT  id, orcid_id, username, email, password, role, created_at,
+            updated_at, deleted_at
+        FROM users WHERE orcid_id = %(orcid_id)s
+        """
+    user = await conn.select(SCRIPT_SQL, {'orcid_id': orcid_id}, True)
+
+    if user:
+        return user_models.User(**user)
+
+    new_user_data = user_models.CreateUser(
+        email=f'{orcid_id}@orcid.placeholder',
+        username=orcid_claims.get('name', orcid_id),
+        password='a-random-password-since-login-is-external',
+        orcid_id=orcid_id,
+    )
+
+    created_user = await post_user(conn, new_user_data)
+    return created_user
