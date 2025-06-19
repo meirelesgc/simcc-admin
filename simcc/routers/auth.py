@@ -1,4 +1,7 @@
-from fastapi import APIRouter, Depends
+from http import HTTPStatus
+
+from fastapi import APIRouter, Depends, Request
+from fastapi.exceptions import HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from starlette.responses import RedirectResponse
 
@@ -40,5 +43,30 @@ async def orcid_login():
 async def orcid_callback(code: str, conn: Connection = Depends(get_conn)):
     orcid_claims = await validate_orcid_code(code)
     user = await user_service.get_or_create_user_by_orcid(conn, orcid_claims)
+    app_token = create_access_token(data={'sub': user.email})
+    return {'access_token': app_token, 'token_type': 'bearer'}
+
+
+@router.get('/shibboleth/login')
+async def shibboleth_login(
+    request: Request, conn: Connection = Depends(get_conn)
+):
+    eppn = request.headers.get('eppn')
+    name = request.headers.get('Shib-Person-CommonName')
+    email = request.headers.get('shib-person-mail')
+
+    if not eppn:
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail='Atributo de identificação (eppn) não fornecido pelo Provedor de Identidade. Acesso negado.',  # noqa: E501
+        )
+    shib_user_data = {
+        'eppn': eppn,
+        'email': email or f'{eppn.split("@")[0]}@shibboleth.email',
+        'name': name,
+    }
+    user = await user_service.get_or_create_user_by_shibboleth(
+        conn, shib_user_data
+    )
     app_token = create_access_token(data={'sub': user.email})
     return {'access_token': app_token, 'token_type': 'bearer'}

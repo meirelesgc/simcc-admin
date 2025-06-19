@@ -83,11 +83,35 @@ async def get_or_create_user_by_orcid(
         return user_models.User(**user)
 
     new_user_data = user_models.CreateUser(
-        email=f'{orcid_id}@orcid.placeholder',
+        email=f'{orcid_id}@orcid.email',
         username=orcid_claims.get('name', orcid_id),
         password='a-random-password-since-login-is-external',
         orcid_id=orcid_id,
     )
 
     created_user = await post_user(conn, new_user_data)
+    return created_user
+
+
+async def get_or_create_user_by_shibboleth(
+    conn: Connection, shib_data: dict
+) -> user_models.User:
+    email = shib_data.get('email')
+    SCRIPT_SQL = """
+        SELECT id, orcid_id, username, email, password, role, created_at,
+            updated_at, deleted_at
+        FROM users WHERE email = %(email)s
+        """
+    user = await conn.select(SCRIPT_SQL, {'email': email}, True)
+
+    if user:
+        return user_models.User(**user)
+
+    user = user_models.CreateUser(
+        email=shib_data.get('email'),
+        username=shib_data.get('name', email).strip(),
+        password='shibboleth-user-no-local-password',
+    )
+
+    created_user = await post_user(conn, user)
     return created_user

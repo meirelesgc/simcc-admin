@@ -1,7 +1,6 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
 
 from simcc.core.database import conn
 from simcc.routers import auth, users
@@ -20,6 +19,6 @@ app.include_router(users.router, tags=['arrange'])
 app.include_router(auth.router, prefix='/auth', tags=['Authentication'])
 
 
-@app.get('/', response_class=HTMLResponse)
+@app.get('/')
 async def read_root():
     return {'message': 'Working!'}
