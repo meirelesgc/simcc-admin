@@ -16,7 +16,7 @@ ORCID_CLIENT_ID = Settings().ORCID_CLIENT_ID
 ORCID_REDIRECT_URI = Settings().ORCID_REDIRECT_URI
 ORCID_OAUTH_URL = 'https://orcid.org/oauth/authorize'
 
-router = APIRouter()
+router = APIRouter(prefix='/auth')
 
 
 @router.post('/token', response_model=user_models.Token)

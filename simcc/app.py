@@ -15,8 +15,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan, docs_url='/swagger')
 
-app.include_router(users.router, tags=['arrange'])
-app.include_router(auth.router, prefix='/auth', tags=['Authentication'])
+app.include_router(auth.router, tags=['Authentication'])
+app.include_router(users.router, tags=['Users'])
 
 
 @app.get('/')
