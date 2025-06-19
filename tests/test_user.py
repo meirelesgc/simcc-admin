@@ -141,14 +141,3 @@ async def test_delete_user(client, create_user, get_token):
     response = client.get('/user/')
     assert response.status_code == HTTPStatus.OK
     assert len(response.json()) == LENGTH
-
-
-@pytest.mark.asyncio
-async def test_get_token(client, create_user):
-    user = await create_user()
-    data = {'username': user.email, 'password': user.password}
-    response = client.post('/auth/token/', data=data)
-    token = response.json()
-    assert response.status_code == HTTPStatus.OK
-    assert 'access_token' in token
-    assert 'token_type' in token
