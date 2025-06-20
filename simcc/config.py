@@ -1,5 +1,6 @@
 from typing import Optional
 
+from pydantic import HttpUrl
 from pydantic_settings import BaseSettings
 
 
@@ -13,6 +14,8 @@ class Settings(BaseSettings):
     ORCID_CLIENT_ID: Optional[str] = None
     ORCID_REDIRECT_URI: Optional[str] = None
     ORCID_CLIENT_SECRET: Optional[str] = None
+
+    PROXY_URL: HttpUrl = 'http://localhost:9090'
 
     class Config:
         env_file = '.env'
