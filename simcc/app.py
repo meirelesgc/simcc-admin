@@ -3,6 +3,7 @@ from http import HTTPStatus
 
 import httpx
 from fastapi import FastAPI, Request, Response
+from fastapi.middleware.cors import CORSMiddleware
 
 from simcc.config import Settings
 from simcc.core.database import conn
@@ -17,12 +18,24 @@ async def lifespan(app: FastAPI):
     await conn.disconnect()
 
 
-app = FastAPI(lifespan=lifespan, docs_url='/swagger')
+app = FastAPI(
+    lifespan=lifespan,
+    root_path=Settings().ROOT_PATH,
+    docs_url='/swagger',
+)
 
 app.include_router(auth.router, tags=['Authentication'])
 app.include_router(users.router, tags=['Users'])
 app.include_router(institution.router, tags=['Institution'])
 app.include_router(collection.router, tags=['Collection'])
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=['*'],
+    allow_methods=['*'],
+    allow_headers=['*'],
+    allow_credentials=True,
+)
 
 
 @app.middleware('http')

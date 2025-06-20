@@ -19,7 +19,10 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_SECRET: Optional[str] = None
     GOOGLE_REDIRECT_URI: Optional[str] = None
 
-    PROXY_URL: HttpUrl = 'http://localhost:9090'
+    PROXY_URL: HttpUrl = 'http://localhost:9999'
+    FRONTEND_URL: HttpUrl = 'http://localhost:8080'
+
+    ROOT_PATH: str = str()
 
     class Config:
         env_file = '.env'

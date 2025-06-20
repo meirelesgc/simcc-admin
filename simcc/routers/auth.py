@@ -47,17 +47,19 @@ async def orcid_login():
     return RedirectResponse(url=auth_url)
 
 
-@router.get('/auth/orcid/callback', response_model=user_models.Token)
+@router.get('/auth/orcid/callback')
 async def orcid_callback(code: str, conn: Connection = Depends(get_conn)):
     orcid_claims = await validate_orcid_code(code)
     user = await user_service.get_or_create_user_by_orcid(conn, orcid_claims)
     app_token = create_access_token(data={'sub': user.email})
-    return {'access_token': app_token, 'token_type': 'bearer'}
+    URL = f'{Settings().FRONTEND_URL}/authentication?token={app_token}'
+    return RedirectResponse(url=URL, status_code=302)
 
 
-@router.get('/auth/shibboleth/login', response_model=user_models.Token)
+@router.get('/auth/shibboleth/login')
 async def shibboleth_login(
-    request: Request, conn: Connection = Depends(get_conn)
+    request: Request,
+    conn: Connection = Depends(get_conn),
 ):
     eppn = request.headers.get('eppn')
     name = request.headers.get('Shib-Person-CommonName')
@@ -66,18 +68,22 @@ async def shibboleth_login(
     if not eppn:
         raise HTTPException(
             status_code=HTTPStatus.UNAUTHORIZED,
-            detail='Atributo de identificação (eppn) não fornecido pelo Provedor de Identidade. Acesso negado.',  # noqa: E501
+            detail='Atributo de identificação (eppn) não fornecido pelo Provedor de Identidade. Acesso negado.',
         )
+
     shib_user_data = {
         'eppn': eppn,
         'email': email or f'{eppn.split("@")[0]}@shibboleth.email',
         'name': name,
     }
+
     user = await user_service.get_or_create_user_by_shibboleth(
         conn, shib_user_data
     )
     app_token = create_access_token(data={'sub': user.email})
-    return {'access_token': app_token, 'token_type': 'bearer'}
+
+    URL = f'{Settings().FRONTEND_URL}/authentication?token={app_token}'
+    return RedirectResponse(url=URL, status_code=302)
 
 
 @router.get('/auth/google/login')
@@ -92,11 +98,12 @@ async def google_login():
     return RedirectResponse(url=auth_url)
 
 
-@router.get('/auth/google/callback', response_model=user_models.Token)
+@router.get('/auth/google/callback')
 async def google_callback(code: str, conn: Connection = Depends(get_conn)):
     google_payload = await validate_google_token(code=code)
     user = await user_service.get_or_create_user_by_google(
         conn=conn, google_payload=google_payload
     )
     access_token = create_access_token(data={'sub': user.email})
-    return {'access_token': access_token, 'token_type': 'bearer'}
+    URL = f'{Settings().FRONTEND_URL}/authentication?token={access_token}'
+    return RedirectResponse(url=URL, status_code=302)
