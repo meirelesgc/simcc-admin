@@ -51,7 +51,6 @@ async def test_post_institution_forbidden(client, create_user, get_token):
 @pytest.mark.asyncio
 async def test_get_institution(client, create_institution):
     institution = await create_institution()
-    print(f'/institution/{institution.institution_id}/')
     get_response = client.get(f'/institution/{institution.institution_id}/')
     assert get_response.status_code == HTTPStatus.OK
     assert institution_model.Institution(**get_response.json())
