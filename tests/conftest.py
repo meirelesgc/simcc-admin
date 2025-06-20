@@ -7,7 +7,9 @@ from simcc.app import app
 from simcc.core.connection import Connection
 from simcc.core.database import get_conn
 from simcc.services import institution_service, user_service
+from simcc.services.features import collection_service
 from tests.factories import institution_factory, user_factory
+from tests.factories.features import collection_factory
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -20,6 +22,7 @@ async def reset_database(conn: Connection):
     SCRIPT_SQL = """
         DROP SCHEMA IF EXISTS public CASCADE;
         DROP SCHEMA IF EXISTS ufmg CASCADE;
+        DROP SCHEMA IF EXISTS feature CASCADE;
         CREATE SCHEMA public;
         """
     await conn.exec(SCRIPT_SQL)
@@ -95,3 +98,14 @@ def get_token(client):
         return response.json()['access_token']
 
     return _get_token
+
+
+@pytest.fixture
+def create_collection(conn):
+    async def _create(user, **kwargs):
+        collection = collection_factory.CreateCollectionFactory(**kwargs)
+        return await collection_service.post_collection(
+            conn, collection, current_user=user
+        )
+
+    return _create

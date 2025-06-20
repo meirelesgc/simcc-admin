@@ -15,11 +15,11 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     role role_type NOT NULL DEFAULT 'DEFAULT',
+
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW(),
     deleted_at TIMESTAMP
 );
-
 
 CREATE TYPE relationship AS ENUM ('COLABORADOR', 'PERMANENTE');
 
@@ -202,6 +202,30 @@ CREATE TABLE public.graduation_program_guidance (
 
 ---
 
+CREATE SCHEMA IF NOT EXISTS feature;
+
+CREATE TABLE IF NOT EXISTS feature.collection (
+    collection_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    visible BOOLEAN DEFAULT TRUE,
+
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    deleted_at TIMESTAMP,
+
+    FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS feature.collection_entries(
+    collection_id UUID REFERENCES feature.collection(collection_id),
+    entrie_id UUID NOT NULL,
+    type VARCHAR(255) NOT NULL,
+    FOREIGN KEY (collection_id) REFERENCES feature.collection(collection_id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+
 CREATE SCHEMA IF NOT EXISTS ufmg;
 
 
@@ -345,6 +369,8 @@ CREATE TABLE IF NOT EXISTS ufmg.disciplines (
     PRIMARY KEY (dep_id, id),
     FOREIGN KEY (dep_id) REFERENCES ufmg.departament (dep_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
+
+
 
 COMMIT;
 

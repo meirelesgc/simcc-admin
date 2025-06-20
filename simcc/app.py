@@ -7,6 +7,7 @@ from fastapi import FastAPI, Request, Response
 from simcc.config import Settings
 from simcc.core.database import conn
 from simcc.routers import auth, institution, users
+from simcc.routers.features import collection
 
 
 @asynccontextmanager
@@ -21,6 +22,7 @@ app = FastAPI(lifespan=lifespan, docs_url='/swagger')
 app.include_router(auth.router, tags=['Authentication'])
 app.include_router(users.router, tags=['Users'])
 app.include_router(institution.router, tags=['Institution'])
+app.include_router(collection.router, tags=['Collection'])
 
 
 @app.middleware('http')
