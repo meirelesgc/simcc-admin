@@ -68,9 +68,7 @@ async def delete_collection(
     await collection_repositoy.delete_collection(conn, collection_id)
 
 
-async def post_collection_entries(conn, entry, current_user):
+async def post_collection_entry(conn, entry, current_user):
     if await get_collection_by_id(conn, entry.collection_id, current_user):
         await delete_collection(conn, entry.collection_id, current_user)
-    return await collection_repositoy.post_collection_entries(
-        conn, entry, current_user
-    )
+    return await collection_repositoy.post_collection_entry(conn, entry)

@@ -220,7 +220,7 @@ CREATE TABLE IF NOT EXISTS feature.collection (
 
 CREATE TABLE IF NOT EXISTS feature.collection_entries(
     collection_id UUID REFERENCES feature.collection(collection_id),
-    entrie_id UUID NOT NULL,
+    entry_id UUID NOT NULL,
     type VARCHAR(255) NOT NULL,
     FOREIGN KEY (collection_id) REFERENCES feature.collection(collection_id) ON DELETE CASCADE ON UPDATE CASCADE
 );

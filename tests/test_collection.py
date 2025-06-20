@@ -106,7 +106,6 @@ async def test_update_collection(
 ):
     user = await create_user()
     token = get_token(user)
-
     collection = await create_collection(user=user)
 
     collection.name = 'Novo Nome da Coleção'
@@ -130,19 +129,24 @@ async def test_update_collection(
     assert response['description'] == 'Nova descrição.'
 
 
-# @pytest.mark.asyncio
-# async def test_update_collection_not_found(
-#     client, create_user, get_token, create_collection
-# ):
-#     user = await create_user()
-#     token = get_token(user)
+@pytest.mark.asyncio
+async def test_post_collection_entry(
+    client, create_user, get_token, create_collection
+):
+    user = await create_user()
+    token = get_token(user)
+    collection = await create_collection(user=user)
 
-#     collection = await create_collection(user=user)
+    entry = {
+        'collection_id': str(collection.collection_id),
+        'entry_id': str(uuid4()),
+        'type': 'XPTO',
+    }
 
-#     response = client.put(
-#         '/collection/',
-#         headers={'Authorization': f'Bearer {token}'},
-#         json=collection.model_dump(mode='json'),
-#     )
-
-#     assert response.status_code == HTTPStatus.OK
+    response = client.post(
+        '/collection/entry/',
+        headers={'Authorization': f'Bearer {token}'},
+        json=entry,
+    )
+    assert response.status_code == HTTPStatus.CREATED
+    assert collection_models.CollectionEntry(**response.json())

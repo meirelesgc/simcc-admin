@@ -24,5 +24,5 @@ class Collection(BaseModel):
 
 class CollectionEntry(BaseModel):
     collection_id: UUID
-    entrie_id: UUID
+    entry_id: UUID
     type: str

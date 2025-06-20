@@ -104,11 +104,11 @@ async def delete_collection(
     '/collection/entry/',
     status_code=HTTPStatus.CREATED,
 )
-async def post_collection_entries(
+async def post_collection_entry(
     entry: collection_models.CollectionEntry,
     current_user: user_models.User = Depends(get_current_user),
     conn: Connection = Depends(get_conn),
 ):
-    return await collection_service.post_collection_entries(
+    return await collection_service.post_collection_entry(
         conn, entry, current_user
     )

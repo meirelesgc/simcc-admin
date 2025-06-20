@@ -14,14 +14,9 @@ double interpolacao_lagrange(const std::vector<double> &valores_x, const std::ve
     for (int k = 0; k < n_pontos; ++k)
     {
         double L_k = 1.0;
-
         for (int j = 0; j < n_pontos; ++j)
-        {
             if (j != k)
-            {
                 L_k *= (x_interpolar - valores_x[j]) / (valores_x[k] - valores_x[j]);
-            }
-        }
 
         double termo_completo = valores_f_x[k] * L_k;
         resultado_polinomio += termo_completo;
@@ -36,7 +31,6 @@ double interpolacao_lagrange(const std::vector<double> &valores_x, const std::ve
 
     std::cout << "+------------------------------------------------------------------+\n"
               << std::endl;
-
     return resultado_polinomio;
 }
 

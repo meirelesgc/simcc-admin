@@ -79,10 +79,10 @@ async def get_public_collections(conn: Connection, user_id: UUID):
     return await conn.select(SCRIPT_SQL, params)
 
 
-async def post_collection_entries(conn, entry):
+async def post_collection_entry(conn, entry):
     params = entry.model_dump()
     SCRIPT_SQL = """
-        INSERT INTO feature.collection_entries (collection_id, entrie_id, type)
-        VALUES (%(collection_id)s, %(entrie_id)s, %(type)s)
+        INSERT INTO feature.collection_entries (collection_id, entry_id, type)
+        VALUES (%(collection_id)s, %(entry_id)s, %(type)s)
         """
     return await conn.exec(SCRIPT_SQL, params)
