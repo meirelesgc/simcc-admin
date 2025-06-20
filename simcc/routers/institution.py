@@ -12,7 +12,10 @@ from simcc.services import institution_service
 router = APIRouter()
 
 
-# @router.post('/InstitutionRest/Insert')
+@router.post(
+    '/InstitutionRest/Insert',
+    deprecated=True,
+)
 @router.post(
     '/institution/',
     response_model=institution_model.Institution | list,
@@ -53,6 +56,10 @@ async def get_institution(
     return institution
 
 
+@router.post(
+    '/InstitutionRest/Update',
+    deprecated=True,
+)
 @router.put(
     '/institution/',
     response_model=institution_model.Institution,
@@ -74,6 +81,10 @@ async def put_institution(
     return institution
 
 
+@router.post(
+    '/InstitutionRest/Delete',
+    deprecated=True,
+)
 @router.delete(
     '/institution/{institution_id}/',
     status_code=HTTPStatus.NO_CONTENT,
@@ -90,4 +101,3 @@ async def delete_institution(
             detail='You do not have permission to delete an institution.',
         )
     await institution_service.delete_institution(conn, institution_id)
-    return {'message': 'NO_CONTENT'}
