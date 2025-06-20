@@ -6,7 +6,7 @@ async def post_institution(institutions, conn: Connection):
         INSERT INTO public.institution (institution_id, name, acronym,
             created_at)
         VALUES (%(institution_id)s, %(name)s, %(acronym)s, %(created_at)s)
-    """
+        """
     params = [i.model_dump(mode='json') for i in institutions]
     return await conn.executemany(SCRIPT_SQL, params)
 

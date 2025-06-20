@@ -1,8 +1,7 @@
 from http import HTTPStatus
-from typing import Union
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException
 
 from simcc.core.connection import Connection
 from simcc.core.database import get_conn
@@ -13,20 +12,15 @@ from simcc.services import institution_service
 router = APIRouter()
 
 
+# @router.post('/InstitutionRest/Insert')
 @router.post(
     '/institution/',
-    response_model=Union[
-        institution_model.Institution,
-        list[institution_model.Institution],
-    ],
+    response_model=institution_model.Institution | list,
     status_code=HTTPStatus.CREATED,
     summary='Create a new institution',
 )
 async def post_institution(
-    institution: Union[
-        institution_model.CreateInstitution,
-        list[institution_model.CreateInstitution],
-    ],
+    institution: institution_model.CreateInstitution | list = Body(...),
     conn: Connection = Depends(get_conn),
     current_user: user_models.User = Depends(get_current_user),
 ):

@@ -16,7 +16,7 @@ ORCID_CLIENT_ID = Settings().ORCID_CLIENT_ID
 ORCID_REDIRECT_URI = Settings().ORCID_REDIRECT_URI
 ORCID_OAUTH_URL = 'https://orcid.org/oauth/authorize'
 
-router = APIRouter(prefix='/auth')
+router = APIRouter()
 
 
 @router.post('/token', response_model=user_models.Token)
@@ -27,7 +27,7 @@ async def login_for_access_token(
     return await user_service.login_for_access_token(conn, form_data)
 
 
-@router.get('/orcid/login')
+@router.get('/auth/orcid/login')
 async def orcid_login():
     params = {
         'client_id': ORCID_CLIENT_ID,
@@ -39,7 +39,7 @@ async def orcid_login():
     return RedirectResponse(url=auth_url)
 
 
-@router.get('/orcid/callback', response_model=user_models.Token)
+@router.get('/auth/orcid/callback', response_model=user_models.Token)
 async def orcid_callback(code: str, conn: Connection = Depends(get_conn)):
     orcid_claims = await validate_orcid_code(code)
     user = await user_service.get_or_create_user_by_orcid(conn, orcid_claims)
@@ -47,7 +47,7 @@ async def orcid_callback(code: str, conn: Connection = Depends(get_conn)):
     return {'access_token': app_token, 'token_type': 'bearer'}
 
 
-@router.get('/shibboleth/login', response_model=user_models.Token)
+@router.get('/auth/shibboleth/login', response_model=user_models.Token)
 async def shibboleth_login(
     request: Request, conn: Connection = Depends(get_conn)
 ):

@@ -91,7 +91,7 @@ def create_admin_user(conn):
 def get_token(client):
     def _get_token(user):
         data = {'username': user.email, 'password': user.password}
-        response = client.post('/auth/token/', data=data)
+        response = client.post('/token', data=data)
         return response.json()['access_token']
 
     return _get_token

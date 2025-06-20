@@ -7,7 +7,7 @@ import pytest
 async def test_get_token(client, create_user):
     user = await create_user()
     data = {'username': user.email, 'password': user.password}
-    response = client.post('/auth/token/', data=data)
+    response = client.post('/token', data=data)
     token = response.json()
     assert response.status_code == HTTPStatus.OK
     assert 'access_token' in token

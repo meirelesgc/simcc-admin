@@ -8,8 +8,8 @@ from simcc.repositories import institution_repository
 async def post_institution(institution, conn: Connection):
     ONE = 1
     if not isinstance(institution, list):
-        institution = [institution]
-    institution = [institution_model.Institution(**i.model_dump()) for i in institution]  # fmt: skip # noqa: E501
+        institution = [institution.model_dump()]
+    institution = [institution_model.Institution(**i) for i in institution]
     await institution_repository.post_institution(institution, conn)
     if len(institution) == ONE:
         return institution[0]
