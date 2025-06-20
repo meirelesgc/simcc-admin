@@ -115,3 +115,26 @@ async def get_or_create_user_by_shibboleth(
 
     created_user = await post_user(conn, user)
     return created_user
+
+
+async def get_or_create_user_by_google(conn: Connection, google_payload: dict):
+    email = google_payload.get('email')
+
+    SCRIPT_SQL = """
+        SELECT id, orcid_id, username, email, password, role, created_at,
+            updated_at, deleted_at
+        FROM users WHERE email = %(email)s
+        """
+    user = await conn.select(SCRIPT_SQL, {'email': email}, True)
+
+    if user:
+        return user_models.User(**user)
+
+    user = user_models.CreateUser(
+        email=google_payload.get('email'),
+        username=google_payload.get('name', email).strip(),
+        password='google-user-no-local-password',
+    )
+
+    created_user = await post_user(conn, user)
+    return created_user

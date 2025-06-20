@@ -9,12 +9,20 @@ from simcc.config import Settings
 from simcc.core.connection import Connection
 from simcc.core.database import get_conn
 from simcc.models import user_models
-from simcc.security import create_access_token, validate_orcid_code
+from simcc.security import (
+    create_access_token,
+    validate_google_token,
+    validate_orcid_code,
+)
 from simcc.services import user_service
 
 ORCID_CLIENT_ID = Settings().ORCID_CLIENT_ID
 ORCID_REDIRECT_URI = Settings().ORCID_REDIRECT_URI
 ORCID_OAUTH_URL = 'https://orcid.org/oauth/authorize'
+
+GOOGLE_CLIENT_ID = Settings().GOOGLE_CLIENT_ID
+GOOGLE_REDIRECT_URI = Settings().GOOGLE_REDIRECT_URI
+GOOGLE_OAUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth'
 
 router = APIRouter()
 
@@ -70,3 +78,25 @@ async def shibboleth_login(
     )
     app_token = create_access_token(data={'sub': user.email})
     return {'access_token': app_token, 'token_type': 'bearer'}
+
+
+@router.get('/auth/google/login')
+async def google_login():
+    params = {
+        'client_id': GOOGLE_CLIENT_ID,
+        'redirect_uri': GOOGLE_REDIRECT_URI,
+        'response_type': 'code',
+        'scope': 'openid email profile',
+    }
+    auth_url = f'{GOOGLE_OAUTH_URL}?{"&".join([f"{k}={v}" for k, v in params.items()])}'  # noqa: E501
+    return RedirectResponse(url=auth_url)
+
+
+@router.get('/auth/google/callback', response_model=user_models.Token)
+async def google_callback(code: str, conn: Connection = Depends(get_conn)):
+    google_payload = await validate_google_token(code=code)
+    user = await user_service.get_or_create_user_by_google(
+        conn=conn, google_payload=google_payload
+    )
+    access_token = create_access_token(data={'sub': user.email})
+    return {'access_token': access_token, 'token_type': 'bearer'}

@@ -6,6 +6,8 @@ from zoneinfo import ZoneInfo
 import httpx
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
+from google.auth.transport import requests as google_requests
+from google.oauth2 import id_token
 from jose import JWTError
 from jose import jwt as jwtJose
 from jwt import DecodeError, ExpiredSignatureError, decode, encode
@@ -24,6 +26,8 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl='token')
 
 ORCID_TOKEN_URL = 'https://orcid.org/oauth/token'
 ORCID_JWKS_URL = 'https://orcid.org/oauth/jwks'
+
+GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token'
 
 
 async def get_current_user(
@@ -103,7 +107,6 @@ async def validate_orcid_code(code: str) -> dict:
         token_response = await client.post(
             ORCID_TOKEN_URL,
             data=token_request_payload,
-            headers={'Accept': 'application/json'},
         )
         if token_response.status_code != HTTPStatus.OK:
             raise HTTPException(
@@ -111,9 +114,9 @@ async def validate_orcid_code(code: str) -> dict:
                 detail='Falha ao trocar o código de autorização com o ORCID.',
             )
 
-        response_data = token_response.json()
-        id_token = response_data.get('id_token')
-        access_token = response_data.get('access_token')
+        token_data = token_response.json()
+        id_token = token_data.get('id_token')
+        access_token = token_data.get('access_token')
 
         if not id_token or not access_token:
             raise HTTPException(
@@ -146,6 +149,53 @@ async def validate_orcid_code(code: str) -> dict:
             detail=f'Erro na validação do token ORCID: {e}',
         )
     except Exception as e:
+        raise HTTPException(
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+            detail=f'Erro inesperado no processamento do token: {e}',
+        )
+
+
+async def validate_google_token(code: str) -> dict:
+    token_request_payload = {
+        'code': code,
+        'client_id': Settings().GOOGLE_CLIENT_ID,
+        'client_secret': Settings().GOOGLE_CLIENT_SECRET,
+        'redirect_uri': Settings().GOOGLE_REDIRECT_URI,
+        'grant_type': 'authorization_code',
+    }
+
+    try:
+        async with httpx.AsyncClient() as client:
+            token_response = await client.post(
+                GOOGLE_TOKEN_URL,
+                data=token_request_payload,
+            )
+            if token_response.status_code != HTTPStatus.OK:
+                raise HTTPException(
+                    status_code=HTTPStatus.BAD_REQUEST,
+                    detail='Falha ao trocar o código de autorização com o GOOGLE.',
+                )
+            token_data = token_response.json()
+
+        id_token_str = token_data.get('id_token')
+        if not id_token_str:
+            raise HTTPException(
+                status_code=HTTPStatus.BAD_REQUEST,
+                detail='Token de ID ou de Acesso não encontrado na resposta do GOOGLE.',  # noqa: E501
+            )
+
+        request = google_requests.Request()
+        id_info = id_token.verify_oauth2_token(
+            id_token_str, request, Settings().GOOGLE_CLIENT_ID
+        )
+        return id_info
+
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail=f'Erro na validação do token GOOGLE: {e}',
+        )
+    except ValueError as e:
         raise HTTPException(
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
             detail=f'Erro inesperado no processamento do token: {e}',
