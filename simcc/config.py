@@ -15,6 +15,10 @@ class Settings(BaseSettings):
     ORCID_REDIRECT_URI: Optional[str] = None
     ORCID_CLIENT_SECRET: Optional[str] = None
 
+    GOOGLE_CLIENT_ID: Optional[str] = None
+    GOOGLE_CLIENT_SECRET: Optional[str] = None
+    GOOGLE_REDIRECT_URI: Optional[str] = None
+
     PROXY_URL: HttpUrl = 'http://localhost:9090'
 
     class Config:
