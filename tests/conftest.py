@@ -6,8 +6,8 @@ from testcontainers.postgres import PostgresContainer
 from simcc.app import app
 from simcc.core.connection import Connection
 from simcc.core.database import get_conn
-from simcc.services import user_service
-from tests.factories import user_factory
+from simcc.services import institution_service, user_service
+from tests.factories import institution_factory, user_factory
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -45,6 +45,18 @@ def client(conn):
     app.dependency_overrides[get_conn] = get_conn_override
 
     return TestClient(app)
+
+
+@pytest.fixture
+def create_institution(conn):
+    async def _create_institution(**kwargs):
+        institution = institution_factory.CreateInstitutionFactory(**kwargs)
+        institution = await institution_service.post_institution(
+            institution, conn
+        )
+        return institution
+
+    return _create_institution
 
 
 @pytest.fixture

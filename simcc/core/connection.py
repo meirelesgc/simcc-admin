@@ -28,6 +28,17 @@ class Connection:
                 f'Error executing query: {query}\n{params}\n{e}'
             )
 
+    async def executemany(self, query: str, params: dict | None = None) -> int:
+        try:
+            async with self.pool.connection() as conn:
+                async with conn.cursor() as cur:
+                    await cur.executemany(query, params)
+                    return cur.rowcount
+        except Exception as e:
+            raise RuntimeError(
+                f'Error executing query: {query}\n{params}\n{e}'
+            )
+
     async def select(
         self, query: str, params: dict | None = None, one: bool = False
     ):

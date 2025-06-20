@@ -1,0 +1,99 @@
+from http import HTTPStatus
+from typing import Union
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, HTTPException
+
+from simcc.core.connection import Connection
+from simcc.core.database import get_conn
+from simcc.models import institution_model, user_models
+from simcc.security import get_current_user
+from simcc.services import institution_service
+
+router = APIRouter()
+
+
+@router.post(
+    '/institution/',
+    response_model=Union[
+        institution_model.Institution,
+        list[institution_model.Institution],
+    ],
+    status_code=HTTPStatus.CREATED,
+    summary='Create a new institution',
+)
+async def post_institution(
+    institution: Union[
+        institution_model.CreateInstitution,
+        list[institution_model.CreateInstitution],
+    ],
+    conn: Connection = Depends(get_conn),
+    current_user: user_models.User = Depends(get_current_user),
+):
+    if current_user.role != 'ADMIN':
+        raise HTTPException(
+            status_code=HTTPStatus.FORBIDDEN,
+            detail='You do not have permission to create an institution.',
+        )
+    return await institution_service.post_institution(institution, conn)
+
+
+@router.get(
+    '/institution/{institution_id}/',
+    response_model=institution_model.Institution,
+    status_code=HTTPStatus.OK,
+    summary='Get an institution by ID',
+)
+async def get_institution(
+    institution_id: UUID,
+    conn: Connection = Depends(get_conn),
+):
+    institution = await institution_service.get_institution(
+        conn, institution_id
+    )
+    if institution is None:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail=f'Institution with ID {institution_id} not found.',
+        )
+    return institution
+
+
+@router.put(
+    '/institution/',
+    response_model=institution_model.Institution,
+    status_code=HTTPStatus.OK,
+    summary='Update an existing institution',
+)
+async def put_institution(
+    institution: institution_model.Institution,
+    conn: Connection = Depends(get_conn),
+    current_user: user_models.User = Depends(get_current_user),
+):
+    if current_user.role != 'ADMIN':
+        raise HTTPException(
+            status_code=HTTPStatus.FORBIDDEN,
+            detail='You do not have permission to update an institution.',
+        )
+
+    institution = await institution_service.put_institution(conn, institution)
+    return institution
+
+
+@router.delete(
+    '/institution/{institution_id}/',
+    status_code=HTTPStatus.NO_CONTENT,
+    summary='Delete an institution by ID',
+)
+async def delete_institution(
+    institution_id: UUID,
+    conn: Connection = Depends(get_conn),
+    current_user: user_models.User = Depends(get_current_user),
+):
+    if current_user.role != 'ADMIN':
+        raise HTTPException(
+            status_code=HTTPStatus.FORBIDDEN,
+            detail='You do not have permission to delete an institution.',
+        )
+    await institution_service.delete_institution(conn, institution_id)
+    return {'message': 'NO_CONTENT'}

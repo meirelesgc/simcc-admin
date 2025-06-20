@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from simcc.core.database import conn
-from simcc.routers import auth, users
+from simcc.routers import auth, institution, users
 
 
 @asynccontextmanager
@@ -17,6 +17,7 @@ app = FastAPI(lifespan=lifespan, docs_url='/swagger')
 
 app.include_router(auth.router, tags=['Authentication'])
 app.include_router(users.router, tags=['Users'])
+app.include_router(institution.router, tags=['Institution'])
 
 
 @app.get('/')
