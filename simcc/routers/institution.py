@@ -35,9 +35,13 @@ async def post_institution(
     return await institution_service.post_institution(institution, conn)
 
 
+@router.put(
+    '/Query/Count',
+    deprecated=True,
+)
 @router.get(
     '/institution/{institution_id}/',
-    response_model=institution_model.Institution,
+    response_model=institution_model.InstitutionStats,
     status_code=HTTPStatus.OK,
     summary='Get an institution by ID',
 )
@@ -56,7 +60,7 @@ async def get_institution(
     return institution
 
 
-@router.post(
+@router.put(
     '/InstitutionRest/Update',
     deprecated=True,
 )
