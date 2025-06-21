@@ -68,7 +68,60 @@ async def delete_collection(
     await collection_repositoy.delete_collection(conn, collection_id)
 
 
-async def post_collection_entry(conn, entry, current_user):
-    if await get_collection_by_id(conn, entry.collection_id, current_user):
-        await delete_collection(conn, entry.collection_id, current_user)
-    return await collection_repositoy.post_collection_entry(conn, entry)
+async def post_entries(
+    conn: Connection,
+    collection_id: UUID,
+    entry: collection_models.CreateCollectionEntry,
+    user: user_models.User,
+):
+    owner_collection = await collection_repositoy.get_collection_by_id(
+        conn, collection_id, user
+    )
+    if not owner_collection:
+        raise HTTPException(
+            status_code=HTTPStatus.FORBIDDEN,
+            detail='Collection not found or permission denied',
+        )
+
+    entry = collection_models.CollectionEntry(
+        collection_id=collection_id, **entry.model_dump()
+    )
+    await collection_repositoy.post_entries(conn, entry)
+    return entry
+
+
+async def get_entries(
+    conn: Connection, collection_id: UUID, user: user_models.User
+) -> list[collection_models.CollectionEntry] | None:
+    collection = await collection_repositoy.get_any_collection_by_id(
+        conn, collection_id
+    )
+
+    if not collection:
+        return None
+    if not collection['visible']:
+        if collection['user_id'] != user.id:
+            return None
+
+    return await collection_repositoy.get_entries_by_collection_id(
+        conn, collection_id
+    )
+
+
+async def delete_entries(
+    conn: Connection,
+    collection_id: UUID,
+    entry_id: UUID,
+    user: user_models.User,
+) -> bool:
+    owner_collection = await collection_repositoy.get_collection_by_id(
+        conn, collection_id, user
+    )
+    if not owner_collection:
+        return False
+
+    deleted_rows = await collection_repositoy.delete_entries(
+        conn, collection_id, entry_id
+    )
+
+    return deleted_rows > 0

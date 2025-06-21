@@ -22,6 +22,11 @@ class Collection(BaseModel):
     deleted_at: Optional[datetime] = None
 
 
+class CreateCollectionEntry(BaseModel):
+    entry_id: UUID
+    type: str
+
+
 class CollectionEntry(BaseModel):
     collection_id: UUID
     entry_id: UUID

@@ -68,7 +68,7 @@ async def shibboleth_login(
     if not eppn:
         raise HTTPException(
             status_code=HTTPStatus.UNAUTHORIZED,
-            detail='Atributo de identificação (eppn) não fornecido pelo Provedor de Identidade. Acesso negado.',
+            detail='Atributo de identificação (eppn) não fornecido pelo Provedor de Identidade. Acesso negado.',  # noqa: E501
         )
 
     shib_user_data = {

@@ -101,14 +101,66 @@ async def delete_collection(
 
 
 @router.post(
-    '/collection/entry/',
+    '/collection/{collection_id}/entries/',
     status_code=HTTPStatus.CREATED,
+    response_model=collection_models.CollectionEntry,
+    summary='Adiciona uma entrada a uma coleção',
 )
-async def post_collection_entry(
-    entry: collection_models.CollectionEntry,
+async def post_entries(
+    collection_id: UUID,
+    entry: collection_models.CreateCollectionEntry,
     current_user: user_models.User = Depends(get_current_user),
     conn: Connection = Depends(get_conn),
 ):
-    return await collection_service.post_collection_entry(
-        conn, entry, current_user
+    return await collection_service.post_entries(
+        conn,
+        collection_id=collection_id,
+        entry=entry,
+        user=current_user,
     )
+
+
+@router.get(
+    '/collection/{collection_id}/entries/',
+    status_code=HTTPStatus.OK,
+    response_model=list[collection_models.CollectionEntry],
+    summary='Lista todas as entradas de uma coleção',
+)
+async def get_entries(
+    collection_id: UUID,
+    conn: Connection = Depends(get_conn),
+    current_user: user_models.User = Depends(get_current_user),
+):
+    entries = await collection_service.get_entries(
+        conn, collection_id, current_user
+    )
+    if not entries:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail='Collection not found or permission denied',
+        )
+    return entries
+
+
+@router.delete(
+    '/collection/{collection_id}/entries/{entry_id}/',
+    status_code=HTTPStatus.NO_CONTENT,
+    summary='Remove uma entrada de uma coleção',
+)
+async def delete_entries(
+    collection_id: UUID,
+    entry_id: UUID,
+    current_user: user_models.User = Depends(get_current_user),
+    conn: Connection = Depends(get_conn),
+):
+    success = await collection_service.delete_entries(
+        conn,
+        collection_id=collection_id,
+        entry_id=entry_id,
+        user=current_user,
+    )
+    if not success:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail='Entry or collection not found, or permission denied',
+        )

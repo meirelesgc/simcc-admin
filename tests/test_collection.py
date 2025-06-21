@@ -56,9 +56,24 @@ async def test_get_collection_by_id(
 
 
 @pytest.mark.asyncio
-async def test_get_public_collections(client, create_user, create_collection):
+async def test_get_public_collections(
+    client, create_user, create_collection, get_token
+):
     user = await create_user()
-    await create_collection(user)
+    token = get_token(user)
+    collection = await create_collection(user)
+
+    response = client.get(f'/collection/public/{user.id}/')
+    assert response.status_code == HTTPStatus.OK
+    assert len(response.json()) == 0
+
+    collection.visible = True
+
+    response = client.put(
+        '/collection/',
+        headers={'Authorization': f'Bearer {token}'},
+        json=collection.model_dump(mode='json'),
+    )
 
     response = client.get(f'/collection/public/{user.id}/')
     assert response.status_code == HTTPStatus.OK
@@ -130,23 +145,152 @@ async def test_update_collection(
 
 
 @pytest.mark.asyncio
-async def test_post_collection_entry(
+async def test_post_entry_to_collection(
     client, create_user, get_token, create_collection
 ):
-    user = await create_user()
-    token = get_token(user)
-    collection = await create_collection(user=user)
-
-    entry = {
-        'collection_id': str(collection.collection_id),
-        'entry_id': str(uuid4()),
-        'type': 'XPTO',
-    }
+    owner = await create_user()
+    token = get_token(owner)
+    collection = await create_collection(user=owner)
+    entry_data = collection_factory.CreateCollectionEntryFactory()
 
     response = client.post(
-        '/collection/entry/',
+        f'/collection/{collection.collection_id}/entries/',
         headers={'Authorization': f'Bearer {token}'},
-        json=entry,
+        json=entry_data.model_dump(mode='json'),
     )
+
     assert response.status_code == HTTPStatus.CREATED
-    assert collection_models.CollectionEntry(**response.json())
+    response_data = response.json()
+    assert response_data['entry_id'] == str(entry_data.entry_id)
+    assert response_data['collection_id'] == str(collection.collection_id)
+    assert response_data['type'] == entry_data.type
+
+
+@pytest.mark.asyncio
+async def test_get_entries_from_collection(
+    client,
+    create_user,
+    get_token,
+    create_collection,
+    create_entry_in_collection,
+):
+    AMONG = 3
+    owner = await create_user()
+    token = get_token(owner)
+    collection = await create_collection(user=owner)
+    for _ in range(AMONG):
+        await create_entry_in_collection(collection, owner)
+
+    response = client.get(
+        f'/collection/{collection.collection_id}/entries/',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert len(response.json()) == AMONG
+
+
+@pytest.mark.asyncio
+async def test_delete_entry_from_collection(
+    client,
+    create_user,
+    get_token,
+    create_collection,
+    create_entry_in_collection,
+):
+    owner = await create_user()
+    token = get_token(owner)
+    collection = await create_collection(user=owner)
+    entry = await create_entry_in_collection(collection, owner)
+
+    delete_response = client.delete(
+        f'/collection/{collection.collection_id}/entries/{entry.entry_id}/',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert delete_response.status_code == HTTPStatus.NO_CONTENT
+
+    response = client.get(
+        f'/collection/{collection.collection_id}/entries/',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+    assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+@pytest.mark.asyncio
+async def test_post_entry_permission_denied(
+    client, create_user, get_token, create_collection
+):
+    owner = await create_user(username='dono')
+    attacker = await create_user(username='atacante')
+    token_attacker = get_token(attacker)
+    collection = await create_collection(user=owner)
+    entry_data = collection_factory.CreateCollectionEntryFactory()
+
+    response = client.post(
+        f'/collection/{collection.collection_id}/entries/',
+        headers={'Authorization': f'Bearer {token_attacker}'},
+        json=entry_data.model_dump(mode='json'),
+    )
+
+    assert response.status_code == HTTPStatus.FORBIDDEN
+
+
+@pytest.mark.asyncio
+async def test_get_entries_permission_logic(
+    client,
+    create_user,
+    get_token,
+    create_collection,
+    create_entry_in_collection,
+):
+    owner = await create_user(username='dono')
+    viewer = await create_user(username='visitante')
+    token_viewer = get_token(viewer)
+
+    private_collection = await create_collection(user=owner)
+    await create_entry_in_collection(private_collection, owner)
+
+    response_private = client.get(
+        f'/collection/{private_collection.collection_id}/entries/',
+        headers={'Authorization': f'Bearer {token_viewer}'},
+    )
+
+    assert response_private.status_code == HTTPStatus.NOT_FOUND
+
+    public_collection = await create_collection(user=owner)
+    public_collection.visible = True
+    client.put(
+        '/collection/',
+        headers={'Authorization': f'Bearer {get_token(owner)}'},
+        json=public_collection.model_dump(mode='json'),
+    )
+    await create_entry_in_collection(public_collection, owner)
+    response_public = client.get(
+        f'/collection/{public_collection.collection_id}/entries/',
+        headers={'Authorization': f'Bearer {token_viewer}'},
+    )
+    assert response_public.status_code == HTTPStatus.OK
+    assert len(response_public.json()) == 1
+
+
+@pytest.mark.asyncio
+async def test_delete_entry_permission_denied(
+    client,
+    create_user,
+    get_token,
+    create_collection,
+    create_entry_in_collection,
+):
+    owner = await create_user(username='dono')
+    attacker = await create_user(username='atacante')
+    token_attacker = get_token(attacker)
+    collection = await create_collection(user=owner)
+    entry = await create_entry_in_collection(collection, owner)
+
+    response = client.delete(
+        f'/collection/{collection.collection_id}/entries/{entry.entry_id}/',
+        headers={'Authorization': f'Bearer {token_attacker}'},
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND

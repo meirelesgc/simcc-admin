@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 import pytest
 import pytest_asyncio
 from fastapi.testclient import TestClient
@@ -6,6 +8,7 @@ from testcontainers.postgres import PostgresContainer
 from simcc.app import app
 from simcc.core.connection import Connection
 from simcc.core.database import get_conn
+from simcc.models.features import collection_models
 from simcc.services import institution_service, user_service
 from simcc.services.features import collection_service
 from tests.factories import institution_factory, user_factory
@@ -109,3 +112,20 @@ def create_collection(conn):
         )
 
     return _create
+
+
+@pytest.fixture
+def create_entry_in_collection(client, get_token):
+    async def _create_entry(collection, user):
+        token = get_token(user)
+        entry_data = collection_factory.CreateCollectionEntryFactory()
+        entry_data = entry_data.model_dump(mode='json')
+        response = client.post(
+            f'/collection/{collection.collection_id}/entries/',
+            headers={'Authorization': f'Bearer {token}'},
+            json=entry_data,
+        )
+        assert response.status_code == HTTPStatus.CREATED
+        return collection_models.CollectionEntry(**response.json())
+
+    return _create_entry

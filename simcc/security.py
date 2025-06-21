@@ -173,7 +173,7 @@ async def validate_google_token(code: str) -> dict:
             if token_response.status_code != HTTPStatus.OK:
                 raise HTTPException(
                     status_code=HTTPStatus.BAD_REQUEST,
-                    detail='Falha ao trocar o código de autorização com o GOOGLE.',
+                    detail='Falha ao trocar o código de autorização com o GOOGLE.',  # noqa: E501
                 )
             token_data = token_response.json()
 
