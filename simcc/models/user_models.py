@@ -17,7 +17,7 @@ class CreateUser(BaseModel):
 
 
 class User(BaseModel):
-    id: UUID = Field(default_factory=uuid4)
+    user_id: UUID = Field(default_factory=uuid4)
     username: str
     email: EmailStr
     role: Literal['ADMIN', 'DEFAULT']
@@ -27,7 +27,7 @@ class User(BaseModel):
 
 
 class UserResponse(BaseModel):
-    id: UUID
+    user_id: UUID
     username: str
     email: EmailStr
     role: Literal['ADMIN', 'DEFAULT']

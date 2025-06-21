@@ -11,7 +11,7 @@ async def post_collection(
     current_user: user_models.User,
 ):
     params = collection.model_dump()
-    params['user_id'] = current_user.id
+    params['user_id'] = current_user.user_id
     SCRIPT_SQL = """
         INSERT INTO feature.collection (collection_id, user_id, name,
             description, visible)
@@ -22,7 +22,7 @@ async def post_collection(
 
 
 async def get_collection(conn: Connection, current_user: user_models.User):
-    params = {'user_id': current_user.id}
+    params = {'user_id': current_user.user_id}
     SCRIPT_SQL = """
         SELECT collection_id, name, description, visible
         FROM feature.collection
@@ -34,7 +34,7 @@ async def get_collection(conn: Connection, current_user: user_models.User):
 async def get_collection_by_id(
     conn: Connection, collection_id: UUID, current_user: user_models.User
 ):
-    params = {'collection_id': collection_id, 'user_id': current_user.id}
+    params = {'collection_id': collection_id, 'user_id': current_user.user_id}
     SCRIPT_SQL = """
         SELECT collection_id, name, description, visible
         FROM feature.collection

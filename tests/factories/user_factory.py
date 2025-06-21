@@ -19,7 +19,7 @@ class UserFactory(factory.Factory):
     class Meta:
         model = user_models.User
 
-    id = factory.LazyFunction(uuid.uuid4)
+    user_id = factory.LazyFunction(uuid.uuid4)
     username = factory.Faker('user_name')
     email = factory.Faker('email')
     role = 'DEFAULT'

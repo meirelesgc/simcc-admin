@@ -55,7 +55,7 @@ async def put_user(
     forbidden_exception = HTTPException(
         status_code=HTTPStatus.FORBIDDEN, detail='Not enough permissions'
     )
-    if current_user.id != user.id and current_user.role != 'ADMIN':
+    if current_user.user_id != user.user_id and current_user.role != 'ADMIN':
         raise forbidden_exception
     if current_user.role == 'DEFAULT' and user.role == 'ADMIN':
         raise forbidden_exception

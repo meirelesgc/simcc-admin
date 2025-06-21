@@ -47,7 +47,7 @@ async def test_get_two_users(client, create_user):
 @pytest.mark.asyncio
 async def test_get_single_user(client, create_user):
     user = await create_user()
-    response = client.get(f'/user/{user.id}/')
+    response = client.get(f'/user/{user.user_id}/')
     assert response.status_code == HTTPStatus.OK
     assert user_models.UserResponse(**response.json())
 
@@ -132,7 +132,7 @@ async def test_put_user_by_default_user_to_admin_role(
 async def test_delete_user(client, create_user, get_token):
     user = await create_user()
     response = client.delete(
-        f'/user/{user.id}/',
+        f'/user/{user.user_id}/',
         headers={'Authorization': f'Bearer {get_token(user)}'},
     )
     assert response.status_code == HTTPStatus.NO_CONTENT

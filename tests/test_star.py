@@ -24,7 +24,7 @@ async def test_post_star(client, create_user, get_token):
 
     response_data = response.json()
     assert star_models.Star(**response_data)
-    assert response_data['user_id'] == str(user.id)
+    assert response_data['user_id'] == str(user.user_id)
     assert response_data['entry_id'] == str(star_payload.entry_id)
 
 
@@ -40,6 +40,7 @@ async def test_post_star_not_authenticated(client):
 
 @pytest.mark.asyncio
 async def test_get_stars(client, create_user, create_star, get_token):
+    AMONG = 2
     user = await create_user()
     token = get_token(user)
 
@@ -57,9 +58,9 @@ async def test_get_stars(client, create_user, create_star, get_token):
     assert response.status_code == HTTPStatus.OK
 
     response_data = response.json()
-    assert len(response_data) == 2
+    assert len(response_data) == AMONG
     for star in response_data:
-        assert star['user_id'] == str(user.id)
+        assert star['user_id'] == str(user.user_id)
 
 
 @pytest.mark.asyncio

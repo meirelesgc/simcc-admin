@@ -63,7 +63,7 @@ async def test_get_public_collections(
     token = get_token(user)
     collection = await create_collection(user)
 
-    response = client.get(f'/collection/public/{user.id}/')
+    response = client.get(f'/collection/public/{user.user_id}/')
     assert response.status_code == HTTPStatus.OK
     assert len(response.json()) == 0
 
@@ -75,7 +75,7 @@ async def test_get_public_collections(
         json=collection.model_dump(mode='json'),
     )
 
-    response = client.get(f'/collection/public/{user.id}/')
+    response = client.get(f'/collection/public/{user.user_id}/')
     assert response.status_code == HTTPStatus.OK
     assert len(response.json()) == 1
 

@@ -1,6 +1,8 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+# from http import HTTPStatus
+# import httpx
+from fastapi import FastAPI  # , Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from simcc.config import Settings

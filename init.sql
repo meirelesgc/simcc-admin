@@ -9,7 +9,7 @@ CREATE EXTENSION IF NOT EXISTS unaccent;
 CREATE TYPE role_type AS ENUM ('ADMIN', 'DEFAULT');
 
 CREATE TABLE IF NOT EXISTS users (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     orcid_id CHAR(20),
     username VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
@@ -215,7 +215,7 @@ CREATE TABLE IF NOT EXISTS feature.collection (
     updated_at TIMESTAMP DEFAULT NOW(),
     deleted_at TIMESTAMP,
 
-    FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE ON UPDATE CASCADE
+    FOREIGN KEY (user_id) REFERENCES public.users(user_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS feature.collection_entries(
@@ -229,7 +229,7 @@ CREATE TABLE IF NOT EXISTS feature.stars(
     user_id UUID NOT NULL,
     entry_id UUID NOT NULL,
     type VARCHAR(255) NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE ON UPDATE CASCADE
+    FOREIGN KEY (user_id) REFERENCES public.users(user_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 

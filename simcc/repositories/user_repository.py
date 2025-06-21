@@ -9,21 +9,25 @@ from simcc.models import user_models
 async def post_user(conn: Connection, user: user_models.User):
     params = user.model_dump()
     SCRIPT_SQL = """
-        INSERT INTO public.users (id, username, email, role, password, created_at)
-        VALUES (%(id)s, %(username)s, %(email)s, %(role)s, %(password)s, %(created_at)s);
+        INSERT INTO public.users (user_id, username, email, role, password, created_at)
+        VALUES (%(user_id)s, %(username)s, %(email)s, %(role)s, %(password)s, %(created_at)s);
         """  # noqa: E501
     return await conn.exec(SCRIPT_SQL, params)
 
 
-async def get_user(conn: Connection, id: UUID = None, email: EmailStr = None):
+async def get_user(
+    conn: Connection,
+    user_id: UUID = None,
+    email: EmailStr = None,
+):
     one = False
     params = {}
 
     filter_id = str()
-    if id:
+    if user_id:
         one = True
-        params['id'] = id
-        filter_id = 'AND id = %(id)s'
+        params['user_id'] = user_id
+        filter_id = 'AND user_id = %(user_id)s'
 
     filter_email = str()
     if email:
@@ -32,7 +36,7 @@ async def get_user(conn: Connection, id: UUID = None, email: EmailStr = None):
         filter_email = 'AND email = %(email)s'
 
     SCRIPT_SQL = f"""
-        SELECT id, username, email, role, password, created_at, updated_at
+        SELECT user_id, username, email, role, password, created_at, updated_at
         FROM public.users
         WHERE 1 = 1
             {filter_id}
@@ -49,15 +53,15 @@ async def put_user(conn: Connection, user: user_models.User):
                 email = %(email)s,
                 password = %(password)s,
                 updated_at = %(updated_at)s
-        WHERE id = %(id)s;
+        WHERE user_id = %(user_id)s;
         """
     return await conn.exec(SCRIPT_SQL, params)
 
 
-async def delete_user(conn: Connection, id: UUID):
-    params = {'id': id}
+async def delete_user(conn: Connection, user_id: UUID):
+    params = {'user_id': user_id}
     SCRIPT_SQL = """
         DELETE FROM public.users
-        WHERE id = %(id)s;
+        WHERE user_id = %(user_id)s;
         """
     await conn.exec(SCRIPT_SQL, params)

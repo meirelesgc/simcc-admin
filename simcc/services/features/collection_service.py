@@ -100,7 +100,7 @@ async def get_entries(
     if not collection:
         return None
     if not collection['visible']:
-        if collection['user_id'] != user.id:
+        if collection['user_id'] != user.user_id:
             return None
 
     return await collection_repositoy.get_entries_by_collection_id(
