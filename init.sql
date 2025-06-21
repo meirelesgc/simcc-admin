@@ -225,6 +225,13 @@ CREATE TABLE IF NOT EXISTS feature.collection_entries(
     FOREIGN KEY (collection_id) REFERENCES feature.collection(collection_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS feature.stars(
+    user_id UUID NOT NULL,
+    entry_id UUID NOT NULL,
+    type VARCHAR(255) NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
 
 CREATE SCHEMA IF NOT EXISTS ufmg;
 

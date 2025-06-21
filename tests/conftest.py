@@ -10,9 +10,9 @@ from simcc.core.connection import Connection
 from simcc.core.database import get_conn
 from simcc.models.features import collection_models
 from simcc.services import institution_service, user_service
-from simcc.services.features import collection_service
+from simcc.services.features import collection_service, star_service
 from tests.factories import institution_factory, user_factory
-from tests.factories.features import collection_factory
+from tests.factories.features import collection_factory, star_factory
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -129,3 +129,13 @@ def create_entry_in_collection(client, get_token):
         return collection_models.CollectionEntry(**response.json())
 
     return _create_entry
+
+
+@pytest.fixture
+def create_star(conn):
+    async def _create_star(user):
+        star_payload = star_factory.CreateStarFactory()
+        created_star = await star_service.post_star(conn, star_payload, user)
+        return created_star
+
+    return _create_star
