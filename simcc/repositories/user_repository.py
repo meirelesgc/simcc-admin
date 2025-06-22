@@ -3,10 +3,10 @@ from uuid import UUID
 from pydantic import EmailStr
 
 from simcc.core.connection import Connection
-from simcc.models import user_models
+from simcc.models import user_model
 
 
-async def post_user(conn: Connection, user: user_models.User):
+async def post_user(conn: Connection, user: user_model.User):
     params = user.model_dump()
     SCRIPT_SQL = """
         INSERT INTO public.users (user_id, username, email, role, password, created_at)
@@ -45,7 +45,7 @@ async def get_user(
     return await conn.select(SCRIPT_SQL, params, one)
 
 
-async def put_user(conn: Connection, user: user_models.User):
+async def put_user(conn: Connection, user: user_model.User):
     params = user.model_dump()
     SCRIPT_SQL = """
         UPDATE public.users

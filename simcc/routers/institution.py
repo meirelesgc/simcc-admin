@@ -5,7 +5,7 @@ from fastapi import APIRouter, Body, Depends, HTTPException
 
 from simcc.core.connection import Connection
 from simcc.core.database import get_conn
-from simcc.models import institution_model, user_models
+from simcc.models import institution_model, user_model
 from simcc.security import get_current_user
 from simcc.services import institution_service
 
@@ -24,7 +24,7 @@ router = APIRouter()
 async def post_institution(
     institution: institution_model.CreateInstitution | list = Body(...),
     conn: Connection = Depends(get_conn),
-    current_user: user_models.User = Depends(get_current_user),
+    current_user: user_model.User = Depends(get_current_user),
 ):
     if current_user.role != 'ADMIN':
         raise HTTPException(
@@ -68,7 +68,7 @@ async def get_institution(
 async def put_institution(
     institution: institution_model.Institution,
     conn: Connection = Depends(get_conn),
-    current_user: user_models.User = Depends(get_current_user),
+    current_user: user_model.User = Depends(get_current_user),
 ):
     if current_user.role != 'ADMIN':
         raise HTTPException(
@@ -91,7 +91,7 @@ async def put_institution(
 async def delete_institution(
     institution_id: UUID,
     conn: Connection = Depends(get_conn),
-    current_user: user_models.User = Depends(get_current_user),
+    current_user: user_model.User = Depends(get_current_user),
 ):
     if current_user.role != 'ADMIN':
         raise HTTPException(

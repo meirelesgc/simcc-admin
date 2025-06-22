@@ -8,7 +8,7 @@ from starlette.responses import RedirectResponse
 from simcc.config import Settings
 from simcc.core.connection import Connection
 from simcc.core.database import get_conn
-from simcc.models import user_models
+from simcc.models import user_model
 from simcc.security import (
     create_access_token,
     validate_google_token,
@@ -27,7 +27,7 @@ GOOGLE_OAUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth'
 router = APIRouter()
 
 
-@router.post('/token', response_model=user_models.Token)
+@router.post('/token', response_model=user_model.Token)
 async def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
     conn: Connection = Depends(get_conn),

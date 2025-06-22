@@ -5,7 +5,7 @@ from uuid import UUID
 from fastapi import HTTPException
 
 from simcc.core.connection import Connection
-from simcc.models import user_models
+from simcc.models import user_model
 from simcc.models.features import collection_models
 from simcc.repositories.features import collection_repositoy
 
@@ -13,14 +13,14 @@ from simcc.repositories.features import collection_repositoy
 async def post_collection(
     conn: Connection,
     collection: collection_models.CreateCollection,
-    current_user: user_models.User,
+    current_user: user_model.User,
 ):
     collection = collection_models.Collection(**collection.model_dump())
     await collection_repositoy.post_collection(conn, collection, current_user)
     return collection
 
 
-async def get_collection(conn: Connection, current_user: user_models.User):
+async def get_collection(conn: Connection, current_user: user_model.User):
     return await collection_repositoy.get_collection(conn, current_user)
 
 
@@ -29,7 +29,7 @@ async def get_public_collections(conn: Connection, user_id: UUID):
 
 
 async def get_collection_by_id(
-    conn: Connection, collection_id: UUID, current_user: user_models.User
+    conn: Connection, collection_id: UUID, current_user: user_model.User
 ):
     collection = await collection_repositoy.get_collection_by_id(
         conn, collection_id, current_user
@@ -41,7 +41,7 @@ async def get_collection_by_id(
 async def update_collection(
     conn: Connection,
     collection: collection_models.Collection,
-    current_user: user_models.User,
+    current_user: user_model.User,
 ):
     existing = await collection_repositoy.get_collection_by_id(
         conn, collection.collection_id, current_user
@@ -56,7 +56,7 @@ async def update_collection(
 
 
 async def delete_collection(
-    conn: Connection, collection_id: UUID, current_user: user_models.User
+    conn: Connection, collection_id: UUID, current_user: user_model.User
 ):
     existing = await collection_repositoy.get_collection_by_id(
         conn, collection_id, current_user
@@ -72,7 +72,7 @@ async def post_entries(
     conn: Connection,
     collection_id: UUID,
     entry: collection_models.CreateCollectionEntry,
-    user: user_models.User,
+    user: user_model.User,
 ):
     owner_collection = await collection_repositoy.get_collection_by_id(
         conn, collection_id, user
@@ -91,7 +91,7 @@ async def post_entries(
 
 
 async def get_entries(
-    conn: Connection, collection_id: UUID, user: user_models.User
+    conn: Connection, collection_id: UUID, user: user_model.User
 ) -> list[collection_models.CollectionEntry] | None:
     collection = await collection_repositoy.get_any_collection_by_id(
         conn, collection_id
@@ -112,7 +112,7 @@ async def delete_entries(
     conn: Connection,
     collection_id: UUID,
     entry_id: UUID,
-    user: user_models.User,
+    user: user_model.User,
 ) -> bool:
     owner_collection = await collection_repositoy.get_collection_by_id(
         conn, collection_id, user

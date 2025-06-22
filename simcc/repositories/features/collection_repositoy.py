@@ -1,14 +1,14 @@
 from uuid import UUID
 
 from simcc.core.connection import Connection
-from simcc.models import user_models
+from simcc.models import user_model
 from simcc.models.features import collection_models
 
 
 async def post_collection(
     conn: Connection,
     collection: collection_models.Collection,
-    current_user: user_models.User,
+    current_user: user_model.User,
 ):
     params = collection.model_dump()
     params['user_id'] = current_user.user_id
@@ -21,7 +21,7 @@ async def post_collection(
     return await conn.exec(SCRIPT_SQL, params)
 
 
-async def get_collection(conn: Connection, current_user: user_models.User):
+async def get_collection(conn: Connection, current_user: user_model.User):
     params = {'user_id': current_user.user_id}
     SCRIPT_SQL = """
         SELECT collection_id, name, description, visible
@@ -32,7 +32,7 @@ async def get_collection(conn: Connection, current_user: user_models.User):
 
 
 async def get_collection_by_id(
-    conn: Connection, collection_id: UUID, current_user: user_models.User
+    conn: Connection, collection_id: UUID, current_user: user_model.User
 ):
     params = {'collection_id': collection_id, 'user_id': current_user.user_id}
     SCRIPT_SQL = """

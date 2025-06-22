@@ -140,27 +140,13 @@ CREATE TABLE public.permission (
   permission VARCHAR(255) NOT NULL
 );
 
--- CREATE TABLE public.users (
---   user_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
---   display_name VARCHAR(255) NOT NULL,
---   email VARCHAR(255) UNIQUE NOT NULL,
---   uid VARCHAR(255) UNIQUE NOT NULL,
---   photo_url TEXT,
---   lattes_id VARCHAR(255),
---   institution_id UUID,
---   provider VARCHAR(255),
---   linkedin VARCHAR(255),
---   is_verified BOOLEAN DEFAULT FALSE,
---   FOREIGN KEY (institution_id) REFERENCES public.institution(institution_id) ON DELETE SET NULL ON UPDATE CASCADE
--- );
-
--- CREATE TABLE public.users_roles (
---   role_id UUID NOT NULL,
---   user_id UUID NOT NULL,
---   PRIMARY KEY (role_id, user_id),
---   FOREIGN KEY (role_id) REFERENCES public.roles(id) ON DELETE CASCADE ON UPDATE CASCADE,
---   FOREIGN KEY (user_id) REFERENCES public.users(user_id) ON DELETE CASCADE ON UPDATE CASCADE
--- );
+CREATE TABLE IF NOT EXISTS public.users_roles (
+      role_id UUID NOT NULL,
+      user_id UUID NOT NULL,
+      PRIMARY KEY (role_id, user_id),
+      FOREIGN KEY (role_id) REFERENCES public.roles (id) ON DELETE CASCADE ON UPDATE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES public.users (user_id) ON DELETE CASCADE ON UPDATE CASCADE
+);
 
 CREATE TABLE public.newsletter_subscribers (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

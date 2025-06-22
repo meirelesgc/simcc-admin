@@ -16,7 +16,7 @@ from pwdlib import PasswordHash
 from simcc.config import Settings
 from simcc.core.connection import Connection
 from simcc.core.database import get_conn
-from simcc.models import user_models
+from simcc.models import user_model
 
 SECRET_KEY = 'your-secret-key'  # Buscar do .env
 ALGORITHM = 'HS256'
@@ -60,7 +60,7 @@ async def get_current_user(
     if not user:
         raise credentials_exception
 
-    return user_models.User(**user)
+    return user_model.User(**user)
 
 
 def authorize_user(allowed_roles: List[str]):

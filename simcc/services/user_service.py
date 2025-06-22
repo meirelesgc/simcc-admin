@@ -7,7 +7,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import EmailStr
 
 from simcc.core.connection import Connection
-from simcc.models import user_models
+from simcc.models import user_model
 from simcc.repositories import user_repository
 from simcc.security import (
     create_access_token,
@@ -18,10 +18,10 @@ from simcc.security import (
 
 async def post_user(
     conn: Connection,
-    user: user_models.CreateUser,
+    user: user_model.CreateUser,
     role: str = 'DEFAULT',
 ):
-    user = user_models.User(**user.model_dump(), role=role)
+    user = user_model.User(**user.model_dump(), role=role)
     user.password = get_password_hash(user.password)
     await user_repository.post_user(conn, user)
     return user
@@ -32,7 +32,7 @@ async def get_user(conn: Connection, id: UUID = None, email: EmailStr = None):
     return users
 
 
-async def put_user(conn: Connection, user: user_models.User):
+async def put_user(conn: Connection, user: user_model.User):
     user.updated_at = datetime.now()
     user.password = get_password_hash(user.password)
     await user_repository.put_user(conn, user)
@@ -67,7 +67,7 @@ async def login_for_access_token(
 
 async def get_or_create_user_by_orcid(
     conn: Connection, orcid_claims: dict
-) -> user_models.User:
+) -> user_model.User:
     orcid_id = orcid_claims.get('sub')
     if not orcid_id:
         raise Exception("Claim 'sub' (ORCID iD) não encontrado.")
@@ -80,9 +80,9 @@ async def get_or_create_user_by_orcid(
     user = await conn.select(SCRIPT_SQL, {'orcid_id': orcid_id}, True)
 
     if user:
-        return user_models.User(**user)
+        return user_model.User(**user)
 
-    new_user_data = user_models.CreateUser(
+    new_user_data = user_model.CreateUser(
         email=f'{orcid_id}@orcid.email',
         username=orcid_claims.get('name', orcid_id),
         password='a-random-password-since-login-is-external',
@@ -95,7 +95,7 @@ async def get_or_create_user_by_orcid(
 
 async def get_or_create_user_by_shibboleth(
     conn: Connection, shib_data: dict
-) -> user_models.User:
+) -> user_model.User:
     email = shib_data.get('email')
     SCRIPT_SQL = """
         SELECT id, orcid_id, username, email, password, role, created_at,
@@ -105,9 +105,9 @@ async def get_or_create_user_by_shibboleth(
     user = await conn.select(SCRIPT_SQL, {'email': email}, True)
 
     if user:
-        return user_models.User(**user)
+        return user_model.User(**user)
 
-    user = user_models.CreateUser(
+    user = user_model.CreateUser(
         email=shib_data.get('email'),
         username=shib_data.get('name', email).strip(),
         password='shibboleth-user-no-local-password',
@@ -128,9 +128,9 @@ async def get_or_create_user_by_google(conn: Connection, google_payload: dict):
     user = await conn.select(SCRIPT_SQL, {'email': email}, True)
 
     if user:
-        return user_models.User(**user)
+        return user_model.User(**user)
 
-    user = user_models.CreateUser(
+    user = user_model.CreateUser(
         email=google_payload.get('email'),
         username=google_payload.get('name', email).strip(),
         password='google-user-no-local-password',

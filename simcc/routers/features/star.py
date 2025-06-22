@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from simcc.core.connection import Connection
 from simcc.core.database import get_conn
-from simcc.models import user_models
+from simcc.models import user_model
 from simcc.models.features import star_models
 from simcc.security import get_current_user
 from simcc.services.features import star_service
@@ -23,7 +23,7 @@ router = APIRouter()
 )
 async def post_star(
     star: star_models.CreateStar,
-    current_user: user_models.User = Depends(get_current_user),
+    current_user: user_model.User = Depends(get_current_user),
     conn: Connection = Depends(get_conn),
 ):
     return await star_service.post_star(conn, star, current_user)
@@ -35,7 +35,7 @@ async def post_star(
     response_model=list[star_models.Star],
 )
 async def get_stars(
-    current_user: user_models.User = Depends(get_current_user),
+    current_user: user_model.User = Depends(get_current_user),
     conn: Connection = Depends(get_conn),
 ):
     return await star_service.get_stars(conn, current_user)
@@ -48,7 +48,7 @@ async def get_stars(
 )
 async def delete_star(
     entry_id: UUID,
-    current_user: user_models.User = Depends(get_current_user),
+    current_user: user_model.User = Depends(get_current_user),
     conn: Connection = Depends(get_conn),
 ):
     success = await star_service.delete_star(conn, entry_id, current_user)
