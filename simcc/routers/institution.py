@@ -20,7 +20,6 @@ router = APIRouter()
     '/institution/',
     response_model=institution_model.Institution | list,
     status_code=HTTPStatus.CREATED,
-    summary='Create a new institution',
 )
 async def post_institution(
     institution: institution_model.CreateInstitution | list = Body(...),
@@ -42,8 +41,6 @@ async def post_institution(
 @router.get(
     '/institution/{institution_id}/',
     response_model=institution_model.InstitutionStats,
-    status_code=HTTPStatus.OK,
-    summary='Get an institution by ID',
 )
 async def get_institution(
     institution_id: UUID,
@@ -67,8 +64,6 @@ async def get_institution(
 @router.put(
     '/institution/',
     response_model=institution_model.Institution,
-    status_code=HTTPStatus.OK,
-    summary='Update an existing institution',
 )
 async def put_institution(
     institution: institution_model.Institution,
@@ -92,7 +87,6 @@ async def put_institution(
 @router.delete(
     '/institution/{institution_id}/',
     status_code=HTTPStatus.NO_CONTENT,
-    summary='Delete an institution by ID',
 )
 async def delete_institution(
     institution_id: UUID,

@@ -30,7 +30,6 @@ async def post_collection(
 
 @router.get(
     '/collection/',
-    status_code=HTTPStatus.OK,
     response_model=list[collection_models.Collection],
 )
 async def get_collection(
@@ -42,7 +41,6 @@ async def get_collection(
 
 @router.get(
     '/collection/{collection_id}/',
-    status_code=HTTPStatus.OK,
     response_model=collection_models.Collection,
 )
 async def get_collection_by_id(
@@ -62,7 +60,6 @@ async def get_collection_by_id(
 
 @router.get(
     '/collection/public/{user_id}/',
-    status_code=HTTPStatus.OK,
     response_model=list[collection_models.Collection],
 )
 async def get_public_collections(
@@ -73,7 +70,6 @@ async def get_public_collections(
 
 @router.put(
     '/collection/',
-    status_code=HTTPStatus.OK,
     response_model=collection_models.Collection,
 )
 async def update_collection(
@@ -104,7 +100,6 @@ async def delete_collection(
     '/collection/{collection_id}/entries/',
     status_code=HTTPStatus.CREATED,
     response_model=collection_models.CollectionEntry,
-    summary='Adiciona uma entrada a uma coleção',
 )
 async def post_entries(
     collection_id: UUID,
@@ -122,9 +117,7 @@ async def post_entries(
 
 @router.get(
     '/collection/{collection_id}/entries/',
-    status_code=HTTPStatus.OK,
     response_model=list[collection_models.CollectionEntry],
-    summary='Lista todas as entradas de uma coleção',
 )
 async def get_entries(
     collection_id: UUID,
@@ -145,7 +138,6 @@ async def get_entries(
 @router.delete(
     '/collection/{collection_id}/entries/{entry_id}/',
     status_code=HTTPStatus.NO_CONTENT,
-    summary='Remove uma entrada de uma coleção',
 )
 async def delete_entries(
     collection_id: UUID,

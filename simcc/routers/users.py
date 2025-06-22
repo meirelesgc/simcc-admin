@@ -24,9 +24,10 @@ async def post_user(
     return await user_service.post_user(conn, user)
 
 
+@router.get('/s/user/all', deprecated=True)
+@router.get('/s/user/entrys', deprecated=True)
 @router.get(
     '/user/',
-    status_code=HTTPStatus.OK,
     response_model=list[user_models.UserResponse],
 )
 async def get_user(conn: Connection = Depends(get_conn)):
@@ -35,7 +36,6 @@ async def get_user(conn: Connection = Depends(get_conn)):
 
 @router.get(
     '/user/{id}/',
-    status_code=HTTPStatus.OK,
     response_model=user_models.UserResponse,
 )
 async def get_single_user(id: UUID, conn: Connection = Depends(get_conn)):
@@ -44,7 +44,6 @@ async def get_single_user(id: UUID, conn: Connection = Depends(get_conn)):
 
 @router.put(
     '/user/',
-    status_code=HTTPStatus.OK,
     response_model=user_models.User,
 )
 async def put_user(
