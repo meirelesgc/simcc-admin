@@ -1,27 +1,34 @@
-import uuid
 from datetime import datetime
+from typing import Optional
+from uuid import UUID, uuid4
 
-import factory
-
-from simcc.models import user_model
-
-
-class CreateUserFactory(factory.Factory):
-    class Meta:
-        model = user_model.CreateUser
-
-    username = factory.Faker('user_name')
-    email = factory.Faker('email')
-    password = factory.Faker('password')
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
-class UserFactory(factory.Factory):
-    class Meta:
-        model = user_model.User
+class Token(BaseModel):
+    access_token: str
+    token_type: str
 
-    user_id = factory.LazyFunction(uuid.uuid4)
-    username = factory.Faker('user_name')
-    email = factory.Faker('email')
-    password = factory.Faker('password')
-    created_at = factory.LazyFunction(datetime.now)
-    updated_at = None
+
+class CreateUser(BaseModel):
+    username: str
+    email: EmailStr
+    password: str
+
+
+class User(BaseModel):
+    user_id: UUID = Field(default_factory=uuid4)
+    username: str
+    email: EmailStr
+    password: str
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: Optional[datetime] = None
+
+
+class UserResponse(BaseModel):
+    user_id: UUID
+    username: str
+    email: EmailStr
+
+    permissions: list = []
+    model_config = ConfigDict(from_attributes=True)

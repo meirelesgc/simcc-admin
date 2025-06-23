@@ -8,6 +8,7 @@ from testcontainers.postgres import PostgresContainer
 from simcc.app import app
 from simcc.core.connection import Connection
 from simcc.core.database import get_conn
+from simcc.models import rbac_model
 from simcc.models.features import collection_models
 from simcc.services import institution_service, rbac_service, user_service
 from simcc.services.features import collection_service, star_service
@@ -70,9 +71,7 @@ def create_user(conn):
     async def _create_user(**kwargs):
         raw_user = user_factory.CreateUserFactory(**kwargs)
         password = raw_user.password
-        created_user = await user_service.post_user(
-            conn, raw_user, role='DEFAULT'
-        )
+        created_user = await user_service.post_user(conn, raw_user)
         created_user.password = password
         return created_user
 
@@ -80,17 +79,52 @@ def create_user(conn):
 
 
 @pytest.fixture
-def create_admin_user(conn):
+def create_admin_user(conn, create_role):
     async def _create_admin_user(**kwargs):
-        raw_user = user_factory.CreateUserFactory(**kwargs)
-        password = raw_user.password
-        created_user = await user_service.post_user(
-            conn, raw_user, role='ADMIN'
-        )
-        created_user.password = password
-        return created_user
+        user = await _create_user_with_password(conn, **kwargs)
+        role = await _assign_role_to_user(conn, create_role, user.user_id)
+        await _assign_admin_permission_to_role(conn, role.role_id)
+        return user
 
     return _create_admin_user
+
+
+async def _create_user_with_password(conn, **kwargs):
+    raw_user = user_factory.CreateUserFactory(**kwargs)
+    password = raw_user.password
+    user = await user_service.post_user(conn, raw_user)
+    user.password = password
+    return user
+
+
+async def _assign_role_to_user(conn, create_role, user_id):
+    role = await create_role()
+    user_role = rbac_model.CreateUserRole(
+        role_id=role.role_id, user_id=user_id
+    )
+    await rbac_service.post_user_role(conn, user_role)
+    return role
+
+
+async def _assign_admin_permission_to_role(conn, role_id):
+    permissions = await rbac_service.get_permissions(conn)
+
+    for p in permissions:
+        if p['name'] == 'ADMIN':
+            admin = p
+    rp = {'permission_id': admin['permission_id'], 'role_id': role_id}
+    rp = rbac_model.CreateRolePermission(**rp)
+    await rbac_service.post_role_permissions(conn, rp)
+
+
+@pytest.fixture
+def create_role(conn):
+    async def _create_role(**kwargs):
+        payload = rbac_factory.CreateRoleFactory(**kwargs)
+        created_role = await rbac_service.post_role(conn, payload)
+        return created_role
+
+    return _create_role
 
 
 @pytest.fixture
@@ -105,7 +139,7 @@ def auth_header(get_token):
 def get_token(client):
     def _get_token(user):
         data = {'username': user.email, 'password': user.password}
-        response = client.post('/token', data=data)
+        response = client.post('/token/', data=data)
         return response.json()['access_token']
 
     return _get_token
@@ -147,13 +181,3 @@ def create_star(conn):
         return created_star
 
     return _create_star
-
-
-@pytest.fixture
-def create_role(conn):
-    async def _create_role(**kwargs):
-        payload = rbac_factory.CreateRoleFactory(**kwargs)
-        created_role = await rbac_service.post_role(conn, payload)
-        return created_role
-
-    return _create_role

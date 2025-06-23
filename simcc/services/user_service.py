@@ -19,9 +19,8 @@ from simcc.security import (
 async def post_user(
     conn: Connection,
     user: user_model.CreateUser,
-    role: str = 'DEFAULT',
 ):
-    user = user_model.User(**user.model_dump(), role=role)
+    user = user_model.User(**user.model_dump())
     user.password = get_password_hash(user.password)
     await user_repository.post_user(conn, user)
     return user

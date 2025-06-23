@@ -23,6 +23,14 @@ async def post_role(
     return await rbac_service.post_role(conn, role)
 
 
+@router.post('/role/permissions/')
+async def post_role_permissions(
+    role_permission: rbac_model.CreateRolePermission,
+    conn: Connection = Depends(get_conn),
+):
+    return await rbac_service.post_role_permissions(conn, role_permission)
+
+
 @router.get('/role/', response_model=list[rbac_model.RoleResponse])
 async def get_role(
     conn: Connection = Depends(get_conn),

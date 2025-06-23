@@ -50,12 +50,14 @@ async def get_current_user(
 
     SCRIPT_SQL = """
         SELECT u.user_id, u.username, u.email, u.password, u.created_at,
-            u.updated_at, ARRAY_AGG(r.name) AS roles
+            u.updated_at, ARRAY_REMOVE(ARRAY_AGG(p.name), NULL) AS permissions
         FROM public.users u
             LEFT JOIN user_roles ur
                 ON ur.user_id = u.user_id
-            LEFT JOIN roles r
-                ON r.role_id = ur.role_id
+            LEFT JOIN role_permissions rp
+                ON rp.role_id = ur.role_id
+            LEFT JOIN permissions p
+                ON p.permission_id = rp.permission_id
         WHERE email = %(email)s
         GROUP BY u.user_id;
         """
@@ -65,7 +67,7 @@ async def get_current_user(
     if not user:
         raise credentials_exception
 
-    return user_model.User(**user)
+    return user_model.UserResponse(**user)
 
 
 def authorize_user(allowed_roles: List[str]):

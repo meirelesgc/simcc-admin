@@ -27,19 +27,33 @@ async def post_user(
     return await user_service.post_user(conn, user)
 
 
-@router.get('/s/user/all', deprecated=True)
-@router.get('/s/user/entrys', deprecated=True)
+@router.get(
+    '/s/user/all',
+    deprecated=True,
+)
+@router.get(
+    '/s/user/entrys',
+    deprecated=True,
+)
 @router.get(
     '/user/',
     response_model=list[user_model.UserResponse],
 )
 async def get_user(
-    current_user: user_model.User = Depends(get_current_user),
+    current_user: user_model.UserResponse = Depends(get_current_user),
     conn: Connection = Depends(get_conn),
 ):
-    if not set(current_user.roles) & set(ALLOWED):
+    if not set(current_user.permissions) & set(ALLOWED):
         raise ForbiddenException
     return await user_service.get_user(conn)
+
+
+@router.get('/user/my-self/', response_model=user_model.UserResponse)
+async def get_me(
+    current_user: user_model.UserResponse = Depends(get_current_user),
+    conn: Connection = Depends(get_conn),
+):
+    return await user_service.get_user(conn, current_user.user_id)
 
 
 @router.get(
@@ -48,25 +62,14 @@ async def get_user(
 )
 async def get_single_user(
     id: UUID,
-    current_user: user_model.User = Depends(get_current_user),
+    current_user: user_model.UserResponse = Depends(get_current_user),
     conn: Connection = Depends(get_conn),
 ):
-    has_permission = set(current_user.roles) & set(ALLOWED)
+    has_permission = any(p in current_user.permissions for p in ALLOWED)
     is_self = current_user.user_id == id
     if not (has_permission or is_self):
         raise ForbiddenException
     return await user_service.get_user(conn, id)
-
-
-@router.get(
-    '/user/me/',
-    response_model=user_model.UserResponse,
-)
-async def get_me(
-    current_user: user_model.User = Depends(get_current_user),
-    conn: Connection = Depends(get_conn),
-):
-    return await user_service.get_user(conn, current_user.user_id)
 
 
 @router.put(
@@ -75,11 +78,11 @@ async def get_me(
 )
 async def put_user(
     user: user_model.User,
-    current_user: user_model.User = Depends(get_current_user),
+    current_user: user_model.UserResponse = Depends(get_current_user),
     conn: Connection = Depends(get_conn),
 ):
-    has_permission = set(current_user.roles) & set(ALLOWED)
-    is_self = current_user.user_id == id
+    has_permission = any(p in current_user.permissions for p in ALLOWED)
+    is_self = current_user.user_id == user.user_id
     if not (has_permission or is_self):
         raise ForbiddenException
     return await user_service.put_user(conn, user)
@@ -91,10 +94,10 @@ async def put_user(
 )
 async def delete_user(
     id: UUID,
-    current_user: user_model.User = Depends(get_current_user),
+    current_user: user_model.UserResponse = Depends(get_current_user),
     conn: Connection = Depends(get_conn),
 ):
-    has_permission = set(current_user.roles) & set(ALLOWED)
+    has_permission = any(p in current_user.permissions for p in ALLOWED)
     is_self = current_user.user_id == id
     if not (has_permission or is_self):
         raise ForbiddenException

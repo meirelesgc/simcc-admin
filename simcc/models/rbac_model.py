@@ -37,3 +37,8 @@ class Permission(BaseModel):
 class CreateUserRole(BaseModel):
     user_id: UUID
     role_id: UUID
+
+
+class CreateRolePermission(BaseModel):
+    permission_id: UUID
+    role_id: UUID

@@ -32,3 +32,7 @@ async def get_permissions(conn):
 
 async def post_user_role(conn, user_role):
     return await rbac_repository.post_user_role(conn, user_role)
+
+
+async def post_role_permissions(conn, role_permission):
+    return await rbac_repository.post_role_permissions(conn, role_permission)

@@ -20,7 +20,7 @@ router = APIRouter()
 )
 async def post_collection(
     collection: collection_models.CreateCollection,
-    current_user: user_model.User = Depends(get_current_user),
+    current_user: user_model.UserResponse = Depends(get_current_user),
     conn: Connection = Depends(get_conn),
 ):
     return await collection_service.post_collection(
@@ -34,7 +34,7 @@ async def post_collection(
 )
 async def get_collection(
     conn: Connection = Depends(get_conn),
-    current_user: user_model.User = Depends(get_current_user),
+    current_user: user_model.UserResponse = Depends(get_current_user),
 ):
     return await collection_service.get_collection(conn, current_user)
 
@@ -46,7 +46,7 @@ async def get_collection(
 async def get_collection_by_id(
     collection_id: UUID,
     conn: Connection = Depends(get_conn),
-    current_user: user_model.User = Depends(get_current_user),
+    current_user: user_model.UserResponse = Depends(get_current_user),
 ):
     collection = await collection_service.get_collection_by_id(
         conn, collection_id, current_user
@@ -74,7 +74,7 @@ async def get_public_collections(
 )
 async def update_collection(
     collection: collection_models.Collection,
-    current_user: user_model.User = Depends(get_current_user),
+    current_user: user_model.UserResponse = Depends(get_current_user),
     conn: Connection = Depends(get_conn),
 ):
     return await collection_service.update_collection(
@@ -88,7 +88,7 @@ async def update_collection(
 )
 async def delete_collection(
     collection_id: UUID,
-    current_user: user_model.User = Depends(get_current_user),
+    current_user: user_model.UserResponse = Depends(get_current_user),
     conn: Connection = Depends(get_conn),
 ):
     await collection_service.delete_collection(
@@ -104,7 +104,7 @@ async def delete_collection(
 async def post_entries(
     collection_id: UUID,
     entry: collection_models.CreateCollectionEntry,
-    current_user: user_model.User = Depends(get_current_user),
+    current_user: user_model.UserResponse = Depends(get_current_user),
     conn: Connection = Depends(get_conn),
 ):
     return await collection_service.post_entries(
@@ -122,7 +122,7 @@ async def post_entries(
 async def get_entries(
     collection_id: UUID,
     conn: Connection = Depends(get_conn),
-    current_user: user_model.User = Depends(get_current_user),
+    current_user: user_model.UserResponse = Depends(get_current_user),
 ):
     entries = await collection_service.get_entries(
         conn, collection_id, current_user
@@ -142,7 +142,7 @@ async def get_entries(
 async def delete_entries(
     collection_id: UUID,
     entry_id: UUID,
-    current_user: user_model.User = Depends(get_current_user),
+    current_user: user_model.UserResponse = Depends(get_current_user),
     conn: Connection = Depends(get_conn),
 ):
     success = await collection_service.delete_entries(

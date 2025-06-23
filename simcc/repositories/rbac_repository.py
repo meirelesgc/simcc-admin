@@ -73,3 +73,12 @@ async def post_user_role(conn, user_role):
         VALUES (%(user_id)s, %(role_id)s);
         """
     return await conn.exec(SCRIPT_SQL, params)
+
+
+async def post_role_permissions(conn, role_permission):
+    params = role_permission.model_dump()
+    SCRIPT_SQL = """
+        INSERT INTO public.role_permissions (role_id, permission_id)
+        VALUES (%(role_id)s, %(permission_id)s);
+        """
+    return await conn.exec(SCRIPT_SQL, params)
