@@ -30,6 +30,14 @@ async def get_role(
     return await rbac_service.get_role(conn)
 
 
+@router.get('/role/{id}/', response_model=rbac_model.Role)
+async def get_role_id(
+    id: UUID,
+    conn: Connection = Depends(get_conn),
+):
+    return await rbac_service.get_role_id(conn, id)
+
+
 @router.put(
     '/role/',
     response_model=rbac_model.Role,
@@ -50,3 +58,20 @@ async def delete_role(
     conn: Connection = Depends(get_conn),
 ):
     await rbac_service.delete_role(conn, role_id)
+
+
+@router.get('/permission/', response_model=list[rbac_model.Permission])
+async def get_permissions(
+    conn: Connection = Depends(get_conn),
+):
+    return await rbac_service.get_permissions(conn)
+
+
+@router.post(
+    '/user-role/',
+    status_code=HTTPStatus.CREATED,
+)
+async def post_user_role(
+    user_role: rbac_model.CreateUserRole, conn: Connection = Depends(get_conn)
+):
+    return await rbac_service.post_user_role(conn, user_role)

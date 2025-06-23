@@ -14,3 +14,15 @@ class Role(BaseModel):
     name: str
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: Optional[datetime] = None
+
+
+class Permission(BaseModel):
+    permission_id: UUID
+    name: str
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+
+class CreateUserRole(BaseModel):
+    user_id: UUID
+    role_id: UUID

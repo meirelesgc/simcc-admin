@@ -3,14 +3,9 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE EXTENSION IF NOT EXISTS unaccent;
-
 --- Gerenciamento da conta
-
 CREATE TYPE role_type AS ENUM ('ADMIN', 'DEFAULT');
 CREATE TYPE relationship AS ENUM ('COLABORADOR', 'PERMANENTE');
-
---- Bloco 1
-
 CREATE TABLE IF NOT EXISTS users (
     user_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     orcid_id CHAR(20),
@@ -23,9 +18,6 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at TIMESTAMP DEFAULT NOW(),
     deleted_at TIMESTAMP
 );
-
---- Bloco 2
-
 CREATE TABLE public.institution (
   institution_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name VARCHAR(255) NOT NULL,
@@ -35,9 +27,6 @@ CREATE TABLE public.institution (
   updated_at TIMESTAMP DEFAULT NOW(),
   deleted_at TIMESTAMP
 );
-
---- Bloco 3
-
 CREATE TABLE public.roles (
     role_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL UNIQUE,
@@ -66,8 +55,6 @@ CREATE TABLE public.role_permissions (
     FOREIGN KEY (permission_id) REFERENCES public.permissions (permission_id) ON DELETE CASCADE ON UPDATE CASCADE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-
-
 CREATE TABLE public.researcher (
   researcher_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name VARCHAR(150) NOT NULL,
@@ -81,7 +68,6 @@ CREATE TABLE public.researcher (
   UNIQUE (lattes_id, institution_id),
   FOREIGN KEY (institution_id) REFERENCES public.institution(institution_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
-
 CREATE TABLE public.graduate_program (
   graduate_program_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   code VARCHAR(100),
@@ -112,7 +98,6 @@ CREATE TABLE public.graduate_program (
   deleted_at TIMESTAMP,
   FOREIGN KEY (institution_id) REFERENCES public.institution(institution_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
-
 CREATE TABLE public.graduate_program_researcher (
   graduate_program_id UUID NOT NULL,
   researcher_id UUID NOT NULL,
@@ -125,7 +110,6 @@ CREATE TABLE public.graduate_program_researcher (
   FOREIGN KEY (researcher_id) REFERENCES public.researcher(researcher_id) ON DELETE CASCADE ON UPDATE CASCADE,
   FOREIGN KEY (graduate_program_id) REFERENCES public.graduate_program(graduate_program_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
-
 CREATE TABLE public.graduate_program_student (
   graduate_program_id UUID NOT NULL,
   researcher_id UUID NOT NULL,
@@ -137,10 +121,7 @@ CREATE TABLE public.graduate_program_student (
   FOREIGN KEY (researcher_id) REFERENCES public.researcher(researcher_id) ON DELETE CASCADE ON UPDATE CASCADE,
   FOREIGN KEY (graduate_program_id) REFERENCES public.graduate_program(graduate_program_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
-
 CREATE SCHEMA IF NOT EXISTS ufmg;
-
-
 CREATE TABLE IF NOT EXISTS ufmg.researcher (
     researcher_id UUID PRIMARY KEY REFERENCES public.researcher(researcher_id) ON DELETE CASCADE ON UPDATE CASCADE,
     
@@ -179,8 +160,6 @@ CREATE TABLE IF NOT EXISTS ufmg.researcher (
     updated_at TIMESTAMP,
     deleted_at TIMESTAMP     
 );
-
-
 CREATE TABLE IF NOT EXISTS ufmg.technician (
     technician_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 
@@ -219,9 +198,7 @@ CREATE TABLE IF NOT EXISTS ufmg.technician (
     updated_at TIMESTAMP,
     deleted_at TIMESTAMP
 );
-
 CREATE SCHEMA IF NOT EXISTS feature;
-
 CREATE TABLE IF NOT EXISTS feature.collection (
     collection_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID,
@@ -235,14 +212,12 @@ CREATE TABLE IF NOT EXISTS feature.collection (
 
     FOREIGN KEY (user_id) REFERENCES public.users(user_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
-
 CREATE TABLE IF NOT EXISTS feature.collection_entries(
     collection_id UUID REFERENCES feature.collection(collection_id),
     entry_id UUID NOT NULL,
     type VARCHAR(255) NOT NULL,
     FOREIGN KEY (collection_id) REFERENCES feature.collection(collection_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
-
 CREATE TABLE IF NOT EXISTS feature.stars(
     user_id UUID NOT NULL,
     entry_id UUID NOT NULL,
@@ -251,6 +226,18 @@ CREATE TABLE IF NOT EXISTS feature.stars(
 );
 
 ---
+
+COMMIT;
+
+ROLLBACK;
+
+
+--- Seeds
+BEGIN;
+
+INSERT INTO public.permissions (name) 
+VALUES ('ADMIN'), ('INSTITUTION');
+
 
 COMMIT;
 
