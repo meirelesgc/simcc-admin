@@ -9,8 +9,8 @@ from simcc.models import user_model
 async def post_user(conn: Connection, user: user_model.User):
     params = user.model_dump()
     SCRIPT_SQL = """
-        INSERT INTO public.users (user_id, username, email, role, password, created_at)
-        VALUES (%(user_id)s, %(username)s, %(email)s, %(role)s, %(password)s, %(created_at)s);
+        INSERT INTO public.users (user_id, username, email, password, created_at)
+        VALUES (%(user_id)s, %(username)s, %(email)s, %(password)s, %(created_at)s);
         """  # noqa: E501
     return await conn.exec(SCRIPT_SQL, params)
 
@@ -22,25 +22,30 @@ async def get_user(
 ):
     one = False
     params = {}
+    filters = str()
 
-    filter_id = str()
     if user_id:
         one = True
         params['user_id'] = user_id
-        filter_id = 'AND user_id = %(user_id)s'
+        filters += 'AND u.user_id = %(user_id)s'
 
-    filter_email = str()
     if email:
         one = True
         params['email'] = email
-        filter_email = 'AND email = %(email)s'
+        filters += 'AND u.email = %(email)s'
 
     SCRIPT_SQL = f"""
-        SELECT user_id, username, email, role, password, created_at, updated_at
-        FROM public.users
+        SELECT u.user_id, u.username, u.email, u.password, u.created_at,
+            u.updated_at, ARRAY_AGG(r.name) AS roles
+        FROM public.users u
+            LEFT JOIN user_roles ur
+                ON ur.user_id = u.user_id
+            LEFT JOIN roles r
+                ON r.role_id = ur.role_id
         WHERE 1 = 1
-            {filter_id}
-            {filter_email};
+            {filters}
+            {filters}
+        GROUP BY u.user_id;
         """
     return await conn.select(SCRIPT_SQL, params, one)
 

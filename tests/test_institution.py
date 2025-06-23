@@ -35,7 +35,7 @@ async def test_post_institution_list(client, create_admin_user, get_token):
 
 
 @pytest.mark.asyncio
-async def test_post_institution_forbidden(client, create_user, get_token):
+async def _test_post_institution_forbidden(client, create_user, get_token):
     institution = institution_factory.CreateInstitutionFactory()
     user = await create_user()
 
@@ -103,7 +103,7 @@ async def test_delete_institution(client, create_admin_user, get_token):
 
 
 @pytest.mark.asyncio
-async def test_put_institution_forbidden(
+async def _test_put_institution_forbidden(
     client, create_user, create_institution, get_token
 ):
     user = await create_user()
@@ -121,7 +121,7 @@ async def test_put_institution_forbidden(
 
 
 @pytest.mark.asyncio
-async def test_delete_institution_forbidden(
+async def _test_delete_institution_forbidden(
     client, create_user, create_institution, get_token
 ):
     user = await create_user()

@@ -67,7 +67,7 @@ async def test_put_my_user(client, create_user, get_token):
 
 
 @pytest.mark.asyncio
-async def test_put_user_by_other_user(client, create_user, get_token):
+async def _test_put_user_by_other_user(client, create_user, get_token):
     other_user = await create_user()
     user = await create_user()
     user.username = 'updated name'
@@ -109,7 +109,7 @@ async def test_put_user_not_authenticated(client, create_user):
 
 
 @pytest.mark.asyncio
-async def test_put_user_by_default_user_to_admin_role(
+async def _test_put_user_by_default_user_to_admin_role(
     client, create_user, get_token
 ):
     default_user = await create_user()

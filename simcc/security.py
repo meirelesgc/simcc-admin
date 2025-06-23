@@ -49,7 +49,7 @@ async def get_current_user(
         raise credentials_exception
 
     SCRIPT_SQL = """
-        SELECT user_id, username, email, role, password, created_at,
+        SELECT user_id, username, email, password, created_at,
             updated_at, deleted_at
         FROM public.users
         WHERE email = %(email)s;

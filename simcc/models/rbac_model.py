@@ -9,13 +9,21 @@ class CreateRole(BaseModel):
     name: str
 
 
-class Role(CreateRole):
+class Role(BaseModel):
     role_id: UUID = Field(default_factory=uuid4)
+    name: str
+
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: Optional[datetime] = None
 
 
-class RoleResponse(Role):
+class RoleResponse(BaseModel):
+    role_id: UUID = Field(default_factory=uuid4)
+    name: str
+
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: Optional[datetime] = None
+
     users: list = []
 
 

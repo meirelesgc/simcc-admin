@@ -26,11 +26,6 @@ async def post_institution(
     conn: Connection = Depends(get_conn),
     current_user: user_model.User = Depends(get_current_user),
 ):
-    if current_user.role != 'ADMIN':
-        raise HTTPException(
-            status_code=HTTPStatus.FORBIDDEN,
-            detail='You do not have permission to create an institution.',
-        )
     return await institution_service.post_institution(institution, conn)
 
 
@@ -70,12 +65,6 @@ async def put_institution(
     conn: Connection = Depends(get_conn),
     current_user: user_model.User = Depends(get_current_user),
 ):
-    if current_user.role != 'ADMIN':
-        raise HTTPException(
-            status_code=HTTPStatus.FORBIDDEN,
-            detail='You do not have permission to update an institution.',
-        )
-
     institution = await institution_service.put_institution(conn, institution)
     return institution
 
@@ -93,9 +82,4 @@ async def delete_institution(
     conn: Connection = Depends(get_conn),
     current_user: user_model.User = Depends(get_current_user),
 ):
-    if current_user.role != 'ADMIN':
-        raise HTTPException(
-            status_code=HTTPStatus.FORBIDDEN,
-            detail='You do not have permission to delete an institution.',
-        )
     await institution_service.delete_institution(conn, institution_id)

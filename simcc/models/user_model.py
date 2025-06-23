@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Literal, Optional
+from typing import Optional
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
@@ -20,7 +20,6 @@ class User(BaseModel):
     user_id: UUID = Field(default_factory=uuid4)
     username: str
     email: EmailStr
-    role: Literal['ADMIN', 'DEFAULT']
     password: str
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: Optional[datetime] = None
@@ -30,5 +29,6 @@ class UserResponse(BaseModel):
     user_id: UUID
     username: str
     email: EmailStr
-    role: Literal['ADMIN', 'DEFAULT']
+
+    roles: list = []
     model_config = ConfigDict(from_attributes=True)
