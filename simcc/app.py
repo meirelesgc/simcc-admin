@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from simcc.config import Settings
 from simcc.core.database import conn
-from simcc.routers import auth, institution, users
+from simcc.routers import auth, institution, rbac, users
 from simcc.routers.features import collection, star
 
 
@@ -29,6 +29,8 @@ app.include_router(users.router, tags=['Users'])
 app.include_router(institution.router, tags=['Institution'])
 app.include_router(collection.router, tags=['Collection'])
 app.include_router(star.router, tags=['Star'])
+app.include_router(rbac.router, tags=['Roles & Permissions'])
+
 
 app.add_middleware(
     CORSMiddleware,

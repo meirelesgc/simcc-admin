@@ -9,9 +9,9 @@ from simcc.app import app
 from simcc.core.connection import Connection
 from simcc.core.database import get_conn
 from simcc.models.features import collection_models
-from simcc.services import institution_service, user_service
+from simcc.services import institution_service, rbac_service, user_service
 from simcc.services.features import collection_service, star_service
-from tests.factories import institution_factory, user_factory
+from tests.factories import institution_factory, rbac_factory, user_factory
 from tests.factories.features import collection_factory, star_factory
 
 
@@ -139,3 +139,13 @@ def create_star(conn):
         return created_star
 
     return _create_star
+
+
+@pytest.fixture
+def create_role(conn):
+    async def _create_role(**kwargs):
+        payload = rbac_factory.CreateRoleFactory(**kwargs)
+        created_role = await rbac_service.post_role(conn, payload)
+        return created_role
+
+    return _create_role
