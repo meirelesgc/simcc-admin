@@ -49,10 +49,15 @@ async def get_current_user(
         raise credentials_exception
 
     SCRIPT_SQL = """
-        SELECT user_id, username, email, password, created_at,
-            updated_at, deleted_at
-        FROM public.users
-        WHERE email = %(email)s;
+        SELECT u.user_id, u.username, u.email, u.password, u.created_at,
+            u.updated_at, ARRAY_AGG(r.name) AS roles
+        FROM public.users u
+            LEFT JOIN user_roles ur
+                ON ur.user_id = u.user_id
+            LEFT JOIN roles r
+                ON r.role_id = ur.role_id
+        WHERE email = %(email)s
+        GROUP BY u.user_id;
         """
 
     user = await conn.select(SCRIPT_SQL, {'email': subject_email}, True)

@@ -5,11 +5,14 @@ from fastapi import APIRouter, Depends
 
 from simcc.core.connection import Connection
 from simcc.core.database import get_conn
+from simcc.exceptions import ForbiddenException
 from simcc.models import user_model
 from simcc.security import get_current_user
 from simcc.services import user_service
 
 router = APIRouter()
+
+ALLOWED = ['ADMIN']
 
 
 @router.post(
@@ -30,7 +33,12 @@ async def post_user(
     '/user/',
     response_model=list[user_model.UserResponse],
 )
-async def get_user(conn: Connection = Depends(get_conn)):
+async def get_user(
+    current_user: user_model.User = Depends(get_current_user),
+    conn: Connection = Depends(get_conn),
+):
+    if not set(current_user.roles) & set(ALLOWED):
+        raise ForbiddenException
     return await user_service.get_user(conn)
 
 
@@ -38,8 +46,27 @@ async def get_user(conn: Connection = Depends(get_conn)):
     '/user/{id}/',
     response_model=user_model.UserResponse,
 )
-async def get_single_user(id: UUID, conn: Connection = Depends(get_conn)):
+async def get_single_user(
+    id: UUID,
+    current_user: user_model.User = Depends(get_current_user),
+    conn: Connection = Depends(get_conn),
+):
+    has_permission = set(current_user.roles) & set(ALLOWED)
+    is_self = current_user.user_id == id
+    if not (has_permission or is_self):
+        raise ForbiddenException
     return await user_service.get_user(conn, id)
+
+
+@router.get(
+    '/user/me/',
+    response_model=user_model.UserResponse,
+)
+async def get_me(
+    current_user: user_model.User = Depends(get_current_user),
+    conn: Connection = Depends(get_conn),
+):
+    return await user_service.get_user(conn, current_user.user_id)
 
 
 @router.put(
@@ -51,6 +78,10 @@ async def put_user(
     current_user: user_model.User = Depends(get_current_user),
     conn: Connection = Depends(get_conn),
 ):
+    has_permission = set(current_user.roles) & set(ALLOWED)
+    is_self = current_user.user_id == id
+    if not (has_permission or is_self):
+        raise ForbiddenException
     return await user_service.put_user(conn, user)
 
 
@@ -63,4 +94,8 @@ async def delete_user(
     current_user: user_model.User = Depends(get_current_user),
     conn: Connection = Depends(get_conn),
 ):
+    has_permission = set(current_user.roles) & set(ALLOWED)
+    is_self = current_user.user_id == id
+    if not (has_permission or is_self):
+        raise ForbiddenException
     return await user_service.delete_user(conn, id)

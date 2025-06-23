@@ -94,6 +94,14 @@ def create_admin_user(conn):
 
 
 @pytest.fixture
+def auth_header(get_token):
+    def _auth_header(user):
+        return {'Authorization': f'Bearer {get_token(user)}'}
+
+    return _auth_header
+
+
+@pytest.fixture
 def get_token(client):
     def _get_token(user):
         data = {'username': user.email, 'password': user.password}
