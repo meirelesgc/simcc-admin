@@ -57,7 +57,7 @@ async def test_post_user_role(client, create_role, create_user):
     user_role = {'role_id': str(role.role_id), 'user_id': str(user.user_id)}
 
     response = client.post(
-        '/user-role/',
+        '/user/role/',
         json=user_role,
     )
     assert response.status_code == HTTPStatus.CREATED

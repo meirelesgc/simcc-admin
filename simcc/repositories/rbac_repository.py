@@ -1,6 +1,3 @@
-from uuid import UUID
-
-
 async def post_role(conn, role):
     params = role.model_dump()
     SCRIPT_SQL = """
@@ -10,21 +7,36 @@ async def post_role(conn, role):
     return await conn.exec(SCRIPT_SQL, params)
 
 
-async def get_role(conn):
-    SCRIPT_SQL = """
-        SELECT role_id, name, created_at, updated_at
-        FROM public.roles;
-        """
-    return await conn.select(SCRIPT_SQL)
+async def get_role(conn, role_id):
+    one = False
+    params = {}
+    filters = str()
 
+    if role_id:
+        one = True
+        params['role_id'] = role_id
+        filters += 'AND role_id = %(role_id)s'
 
-async def get_role_id(conn, role_id: UUID):
-    params = {'role_id': role_id}
-    SCRIPT_SQL = """
-        SELECT role_id, name, created_at, updated_at
-        FROM public.roles;
+    SCRIPT_SQL = f"""
+        WITH users_ AS (
+            SELECT u.user_id, JSONB_BUILD_OBJECT(
+                'user_id', u.user_id,
+                'username', u.username
+            ) AS user
+            FROM users u
+        )
+        SELECT r.role_id, r.name, r.created_at, r.updated_at, ARRAY_AGG(u.user)
+            AS users
+        FROM public.roles r
+            LEFT JOIN user_roles ur
+                ON ur.role_id = r.role_id
+            LEFT JOIN users_ u
+                ON u.user_id = ur.user_id
+        WHERE 1 = 1
+            {filters}
+        GROUP BY r.role_id
         """
-    return await conn.select(SCRIPT_SQL, params)
+    return await conn.select(SCRIPT_SQL, params, one)
 
 
 async def put_role(conn, role):
