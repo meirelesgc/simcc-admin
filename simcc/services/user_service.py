@@ -72,7 +72,7 @@ async def get_or_create_user_by_orcid(
         raise Exception("Claim 'sub' (ORCID iD) não encontrado.")
 
     SCRIPT_SQL = """
-        SELECT  id, orcid_id, username, email, password, role, created_at,
+        SELECT  user_id, orcid_id, username, email, password, role, created_at,
             updated_at, deleted_at
         FROM users WHERE orcid_id = %(orcid_id)s
         """
@@ -97,7 +97,7 @@ async def get_or_create_user_by_shibboleth(
 ) -> user_model.User:
     email = shib_data.get('email')
     SCRIPT_SQL = """
-        SELECT id, orcid_id, username, email, password, role, created_at,
+        SELECT user_id, orcid_id, username, email, password, role, created_at,
             updated_at, deleted_at
         FROM users WHERE email = %(email)s
         """
@@ -120,7 +120,7 @@ async def get_or_create_user_by_google(conn: Connection, google_payload: dict):
     email = google_payload.get('email')
 
     SCRIPT_SQL = """
-        SELECT id, orcid_id, username, email, password, role, created_at,
+        SELECT user_id, orcid_id, username, email, password, role, created_at,
             updated_at, deleted_at
         FROM users WHERE email = %(email)s
         """
