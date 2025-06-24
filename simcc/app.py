@@ -1,8 +1,6 @@
 from contextlib import asynccontextmanager
 
-# from http import HTTPStatus
-# import httpx
-from fastapi import FastAPI  # , Request, Response
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from simcc.config import Settings
@@ -40,11 +38,34 @@ app.add_middleware(
     allow_credentials=True,
 )
 
+# from http import HTTPStatus  # noqa: E402
+
+# import httpx  # noqa: E402
+# from fastapi import Request, Response  # noqa: E402
+
+# from simcc.security import get_current_user  # noqa: E402
+
 
 # @app.middleware('http')
 # async def reverse_proxy(request: Request, call_next):
 #     response = await call_next(request)
+
 #     if response.status_code == HTTPStatus.NOT_FOUND:
+#         method_protected = request.method in {'POST', 'PUT', 'DELETE'}
+
+#         if method_protected:
+#             auth_header = request.headers.get('Authorization')
+#             if not auth_header or not auth_header.startswith('Bearer '):
+#                 return Response(status_code=HTTPStatus.UNAUTHORIZED)
+
+#             token = auth_header.removeprefix('Bearer ').strip()
+
+#             try:
+#                 conn = await get_conn()
+#                 await get_current_user(token=token, conn=conn)
+#             except Exception:
+#                 return Response(status_code=HTTPStatus.UNAUTHORIZED)
+
 #         async with httpx.AsyncClient() as client:
 #             proxy_response = await client.request(
 #                 method=request.method,
@@ -59,6 +80,7 @@ app.add_middleware(
 #                 status_code=proxy_response.status_code,
 #                 headers=dict(proxy_response.headers),
 #             )
+
 #     return response
 
 

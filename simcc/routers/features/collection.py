@@ -18,7 +18,7 @@ router = APIRouter()
     status_code=HTTPStatus.CREATED,
     response_model=collection_models.Collection,
 )
-async def post_collection(
+async def collection_post(
     collection: collection_models.CreateCollection,
     current_user: user_model.UserResponse = Depends(get_current_user),
     conn: Connection = Depends(get_conn),
@@ -32,7 +32,7 @@ async def post_collection(
     '/collection/',
     response_model=list[collection_models.Collection],
 )
-async def get_collection(
+async def collection_get(
     conn: Connection = Depends(get_conn),
     current_user: user_model.UserResponse = Depends(get_current_user),
 ):
@@ -43,7 +43,7 @@ async def get_collection(
     '/collection/{collection_id}/',
     response_model=collection_models.Collection,
 )
-async def get_collection_by_id(
+async def collection_id_get(
     collection_id: UUID,
     conn: Connection = Depends(get_conn),
     current_user: user_model.UserResponse = Depends(get_current_user),
@@ -62,7 +62,7 @@ async def get_collection_by_id(
     '/collection/public/{user_id}/',
     response_model=list[collection_models.Collection],
 )
-async def get_public_collections(
+async def collection_public_get(
     user_id: UUID, conn: Connection = Depends(get_conn)
 ):
     return await collection_service.get_public_collections(conn, user_id)
@@ -72,7 +72,7 @@ async def get_public_collections(
     '/collection/',
     response_model=collection_models.Collection,
 )
-async def update_collection(
+async def collection_put(
     collection: collection_models.Collection,
     current_user: user_model.UserResponse = Depends(get_current_user),
     conn: Connection = Depends(get_conn),
@@ -86,7 +86,7 @@ async def update_collection(
     '/collection/{collection_id}/',
     status_code=HTTPStatus.NO_CONTENT,
 )
-async def delete_collection(
+async def collection_delete(
     collection_id: UUID,
     current_user: user_model.UserResponse = Depends(get_current_user),
     conn: Connection = Depends(get_conn),
@@ -101,7 +101,7 @@ async def delete_collection(
     status_code=HTTPStatus.CREATED,
     response_model=collection_models.CollectionEntry,
 )
-async def post_entries(
+async def collection_entries_post(
     collection_id: UUID,
     entry: collection_models.CreateCollectionEntry,
     current_user: user_model.UserResponse = Depends(get_current_user),
@@ -119,7 +119,7 @@ async def post_entries(
     '/collection/{collection_id}/entries/',
     response_model=list[collection_models.CollectionEntry],
 )
-async def get_entries(
+async def collection_entries_get(
     collection_id: UUID,
     conn: Connection = Depends(get_conn),
     current_user: user_model.UserResponse = Depends(get_current_user),
@@ -139,7 +139,7 @@ async def get_entries(
     '/collection/{collection_id}/entries/{entry_id}/',
     status_code=HTTPStatus.NO_CONTENT,
 )
-async def delete_entries(
+async def collection_entries_delete(
     collection_id: UUID,
     entry_id: UUID,
     current_user: user_model.UserResponse = Depends(get_current_user),

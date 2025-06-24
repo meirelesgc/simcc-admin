@@ -47,7 +47,7 @@ async def orcid_login():
     return RedirectResponse(url=auth_url)
 
 
-@router.get('/auth/orcid/callback')
+@router.get('/auth/orcid/callback', include_in_schema=False)
 async def orcid_callback(code: str, conn: Connection = Depends(get_conn)):
     orcid_claims = await validate_orcid_code(code)
     user = await user_service.get_or_create_user_by_orcid(conn, orcid_claims)
@@ -98,7 +98,7 @@ async def google_login():
     return RedirectResponse(url=auth_url)
 
 
-@router.get('/auth/google/callback')
+@router.get('/auth/google/callback', include_in_schema=False)
 async def google_callback(code: str, conn: Connection = Depends(get_conn)):
     google_payload = await validate_google_token(code=code)
     user = await user_service.get_or_create_user_by_google(

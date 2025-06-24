@@ -6,9 +6,9 @@ from fastapi import APIRouter, Depends
 from simcc.core.connection import Connection
 from simcc.core.database import get_conn
 from simcc.exceptions import ForbiddenException
-from simcc.models import user_model
+from simcc.models import rbac_model, user_model
 from simcc.security import get_current_user
-from simcc.services import user_service
+from simcc.services import rbac_service, user_service
 
 router = APIRouter()
 
@@ -30,10 +30,12 @@ async def post_user(
 @router.get(
     '/s/user/all',
     deprecated=True,
+    include_in_schema=False,
 )
 @router.get(
     '/s/user/entrys',
     deprecated=True,
+    include_in_schema=False,
 )
 @router.get(
     '/user/',
@@ -102,3 +104,13 @@ async def delete_user(
     if not (has_permission or is_self):
         raise ForbiddenException
     return await user_service.delete_user(conn, id)
+
+
+@router.post(
+    '/user/role/',
+    status_code=HTTPStatus.CREATED,
+)
+async def user_role_post(
+    user_role: rbac_model.CreateUserRole, conn: Connection = Depends(get_conn)
+):
+    return await rbac_service.post_user_role(conn, user_role)

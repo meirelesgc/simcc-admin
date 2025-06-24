@@ -137,6 +137,30 @@ async def test_put_user_not_authenticated(client, create_user):
 
 
 @pytest.mark.asyncio
+async def test_get_single_user_forbidden(client, create_user, auth_header):
+    user_one = await create_user()
+    user_two = await create_user()
+
+    headers = auth_header(user_one)
+
+    response = client.get(f'/user/{user_two.user_id}/', headers=headers)
+
+    assert response.status_code == HTTPStatus.FORBIDDEN
+
+
+@pytest.mark.asyncio
+async def test_delete_user_forbidden(client, create_user, auth_header):
+    user_one = await create_user()
+    user_two = await create_user()
+
+    headers = auth_header(user_one)
+
+    response = client.delete(f'/user/{user_two.user_id}/', headers=headers)
+
+    assert response.status_code == HTTPStatus.FORBIDDEN
+
+
+@pytest.mark.asyncio
 async def test_delete_user(client, create_user, auth_header):
     user = await create_user()
     token = auth_header(user)

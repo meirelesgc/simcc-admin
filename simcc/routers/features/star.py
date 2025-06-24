@@ -17,7 +17,6 @@ router = APIRouter()
 
 @router.post(
     '/stars/',
-    tags=['Stars'],
     status_code=HTTPStatus.CREATED,
     response_model=star_models.Star,
 )
@@ -31,7 +30,6 @@ async def post_star(
 
 @router.get(
     '/stars/',
-    tags=['Stars'],
     response_model=list[star_models.Star],
 )
 async def get_stars(
@@ -43,7 +41,6 @@ async def get_stars(
 
 @router.delete(
     '/stars/{entry_id}/',
-    tags=['Stars'],
     status_code=HTTPStatus.NO_CONTENT,
 )
 async def delete_star(

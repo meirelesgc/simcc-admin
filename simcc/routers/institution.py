@@ -15,6 +15,7 @@ router = APIRouter()
 @router.post(
     '/InstitutionRest/Insert',
     deprecated=True,
+    include_in_schema=False,
 )
 @router.post(
     '/institution/',
@@ -32,6 +33,7 @@ async def post_institution(
 @router.put(
     '/Query/Count',
     deprecated=True,
+    include_in_schema=False,
 )
 @router.get(
     '/institution/{institution_id}/',
@@ -55,6 +57,7 @@ async def get_institution(
 @router.put(
     '/InstitutionRest/Update',
     deprecated=True,
+    include_in_schema=False,
 )
 @router.put(
     '/institution/',
@@ -72,6 +75,7 @@ async def put_institution(
 @router.post(
     '/InstitutionRest/Delete',
     deprecated=True,
+    include_in_schema=False,
 )
 @router.delete(
     '/institution/{institution_id}/',
