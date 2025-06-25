@@ -50,7 +50,7 @@ pythonpath = "."
 addopts = '-p no:warnings'
 
 [tool.taskipy.tasks]
-format = 'ruff check; ruff check --fix; ruff format'
+format = 'ruff check --fix; ruff format'
 run = 'fastapi dev simcc/app.py'
-test = 'task format; pytest -s -x --cov=simcc; coverage html'
+test = 'task format; PROD=false  pytest -s -x --cov=simcc; coverage html'
 debug = 'task format; pytest -s -x --cov=simcc -vv --lf'

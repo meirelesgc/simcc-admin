@@ -137,3 +137,9 @@ async def get_or_create_user_by_google(conn: Connection, google_payload: dict):
 
     created_user = await post_user(conn, user)
     return created_user
+
+
+async def key_post(conn, user, key):
+    key = user_model.Key(**user.model_dump(), **key.model_dump())
+    await user_repository.key_post(conn, key)
+    return key

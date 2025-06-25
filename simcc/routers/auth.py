@@ -11,6 +11,7 @@ from simcc.core.database import get_conn
 from simcc.models import user_model
 from simcc.security import (
     create_access_token,
+    get_current_user,
     validate_google_token,
     validate_orcid_code,
 )
@@ -35,6 +36,19 @@ async def login_for_access_token(
     return await user_service.login_for_access_token(conn, form_data)
 
 
+@router.post(
+    '/key',
+    response_model=user_model.KeyResponse,
+    status_code=HTTPStatus.CREATED,
+)
+async def key_post(
+    key: user_model.CreateKey,
+    current_user: user_model.UserResponse = Depends(get_current_user),
+    conn: Connection = Depends(get_conn),
+):
+    return await user_service.key_post(conn, current_user, key)
+
+
 @router.get('/auth/orcid/login')
 async def orcid_login():
     params = {
@@ -52,7 +66,7 @@ async def orcid_callback(code: str, conn: Connection = Depends(get_conn)):
     orcid_claims = await validate_orcid_code(code)
     user = await user_service.get_or_create_user_by_orcid(conn, orcid_claims)
     app_token = create_access_token(data={'sub': user.email})
-    URL = f'{Settings().FRONTEND_URL}/authentication?token={app_token}'
+    URL = f'{Settings().FRONTEND_URL}authentication?token={app_token}'
     return RedirectResponse(url=URL, status_code=302)
 
 
@@ -82,7 +96,8 @@ async def shibboleth_login(
     )
     app_token = create_access_token(data={'sub': user.email})
 
-    URL = f'{Settings().FRONTEND_URL}/authentication?token={app_token}'
+    URL = f'{Settings().FRONTEND_URL}authentication?token={app_token}'
+    print(URL)
     return RedirectResponse(url=URL, status_code=302)
 
 
@@ -105,5 +120,5 @@ async def google_callback(code: str, conn: Connection = Depends(get_conn)):
         conn=conn, google_payload=google_payload
     )
     access_token = create_access_token(data={'sub': user.email})
-    URL = f'{Settings().FRONTEND_URL}/authentication?token={access_token}'
+    URL = f'{Settings().FRONTEND_URL}authentication?token={access_token}'
     return RedirectResponse(url=URL, status_code=302)

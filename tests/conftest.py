@@ -10,9 +10,19 @@ from simcc.core.connection import Connection
 from simcc.core.database import get_conn
 from simcc.models import rbac_model
 from simcc.models.features import collection_models
-from simcc.services import institution_service, rbac_service, user_service
+from simcc.services import (
+    institution_service,
+    rbac_service,
+    researcher_service,
+    user_service,
+)
 from simcc.services.features import collection_service, star_service
-from tests.factories import institution_factory, rbac_factory, user_factory
+from tests.factories import (
+    institution_factory,
+    rbac_factory,
+    researcher_factory,
+    user_factory,
+)
 from tests.factories.features import collection_factory, star_factory
 
 
@@ -154,6 +164,17 @@ def create_collection(conn):
         )
 
     return _create
+
+
+@pytest.fixture
+def create_researcher(conn):
+    async def _create_researcher(institution, **kwargs):
+        researcher = researcher_factory.CreateResearcherFactory(
+            institution_id=institution.institution_id, **kwargs
+        )
+        return await researcher_service.researcher_post(conn, researcher)
+
+    return _create_researcher
 
 
 @pytest.fixture

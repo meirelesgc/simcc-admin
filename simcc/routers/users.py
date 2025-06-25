@@ -50,6 +50,7 @@ async def get_user(
     return await user_service.get_user(conn)
 
 
+@router.get('/s/user', response_model=user_model.UserResponse, deprecated=True)
 @router.get('/user/my-self/', response_model=user_model.UserResponse)
 async def get_me(
     current_user: user_model.UserResponse = Depends(get_current_user),

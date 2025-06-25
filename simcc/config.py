@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     HOST: str
     PORT: int
 
+    PROD: bool = True
+
     ORCID_CLIENT_ID: Optional[str] = None
     ORCID_REDIRECT_URI: Optional[str] = None
     ORCID_CLIENT_SECRET: Optional[str] = None
