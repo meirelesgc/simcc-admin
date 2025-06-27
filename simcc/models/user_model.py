@@ -31,6 +31,8 @@ class User(BaseModel):
     photo_url: Optional[str] = None
     lattes_id: Optional[str] = None
 
+    permissions: list = []
+
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: Optional[datetime] = None
 
@@ -47,6 +49,8 @@ class UserResponse(BaseModel):
     linkedin: Optional[str] = None
     photo_url: Optional[str] = None
     lattes_id: Optional[str] = None
+
+    roles: list = []
 
     permissions: list = []
     model_config = ConfigDict(from_attributes=True)

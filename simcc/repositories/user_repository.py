@@ -38,8 +38,8 @@ async def get_user(
 
     SCRIPT_SQL = f"""
         SELECT u.user_id, u.username, u.email, u.password, u.created_at,
-            u.updated_at, ARRAY_AGG(r.name) AS roles, linkedin, photo_url,
-            lattes_id
+            u.updated_at, ARRAY_REMOVE(ARRAY_AGG(r.name), NULL) AS roles,
+            linkedin, photo_url, lattes_id
         FROM public.users u
             LEFT JOIN user_roles ur
                 ON ur.user_id = u.user_id

@@ -42,7 +42,7 @@ async def post_user(
     response_model=list[user_model.UserResponse],
 )
 async def get_user(
-    current_user: user_model.UserResponse = Depends(get_current_user),
+    current_user: user_model.User = Depends(get_current_user),
     conn: Connection = Depends(get_conn),
 ):
     if not set(current_user.permissions) & set(ALLOWED):
@@ -53,7 +53,7 @@ async def get_user(
 @router.get('/s/user', response_model=user_model.UserResponse, deprecated=True)
 @router.get('/user/my-self/', response_model=user_model.UserResponse)
 async def get_me(
-    current_user: user_model.UserResponse = Depends(get_current_user),
+    current_user: user_model.User = Depends(get_current_user),
     conn: Connection = Depends(get_conn),
 ):
     return await user_service.get_user(conn, current_user.user_id)
@@ -65,7 +65,7 @@ async def get_me(
 )
 async def get_single_user(
     id: UUID,
-    current_user: user_model.UserResponse = Depends(get_current_user),
+    current_user: user_model.User = Depends(get_current_user),
     conn: Connection = Depends(get_conn),
 ):
     has_permission = any(p in current_user.permissions for p in ALLOWED)
@@ -81,7 +81,7 @@ async def get_single_user(
 )
 async def put_user(
     user: user_model.User,
-    current_user: user_model.UserResponse = Depends(get_current_user),
+    current_user: user_model.User = Depends(get_current_user),
     conn: Connection = Depends(get_conn),
 ):
     has_permission = any(p in current_user.permissions for p in ALLOWED)
@@ -97,7 +97,7 @@ async def put_user(
 )
 async def delete_user(
     id: UUID,
-    current_user: user_model.UserResponse = Depends(get_current_user),
+    current_user: user_model.User = Depends(get_current_user),
     conn: Connection = Depends(get_conn),
 ):
     has_permission = any(p in current_user.permissions for p in ALLOWED)

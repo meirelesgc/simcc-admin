@@ -43,7 +43,7 @@ async def login_for_access_token(
 )
 async def key_post(
     key: user_model.CreateKey,
-    current_user: user_model.UserResponse = Depends(get_current_user),
+    current_user: user_model.User = Depends(get_current_user),
     conn: Connection = Depends(get_conn),
 ):
     return await user_service.key_post(conn, current_user, key)
