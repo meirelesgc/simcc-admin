@@ -28,8 +28,8 @@ class RoleResponse(BaseModel):
 
 
 class Permission(BaseModel):
-    permission_id: UUID
-    name: str
+    id: UUID
+    permission: str
     created_at: datetime
     updated_at: Optional[datetime] = None
 

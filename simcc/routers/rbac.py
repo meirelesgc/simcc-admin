@@ -84,4 +84,4 @@ async def role_delete(
 async def permissions_get(
     conn: Connection = Depends(get_conn),
 ):
-    return await rbac_service.get_permissions(conn)
+    return await rbac_service.get_permissions(conn, None)

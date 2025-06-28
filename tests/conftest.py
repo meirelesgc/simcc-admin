@@ -117,12 +117,12 @@ async def _assign_role_to_user(conn, create_role, user_id):
 
 
 async def _assign_admin_permission_to_role(conn, role_id):
-    permissions = await rbac_service.get_permissions(conn)
+    permissions = await rbac_service.get_permissions(conn, None)
 
     for p in permissions:
-        if p['name'] == 'ADMIN':
+        if p['permission'] == 'ADMIN':
             admin = p
-    rp = {'permission_id': admin['permission_id'], 'role_id': role_id}
+    rp = {'permission_id': admin['id'], 'role_id': role_id}
     rp = rbac_model.CreateRolePermission(**rp)
     await rbac_service.post_role_permissions(conn, rp)
 
