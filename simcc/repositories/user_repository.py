@@ -42,8 +42,8 @@ async def get_user(
             ur.user_id,
             json_agg(
                 json_build_object(
-                'role_id', r.role_id,
-                'id', r.name,
+                'id', r.role_id,
+                'role_id', r.name,
                 'created_at', r.created_at,
                 'updated_at', r.updated_at
                 )
