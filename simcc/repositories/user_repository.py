@@ -37,18 +37,30 @@ async def get_user(
         filters += 'AND u.email = %(email)s'
 
     SCRIPT_SQL = f"""
+        WITH roles_ AS (
+            SELECT
+            ur.user_id,
+            json_agg(
+                json_build_object(
+                'role_id', r.role_id,
+                'id', r.name,
+                'created_at', r.created_at,
+                'updated_at', r.updated_at
+                )
+            ) AS roles
+            FROM public.user_roles ur
+            JOIN public.roles r ON ur.role_id = r.role_id
+            GROUP BY ur.user_id
+        )
         SELECT u.user_id, u.username, u.email, u.password, u.created_at,
-            u.updated_at, ARRAY_REMOVE(ARRAY_AGG(r.name), NULL) AS roles,
+            u.updated_at, COALESCE(r.roles, '[]'::json) AS roles,
             linkedin, photo_url, lattes_id
         FROM public.users u
-            LEFT JOIN user_roles ur
-                ON ur.user_id = u.user_id
-            LEFT JOIN roles r
-                ON r.role_id = ur.role_id
+            LEFT JOIN roles_ r
+                ON r.user_id = u.user_id
         WHERE 1 = 1
             {filters}
             {filters}
-        GROUP BY u.user_id;
         """
     return await conn.select(SCRIPT_SQL, params, one)
 
