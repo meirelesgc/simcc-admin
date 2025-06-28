@@ -46,7 +46,7 @@ async def role_id_get(
     return await rbac_service.get_role(conn, id)
 
 
-@router.get('/s/role/permission', deprecated=True)
+@router.get('/s/permission', deprecated=True)
 @router.get(
     '/role/{role_id}/permission/',
     response_model=list[rbac_model.Permission],
