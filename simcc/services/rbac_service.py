@@ -26,8 +26,8 @@ async def delete_role(conn: Connection, role_id: UUID):
     await rbac_repository.delete_role(conn, role_id)
 
 
-async def get_permissions(conn):
-    return await rbac_repository.get_permissions(conn)
+async def get_permissions(conn, role_id):
+    return await rbac_repository.get_permissions(conn, role_id)
 
 
 async def post_user_role(conn, user_role):
@@ -36,3 +36,7 @@ async def post_user_role(conn, user_role):
 
 async def post_role_permissions(conn, role_permission):
     return await rbac_repository.post_role_permissions(conn, role_permission)
+
+
+async def role_permissions_get(conn, role_id):
+    return await rbac_repository.role_permissions_get(conn, role_id)

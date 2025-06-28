@@ -58,12 +58,27 @@ async def delete_role(conn, role_id):
     await conn.exec(SCRIPT_SQL, {'role_id': role_id})
 
 
-async def get_permissions(conn):
-    SCRIPT_SQL = """
-        SELECT permission_id, name, created_at, updated_at
-        FROM public.permissions;
+async def get_permissions(conn, role_id):
+    params = {}
+    join_role_permission = str()
+    filters = str()
+
+    if role_id:
+        params['role_id'] = role_id
+        filters += 'AND rp.role_id = %(role_id)s'
+        join_role_permission = """
+            LEFT JOIN role_permissions rp
+                ON rp.permission_id = p.permission_id
+            """
+
+    SCRIPT_SQL = f"""
+        SELECT p.permission_id, p.name, p.created_at, p.updated_at
+        FROM public.permissions p
+            {join_role_permission}
+        WHERE 1 = 1
+            {filters}
         """
-    return await conn.select(SCRIPT_SQL)
+    return await conn.select(SCRIPT_SQL, params)
 
 
 async def post_user_role(conn, user_role):
