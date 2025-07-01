@@ -8,6 +8,7 @@ from pydantic import UUID4, BaseModel, Field
 class CreateCollection(BaseModel):
     name: str
     description: str
+    visible: bool = False
 
 
 class Collection(BaseModel):

@@ -5,6 +5,18 @@ from uuid import UUID
 from pydantic import BaseModel
 
 
+class CreateNotification(BaseModel):
+    type: Literal[
+        'NEW_PRODUCTION',
+        'USER_FOLLOWED',
+        'PRODUCTION_LIKED',
+        'LATTES_REMINDER',
+        'ORCID_REMINDER',
+        'NEW_LOGIN',
+    ]
+    data: dict
+
+
 class Notification(BaseModel):
     notification_id: UUID
     user_id: UUID

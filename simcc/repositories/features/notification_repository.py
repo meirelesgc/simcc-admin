@@ -4,5 +4,6 @@ async def notifications_get(conn, current_user):
         SELECT notification_id, user_id, sender_id, type, data, read,
             created_at, read_at
         FROM notifications
+        WHERE user_id = %(user_id)s;
         """
     return await conn.select(SCRIPT_SQL, params)
