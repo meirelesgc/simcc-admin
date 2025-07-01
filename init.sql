@@ -6,7 +6,15 @@ CREATE EXTENSION IF NOT EXISTS unaccent;
 
 --- Gerenciamento da conta
 
-CREATE TYPE relationship AS ENUM ('COLABORADOR', 'PERMANENTE');
+CREATE TYPE RELATIONSHIP AS ENUM ('COLABORADOR', 'PERMANENTE');
+CREATE TYPE NOTIFICATION_TYPE AS ENUM (
+  'NEW_PRODUCTION',
+  'USER_FOLLOWED',
+  'PRODUCTION_LIKED',
+  'LATTES_REMINDER',
+  'ORCID_REMINDER',
+  'NEW_LOGIN'
+);
 
 CREATE TABLE public.institution (
   institution_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -131,7 +139,7 @@ CREATE TABLE public.graduate_program_researcher (
   graduate_program_id UUID NOT NULL,
   researcher_id UUID NOT NULL,
   year INT[],
-  relationship_type relationship,
+  RELATIONSHIP_type RELATIONSHIP,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW(),
   deleted_at TIMESTAMP,
@@ -257,7 +265,19 @@ CREATE TABLE IF NOT EXISTS feature.stars(
     type VARCHAR(255) NOT NULL,
     FOREIGN KEY (user_id) REFERENCES public.users(user_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
+CREATE TABLE feature.notifications (
+  notification_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL, 
+  sender_id UUID,        
+  type NOTIFICATION_TYPE NOT NULL, 
+  data JSONB,
+  read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT NOW(),
+  read_at TIMESTAMP,
 
+  FOREIGN KEY (user_id) REFERENCES public.users(user_id) ON DELETE CASCADE ON UPDATE CASCADE,
+  FOREIGN KEY (sender_id) REFERENCES public.users(user_id) ON DELETE SET NULL ON UPDATE CASCADE
+);
 ---
 
 COMMIT;
