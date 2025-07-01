@@ -120,7 +120,7 @@ async def _assign_admin_permission_to_role(conn, role_id):
     permissions = await rbac_service.get_permissions(conn, None)
 
     for p in permissions:
-        if p['permission'] == 'ADMIN':
+        if p['name'] == 'ADMIN':
             admin = p
     rp = {'permission_id': admin['id'], 'role_id': role_id}
     rp = rbac_model.CreateRolePermission(**rp)

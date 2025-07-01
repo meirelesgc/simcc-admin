@@ -50,7 +50,8 @@ async def get_current_user(
 
     SCRIPT_SQL = """
         SELECT u.user_id, u.username, u.email, u.password, u.created_at,
-            u.updated_at, ARRAY_REMOVE(ARRAY_AGG(p.name), NULL) AS permissions
+            u.updated_at, ARRAY_REMOVE(ARRAY_AGG(p.name), NULL)
+            AS permissions
         FROM public.users u
             LEFT JOIN user_roles ur
                 ON ur.user_id = u.user_id

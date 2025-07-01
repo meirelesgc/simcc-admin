@@ -61,7 +61,8 @@ CREATE TABLE public.roles (
 );
 CREATE TABLE public.permissions (
     permission_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name VARCHAR(255) NOT NULL UNIQUE,
+    name VARCHAR(255),
+    display_name VARCHAR(255) NOT NULL UNIQUE,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP
 );
@@ -267,8 +268,28 @@ ROLLBACK;
 --- Seeds
 BEGIN;
 
-INSERT INTO public.permissions (name) 
-VALUES ('ADMIN'), ('INSTITUTION');
+INSERT INTO public.permissions (name, display_name) 
+VALUES 
+  ('ADMIN', 'administrativo'),
+  ('INSTITUTION', 'instituicoes'),
+  ('INSTITUTION', 'painel_instituicao'),
+  ('DEPARTMENT', 'departamentos'),
+  ('PROGRAM', 'programas'),
+  (NULL, 'grupos_pesquisa'),
+  ('RESEARCHER', 'pesquisadores'),
+  (NULL, 'barema'),
+  (NULL, 'notificacoes'),
+  (NULL, 'indicadores_instituicao'),
+  (NULL, 'indicadores_pos_graduacao'),
+  (NULL, 'indicadores_departamento'),
+  (NULL, 'indicadores_grupos_pesquisa'),
+  (NULL, 'configuracoes'),
+  ('ADMIN', 'apache_hop'),
+  ('ADMIN', 'cargos_funcoes'),
+  ('WEIGHTS', 'pesos_avaliacao'),
+  ('ADMIN', 'parâmetros'),
+  ('ADMIN', 'secao_pessoal');
+
 
 
 COMMIT;
