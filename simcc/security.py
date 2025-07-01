@@ -20,7 +20,7 @@ from simcc.models import user_model
 
 SECRET_KEY = 'your-secret-key'  # Buscar do .env
 ALGORITHM = 'HS256'
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 10080
 pwd_context = PasswordHash.recommended()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='token')
 
