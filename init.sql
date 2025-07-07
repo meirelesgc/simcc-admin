@@ -267,8 +267,8 @@ CREATE TABLE IF NOT EXISTS feature.stars(
 );
 CREATE TABLE feature.notifications (
   notification_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID NOT NULL, 
-  sender_id UUID,        
+  user_id UUID NOT NULL,
+  sender_id UUID,
   type NOTIFICATION_TYPE NOT NULL, 
   data JSONB,
   read BOOLEAN DEFAULT FALSE,
