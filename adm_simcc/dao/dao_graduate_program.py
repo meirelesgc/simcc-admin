@@ -182,6 +182,7 @@ def graduate_program_basic_query(
             graduate_program_id
     """
     registry_students = adm_database.select(SCRIPT_SQL_STUDENTS)
+
     qtd_discentes = pd.DataFrame(
         registry_students, columns=["graduate_program_id", "qtd_discente"]
     )
@@ -193,7 +194,6 @@ def graduate_program_basic_query(
             how="left",
             on="graduate_program_id",
         )
-        data_frame["qtd_discente"].fillna(0, inplace=True)
     else:
         data_frame["qtd_discente"] = 0
 
@@ -203,19 +203,12 @@ def graduate_program_basic_query(
 
 
 def graduate_program_delete(graduate_program_id: UUID):
-    """
-    Deleta um programa de pós-graduação e seus registros associados.
-    """
-    # A lógica de DELETE não muda, pois as chaves estrangeiras garantem
-    # a remoção em cascata ou você continua deletando com base no ID.
     parameters = [graduate_program_id, graduate_program_id, graduate_program_id]
     SCRIPT_SQL = """
         DELETE FROM graduate_program_student
         WHERE graduate_program_id = %s;
-        
         DELETE FROM graduate_program_researcher
         WHERE graduate_program_id = %s;
-
         DELETE FROM graduate_program
         WHERE graduate_program_id = %s;
     """
