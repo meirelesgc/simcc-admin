@@ -133,7 +133,7 @@ def graduate_program_basic_query(
             {filter_graduate_program}
             {filter_institution}
     """
-
+    print(SCRIPT_SQL, parameters)
     registry = adm_database.select(SCRIPT_SQL, parameters)
     columns = [
         "graduate_program_id",
