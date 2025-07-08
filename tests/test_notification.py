@@ -24,6 +24,23 @@ async def test_post_notification(client, create_user, auth_header):
 
 
 @pytest.mark.asyncio
+async def test_post_notification_for_any_users(
+    client, create_user, auth_header
+):
+    user = await create_user()
+    notification = notification_factory.CreateNotificationFactory(user_id='*')
+
+    response = client.post(
+        '/notification/',
+        json=notification.model_dump(mode='json'),
+        headers=auth_header(user),
+    )
+
+    assert response.status_code == HTTPStatus.CREATED
+    assert notification_models.Notification(**response.json())
+
+
+@pytest.mark.asyncio
 async def test_get_notifications(
     client, create_user, create_notification, auth_header
 ):
@@ -53,6 +70,22 @@ async def test_get_notifications_by_other_user(
     )
     assert response.status_code == HTTPStatus.OK
     assert len(response.json()) == 0
+
+
+@pytest.mark.asyncio
+async def test_get_notifications_by_other_user_with_any(
+    client, create_user, create_notification, auth_header
+):
+    sender = await create_user()
+    user = await create_user()
+    await create_notification(sender, user_id='*')
+
+    response = client.get(
+        '/notification/',
+        headers=auth_header(user),
+    )
+    assert response.status_code == HTTPStatus.OK
+    assert len(response.json()) == 1
 
 
 @pytest.mark.asyncio

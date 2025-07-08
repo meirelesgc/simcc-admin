@@ -72,8 +72,8 @@ async def get_permissions(conn, role_id):
             """
 
     SCRIPT_SQL = f"""
-        SELECT p.permission_id AS id, p.name, p.display_name AS permission, p.created_at,
-            p.updated_at
+        SELECT p.permission_id AS id, p.name, p.display_name AS permission,
+            p.created_at, p.updated_at
         FROM public.permissions p
             {join_role_permission}
         WHERE 1 = 1
