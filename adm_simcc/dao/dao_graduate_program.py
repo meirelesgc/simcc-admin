@@ -224,7 +224,7 @@ def graduate_program_fix(program: GraduateProgram):
         program.region, program.url_image, program.acronym, program.description,
         program.visible, program.site, program.coordinator, program.email,
         program.start, program.phone, program.periodicity,
-        program.menagers,  # Adicione o campo menagers aqui
+        program.menagers,
         program.graduate_program_id,
     )
     # fmt: on

@@ -12,7 +12,7 @@ class GraduateProgram(BaseModel):
     cooperation_project: Optional[str] = None
     area: str = None
     modality: str = None
-    program_type: Optional[str] = None
+    type: Optional[str] = None
     rating: Optional[str] = None
     institution_id: UUID4
     state: str = "BA"
@@ -28,6 +28,7 @@ class GraduateProgram(BaseModel):
     start: Optional[Any] = None
     phone: Optional[str] = None
     periodicity: Optional[str] = None
+    menagers: Optional[list] = None
 
 
 class ListGraduateProgram(BaseModel):
