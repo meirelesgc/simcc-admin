@@ -11,4 +11,11 @@ async def notification_post(conn, current_user, notification):
         **notification.model_dump(),
         sender_id=current_user.user_id,
     )
-    print(notification)
+    await notification_repository.notification_post(conn, notification)
+    return notification
+
+
+async def notification_delete(conn, notification_id):
+    return await notification_repository.notification_delete(
+        conn, notification_id
+    )

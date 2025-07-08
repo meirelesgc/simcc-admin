@@ -16,14 +16,22 @@ from simcc.services import (
     researcher_service,
     user_service,
 )
-from simcc.services.features import collection_service, star_service
+from simcc.services.features import (
+    collection_service,
+    notification_service,
+    star_service,
+)
 from tests.factories import (
     institution_factory,
     rbac_factory,
     researcher_factory,
     user_factory,
 )
-from tests.factories.features import collection_factory, star_factory
+from tests.factories.features import (
+    collection_factory,
+    notification_factory,
+    star_factory,
+)
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -202,3 +210,15 @@ def create_star(conn):
         return created_star
 
     return _create_star
+
+
+@pytest.fixture
+def create_notification(conn):
+    async def _create_notification(user, **kwargs):
+        notification = notification_factory.CreateNotificationFactory(**kwargs)
+        created_notification = await notification_service.notification_post(
+            conn, user, notification
+        )
+        return created_notification
+
+    return _create_notification

@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Literal, Optional
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
 
@@ -19,7 +19,7 @@ class CreateNotification(BaseModel):
 
 
 class Notification(BaseModel):
-    notification_id: UUID
+    notification_id: UUID = Field(default_factory=uuid4)
     user_id: UUID | Literal['*']
     sender_id: UUID
     type: Literal[
@@ -33,4 +33,4 @@ class Notification(BaseModel):
     data: dict
     read: bool = False
     created_at: datetime = Field(default_factory=datetime.now)
-    read_at: Optional[datetime]
+    read_at: Optional[datetime] = None

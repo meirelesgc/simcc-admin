@@ -1,3 +1,6 @@
+from http import HTTPStatus
+from uuid import UUID
+
 from fastapi import APIRouter, Depends
 
 from simcc.core.connection import Connection
@@ -21,6 +24,7 @@ async def notifications_get(
 @router.post(
     '/notification/',
     response_model=notification_models.Notification,
+    status_code=HTTPStatus.CREATED,
 )
 async def notification_post(
     notification: notification_models.CreateNotification,
@@ -32,12 +36,14 @@ async def notification_post(
     )
 
 
-@router.delete('/notification/{notification_id}/')
+@router.delete(
+    '/notification/{notification_id}/', status_code=HTTPStatus.NO_CONTENT
+)
 async def notification_delete(
-    notification_id: int,
+    notification_id: UUID,
     current_user: user_model.User = Depends(get_current_user),
     conn: Connection = Depends(get_conn),
 ):
     return await notification_service.notification_delete(
-        conn, current_user, notification_id
+        conn, notification_id
     )
