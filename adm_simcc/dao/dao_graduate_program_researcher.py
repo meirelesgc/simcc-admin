@@ -149,7 +149,7 @@ def graduate_program_researcher_basic_query(
     filter_program = str()
     if graduate_program_id:
         parameters.append(graduate_program_id)
-        filter_program = "gpr.graduate_program_id = %s"
+        filter_program = "AND gpr.graduate_program_id = %s"
     if type_:
         type_filter = "AND type_ = %s"
         parameters.append(type_)
