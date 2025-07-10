@@ -13,7 +13,7 @@ from simcc.services.features import notification_service
 router = APIRouter()
 
 
-@router.get('/notification/')
+@router.get('/notification/', response_model=notification_models.Notification)
 async def notifications_get(
     current_user: user_model.User = Depends(get_current_user),
     conn: Connection = Depends(get_conn),

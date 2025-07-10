@@ -29,6 +29,8 @@ class Notification(BaseModel):
         'LATTES_REMINDER',
         'ORCID_REMINDER',
         'NEW_LOGIN',
+        'MESSAGE',
+        'SYSTEM',
     ]
     data: dict
     read: bool = False
