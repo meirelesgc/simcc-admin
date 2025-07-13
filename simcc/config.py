@@ -24,7 +24,9 @@ class Settings(BaseSettings):
     PROXY_URL: HttpUrl = 'http://localhost:9999'
     FRONTEND_URL: HttpUrl = 'http://localhost:8080'
 
-    ROOT_PATH: str = str()
+    REDIS: str = 'redis://localhost:6379/0'
+
+    ROOT_PATH: str = None
 
     class Config:
         env_file = '.env'
