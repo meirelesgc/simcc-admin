@@ -4,10 +4,11 @@ import pytest
 import pytest_asyncio
 from fastapi.testclient import TestClient
 from testcontainers.postgres import PostgresContainer
+from testcontainers.redis import AsyncRedisContainer
 
 from simcc.app import app
 from simcc.core.connection import Connection
-from simcc.core.database import get_conn
+from simcc.core.database import get_cache_conn, get_conn
 from simcc.models import rbac_model
 from simcc.models.features import collection_models
 from simcc.services import (
@@ -62,12 +63,22 @@ async def conn(postgres):
     await conn.disconnect()
 
 
+@pytest_asyncio.fixture(scope='session', autouse=True)
+async def redis():
+    with AsyncRedisContainer('redis:latest') as rd:
+        yield await rd.get_async_client(decode_responses=True)
+
+
 @pytest.fixture
-def client(conn):
+def client(conn, redis):
     async def get_conn_override():
         yield conn
 
+    async def get_cache_conn_override():
+        return redis
+
     app.dependency_overrides[get_conn] = get_conn_override
+    app.dependency_overrides[get_cache_conn] = get_cache_conn_override
 
     return TestClient(app)
 

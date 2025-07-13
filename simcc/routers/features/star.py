@@ -1,5 +1,3 @@
-# simcc/routers/star_router.py
-
 from http import HTTPStatus
 from uuid import UUID
 
