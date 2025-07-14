@@ -310,7 +310,7 @@ def list_users():
             u.display_name,
             u.email,
             u.uid,
-            u.photo_url
+            u.photo_url,
             u.linkedin,
             u.provider,
             u.lattes_id,
@@ -325,7 +325,7 @@ def list_users():
             u.last_name,
             u.email_status,
             u.verify,
-            u.visible_email;
+            u.visible_email
         """
     registry = adm_database.select(SCRIPT_SQL)
     data_frame = pd.DataFrame(
@@ -349,6 +349,7 @@ def list_users():
             "gender",
             "last_name",
             "email_status",
+            "roles",
             "verify",
             "visible_email",
         ],
