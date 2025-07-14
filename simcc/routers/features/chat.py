@@ -1,35 +1,29 @@
-import asyncio
+from uuid import UUID
 
-from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, Query, WebSocket
 from redis.asyncio.client import Redis
 
-from simcc.core.database import get_cache_conn
+from simcc.core.connection import Connection
+from simcc.core.database import get_cache_conn, get_conn
+from simcc.models import user_model
+from simcc.security import get_current_user
+from simcc.services.features import chat_service
 
 router = APIRouter()
 
 
-@router.websocket('/ws/{room_id}')
-async def websocket_endpoint(
-    room_id: str,
+@router.websocket('/ws/chat/user/{user_id}/')
+async def chat_ws(
+    user_id: UUID,
     websocket: WebSocket,
+    token: str = Query(),
     redis: Redis = Depends(get_cache_conn),
+    conn: Connection = Depends(get_conn),
 ):
-    await websocket.accept()
-    pubsub = redis.pubsub()
-    channel = f'chat:{room_id}'
-    await pubsub.subscribe(channel)
-
-    async def send_to_client():
-        async for message in pubsub.listen():
-            if message.get('type') == 'message':
-                await websocket.send_text(message['data'].decode())
-
-    async def recv_from_client():
-        try:
-            while True:
-                text = await websocket.receive_text()
-                await redis.publish(channel, text)
-        except WebSocketDisconnect:
-            await pubsub.unsubscribe(channel)
-
-    await asyncio.gather(send_to_client(), recv_from_client())
+    current_user: user_model.User = await get_current_user(token, conn)
+    sender_id = current_user.user_id
+    users = [user_id, sender_id]
+    chat_id = await chat_service.get_chat_id(conn, users)
+    return await chat_service.chat_ws(
+        conn, chat_id, sender_id, websocket, redis
+    )

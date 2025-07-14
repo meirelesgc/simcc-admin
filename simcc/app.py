@@ -6,7 +6,7 @@ from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from simcc.config import Settings
-from simcc.core.database import conn, get_cache_conn, get_conn
+from simcc.core.database import conn, get_conn
 from simcc.routers import auth, institution, rbac, researcher, users
 from simcc.routers.features import chat, collection, notification, star
 from simcc.security import get_current_user
@@ -17,7 +17,6 @@ async def lifespan(app: FastAPI):
     await conn.connect()
     yield
     await conn.disconnect()
-    await get_cache_conn.disconnect()
 
 
 app = FastAPI(

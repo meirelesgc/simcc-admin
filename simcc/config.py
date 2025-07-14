@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     DATABASE: str
     PG_USER: str
     PASSWORD: str
+
     HOST: str
     PORT: int
 
