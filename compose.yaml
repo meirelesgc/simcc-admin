@@ -18,16 +18,16 @@ services:
     volumes:
       - cache:/data
     restart: unless-stopped
-
   api:
-    image: jade-admin-api
+    image: gleidsoncosta/jade-admin-api:latest
     ports:
       - "8000:8000"
     depends_on:
       - cache
     restart: unless-stopped
     volumes:
-      - .:/app
+      - ./.env:/app/.env
 
 volumes:
+  db:
   cache:
