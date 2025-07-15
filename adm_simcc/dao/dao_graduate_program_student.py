@@ -39,7 +39,22 @@ def student_basic_query(
     graduate_program_id: str = None,
     institution_id: str = None,
     lattes_id: str = None,
+    oriented: int = None,
 ):
+    print(oriented)
+    filter_oriented = str()
+    if oriented == 1:
+        filter_oriented = """
+            AND gps.researcher_id IN
+            (SELECT student_researcher_id FROM guidance_tracking)
+            """
+
+    if oriented == 2:  # noqa: PLR2004
+        filter_oriented = """
+            AND gps.researcher_id NOT IN
+            (SELECT student_researcher_id FROM guidance_tracking)
+            """
+
     if lattes_id:
         filter_lattes_id = f"AND r.lattes_id = '{lattes_id}'"
     else:
@@ -71,8 +86,10 @@ def student_basic_query(
             1 = 1
             {filter_graduate_program}
             {filter_institution}
+            {filter_oriented}
             {filter_lattes_id};
     """
+    print(SCRIPT_SQL)
     registry = adm_database.select(SCRIPT_SQL)
     data_frame = pd.DataFrame(
         registry,

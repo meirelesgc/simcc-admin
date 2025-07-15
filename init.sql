@@ -179,28 +179,41 @@ CREATE TABLE IF NOT EXISTS public.feedback (
     description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-CREATE TABLE "graduation_program_guidance" (
-	id UUID NOT NULL DEFAULT uuid_generate_v4(),
-	student_researcher_id UUID NOT NULL,
-	supervisor_researcher_id UUID NOT NULL,
-	co_supervisor_researcher_id UUID NOT NULL,
-	graduate_program_id UUID NOT NULL,
-	start_date  DATE NOT NULL,
-	planned_date_project DATE NOT NULL,
-	done_date_project DATE NULL,
-	planned_date_qualification DATE NOT NULL,
-	done_date_qualification DATE NULL,
-	planned_date_conclusion DATE NOT NULL,
-	done_date_conclusion DATE NULL,
-	created_at TIMESTAMP NOT NULL DEFAULT now(),
-	updated_at TIMESTAMP NULL,
-	deleted_at TIMESTAMP NULL,
-	PRIMARY KEY ("id"),
-	CONSTRAINT "FKsudent_researcher" FOREIGN KEY ("student_researcher_id") REFERENCES "researcher" ("researcher_id") ON UPDATE CASCADE ON DELETE CASCADE,
-	CONSTRAINT "FKsupervisor_researcher" FOREIGN KEY ("supervisor_researcher_id") REFERENCES "researcher" ("researcher_id") ON UPDATE CASCADE ON DELETE CASCADE,
-   CONSTRAINT "FKco_supervisor_researcher" FOREIGN KEY ("co_supervisor_researcher_id") REFERENCES "researcher" ("researcher_id") ON UPDATE CASCADE ON DELETE CASCADE,
-   CONSTRAINT "FKgraduate_program" FOREIGN KEY ("graduate_program_id") REFERENCES "graduate_program" ("graduate_program_id") ON UPDATE CASCADE ON DELETE CASCADE
-);
+CREATE TABLE IF NOT EXISTS public.guidance_tracking
+(
+    id uuid NOT NULL DEFAULT uuid_generate_v4(),
+    student_researcher_id uuid NOT NULL,
+    supervisor_researcher_id uuid NOT NULL,
+    co_supervisor_researcher_id uuid NOT NULL,
+    graduate_program_id uuid NOT NULL,
+    start_date date NOT NULL,
+    planned_date_project date NOT NULL,
+    done_date_project date,
+    planned_date_qualification date NOT NULL,
+    done_date_qualification date,
+    planned_date_conclusion date NOT NULL,
+    done_date_conclusion date,
+    created_at timestamp without time zone NOT NULL DEFAULT now(),
+    updated_at timestamp without time zone,
+    deleted_at timestamp without time zone,
+    CONSTRAINT guidance_tracking_pkey PRIMARY KEY (id),
+    CONSTRAINT "FKco_supervisor_researcher" FOREIGN KEY (co_supervisor_researcher_id)
+        REFERENCES public.researcher (researcher_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT "FKgraduate_program" FOREIGN KEY (graduate_program_id)
+        REFERENCES public.graduate_program (graduate_program_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT "FKsudent_researcher" FOREIGN KEY (student_researcher_id)
+        REFERENCES public.researcher (researcher_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT "FKsupervisor_researcher" FOREIGN KEY (supervisor_researcher_id)
+        REFERENCES public.researcher (researcher_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+)
 ---
 
 CREATE SCHEMA IF NOT EXISTS ufmg;
