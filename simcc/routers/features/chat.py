@@ -30,6 +30,18 @@ async def chat_message_post(
     )
 
 
+@router.get(
+    '/chat/user/{user_id}/',
+    response_model=list[chat_model.Message],
+)
+async def chat_message_get(
+    user_id: UUID,
+    current_user: user_model.User = Depends(get_current_user),
+    conn: Connection = Depends(get_conn),
+):
+    return await chat_service.chat_message_get(conn, user_id, current_user)
+
+
 @router.websocket('/ws/chat/user/{user_id}/')
 async def chat_ws(
     user_id: UUID,

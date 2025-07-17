@@ -9,9 +9,13 @@ from simcc.models.features import chat_model
 from simcc.repositories.features import chat_repository
 
 
+async def chat_message_get(conn, user_id, current_user):
+    chat_id = await get_chat_id(conn, [user_id, current_user.user_id])
+    return await chat_repository.chat_message_get(conn, chat_id)
+
+
 async def chat_message_post(conn, user_id, message, current_user):
     chat_id = await get_chat_id(conn, [user_id, current_user.user_id])
-
     message = chat_model.Message(
         chat_id=chat_id,
         sender_id=current_user.user_id,

@@ -1,6 +1,18 @@
 from uuid import uuid4
 
 
+async def chat_message_get(conn, chat_id):
+    params = {'chat_id': chat_id}
+    SCRIPT_SQL = """
+        SELECT message_id, chat_id, sender_id, content, created_at, updated_at
+        FROM feature.messages
+        WHERE chat_id = %(chat_id)s
+        AND deleted_at IS NULL
+        ORDER BY created_at ASC
+        """
+    return await conn.select(SCRIPT_SQL, params)
+
+
 async def get_chat_id(conn, users):
     one = True
     params = {'chat_name': ':'.join(users)}
