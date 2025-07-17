@@ -296,11 +296,15 @@ CREATE TABLE feature.chat_participants  (
 );
 CREATE TABLE feature.messages (
     message_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+
     chat_id UUID NOT NULL REFERENCES feature.chats(chat_id) ON DELETE CASCADE,
     sender_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     content TEXT NOT NULL,
-    sent_at TIMESTAMP NOT NULL DEFAULT now(),
-    read_at TIMESTAMP
+    
+    ---
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    deleted_at TIMESTAMP
 );
 COMMIT;
 

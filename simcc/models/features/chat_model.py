@@ -10,9 +10,10 @@ class CreateMessage(BaseModel):
 
 
 class Message(BaseModel):
-    id: UUID = Field(default_factory=uuid4)
+    message_id: UUID = Field(default_factory=uuid4)
+
+    chat_id: UUID
     sender_id: UUID
-    user_id: UUID
     content: str
 
     created_at: datetime = Field(default_factory=datetime.now)

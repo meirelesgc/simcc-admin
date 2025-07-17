@@ -10,15 +10,15 @@ from simcc.repositories.features import chat_repository
 
 
 async def chat_message_post(conn, user_id, message, current_user):
+    chat_id = await get_chat_id(conn, [user_id, current_user.user_id])
+
     message = chat_model.Message(
+        chat_id=chat_id,
         sender_id=current_user.user_id,
-        user_id=user_id,
         content=message.content,
     )
+    await chat_repository.chat_message_post(conn, message)
     return message
-    # await chat_repository.chat_message_post(
-    #     conn, user_id, message, current_user
-    # )
 
 
 async def get_chat_id(conn: Connection, users: list):
@@ -37,8 +37,6 @@ async def chat_ws(
 
     send_channel = f'chat:{chat_id}'
 
-    print(send_channel)
-
     pubsub = redis.pubsub()
     await pubsub.subscribe(send_channel)
 
@@ -51,7 +49,7 @@ async def chat_ws(
         try:
             while True:
                 if message := await websocket.receive_text():
-                    await chat_repository.post_chat(
+                    await chat_repository.chat_message_post(
                         conn, chat_id, sender_id, message
                     )
                     await redis.publish(send_channel, message)
