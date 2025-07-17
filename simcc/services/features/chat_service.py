@@ -5,7 +5,20 @@ from fastapi import WebSocket, WebSocketDisconnect
 from redis.asyncio.client import Redis
 
 from simcc.core.connection import Connection
+from simcc.models.features import chat_model
 from simcc.repositories.features import chat_repository
+
+
+async def chat_message_post(conn, user_id, message, current_user):
+    message = chat_model.Message(
+        sender_id=current_user.user_id,
+        user_id=user_id,
+        content=message.content,
+    )
+    return message
+    # await chat_repository.chat_message_post(
+    #     conn, user_id, message, current_user
+    # )
 
 
 async def get_chat_id(conn: Connection, users: list):

@@ -1,3 +1,4 @@
+from http import HTTPStatus
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, WebSocket
@@ -6,10 +7,27 @@ from redis.asyncio.client import Redis
 from simcc.core.connection import Connection
 from simcc.core.database import get_cache_conn, get_conn
 from simcc.models import user_model
+from simcc.models.features import chat_model
 from simcc.security import get_current_user
 from simcc.services.features import chat_service
 
 router = APIRouter()
+
+
+@router.post(
+    '/chat/user/{user_id}/',
+    status_code=HTTPStatus.CREATED,
+    response_model=chat_model.Message,
+)
+async def chat_message_post(
+    user_id: UUID,
+    message: chat_model.CreateMessage,
+    current_user: user_model.User = Depends(get_current_user),
+    conn: Connection = Depends(get_conn),
+):
+    return await chat_service.chat_message_post(
+        conn, user_id, message, current_user
+    )
 
 
 @router.websocket('/ws/chat/user/{user_id}/')
