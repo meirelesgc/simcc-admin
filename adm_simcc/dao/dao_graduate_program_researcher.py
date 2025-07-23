@@ -160,7 +160,8 @@ def graduate_program_researcher_basic_query(
         SELECT
             r.name, r.lattes_id,
             gpr.type_, gpr.created_at,
-            gpr.year
+            gpr.year,
+            gpr.researcher_id
         FROM
             graduate_program_researcher gpr
             JOIN researcher r ON r.researcher_id = gpr.researcher_id
@@ -176,7 +177,14 @@ def graduate_program_researcher_basic_query(
 
     data_frame = pd.DataFrame(
         registry,
-        columns=["name", "lattes_id", "type_", "created_at", "years"],
+        columns=[
+            "name",
+            "lattes_id",
+            "type_",
+            "created_at",
+            "years",
+            "researcher_id",
+        ],
     )
 
     return data_frame.to_dict(orient="records")

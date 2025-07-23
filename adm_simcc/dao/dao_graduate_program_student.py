@@ -89,7 +89,6 @@ def student_basic_query(
             {filter_oriented}
             {filter_lattes_id};
     """
-    print(SCRIPT_SQL)
     registry = adm_database.select(SCRIPT_SQL)
     data_frame = pd.DataFrame(
         registry,
