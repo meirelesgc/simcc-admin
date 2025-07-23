@@ -10,7 +10,7 @@ COPY . .
 
 RUN pip install poetry && \
     poetry config installer.max-workers 10 && \
-    poetry install --no-interaction --no-ansi
+    poetry install --no-interaction --no-ansi --no-root
 
 EXPOSE 8080
 

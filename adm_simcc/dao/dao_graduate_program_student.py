@@ -41,7 +41,6 @@ def student_basic_query(
     lattes_id: str = None,
     oriented: int = None,
 ):
-    print(oriented)
     filter_oriented = str()
     if oriented == 1:
         filter_oriented = """
@@ -77,6 +76,7 @@ def student_basic_query(
             r.name,
             r.lattes_id,
             'DISCENTE' as type_,
+            gps.researcher_id,
             gps.year
         FROM
             graduate_program_student gps
@@ -97,6 +97,7 @@ def student_basic_query(
             "name",
             "lattes_id",
             "type_",
+            "researcher_id",
             "years",
         ],
     )
