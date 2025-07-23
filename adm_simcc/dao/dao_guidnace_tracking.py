@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import pandas as pd
 from pydantic import UUID4
 
@@ -6,8 +8,15 @@ from ..dao import Connection
 adm_database = Connection()
 
 
-def get_all_guidance_trackings():
-    SCRIPT_SQL = """
+def get_all_guidance_trackings(data):
+    filters = str()
+
+    if "supervisor_researcher_id" in data:
+        filters += """
+            AND supervisor_researcher_id = %(supervisor_researcher_id)s
+            """
+
+    SCRIPT_SQL = f"""
         SELECT 
             id,
             student_researcher_id,
@@ -26,9 +35,10 @@ def get_all_guidance_trackings():
             deleted_at
         FROM guidance_tracking
         WHERE deleted_at IS NULL
+            {filters}
         ORDER BY created_at DESC;
     """
-    records = adm_database.select(SCRIPT_SQL)
+    records = adm_database.select(SCRIPT_SQL, data)
     columns = [
         "id",
         "student_researcher_id",
@@ -47,6 +57,62 @@ def get_all_guidance_trackings():
         "deleted_at",
     ]
     df = pd.DataFrame(records, columns=columns)
+    today = datetime.now().date()
+
+    def peding_days(row):
+        delays = []
+        if row["done_date_conclusion"] is None:
+            if row["planned_date_conclusion"] < today:
+                days = (today - row["planned_date_conclusion"]).days
+                delays.append(days)
+        if row["done_date_qualification"] is None:
+            if row["planned_date_qualification"] < today:
+                days = (today - row["planned_date_qualification"]).days
+                delays.append(days)
+        if row["done_date_project"] is None:
+            if row["planned_date_project"] < today:
+                days = (today - row["planned_date_project"]).days
+                delays.append(days)
+        if delays:
+            return max(delays)
+        return (row["planned_date_conclusion"] - today).days
+
+    def peding_days_(row):
+        delays = []
+        if row["done_date_conclusion"] is None:
+            if row["planned_date_conclusion"] < today:
+                days = (today - row["planned_date_conclusion"]).days
+                delays.append(days)
+        if row["done_date_qualification"] is None:
+            if row["planned_date_qualification"] < today:
+                days = (today - row["planned_date_qualification"]).days
+                delays.append(days)
+        if row["done_date_project"] is None:
+            if row["planned_date_project"] < today:
+                days = (today - row["planned_date_project"]).days
+                delays.append(days)
+        if delays:
+            return max(delays)
+        return 0
+
+    def pending(row):
+        if peding_days_(row) > 0:
+            return "EM ATRASO"
+        return "EM DIA"
+
+    def type_(row):
+        if row["done_date_project"] is None:
+            return "PROJETO"
+        if row["done_date_qualification"] is None:
+            return "QUALIFICAÇÃO"
+        if row["done_date_conclusion"] is None:
+            return "CONCLUSÃO"
+        return "FINALIZADO"
+
+    df["peding_days"] = df.apply(peding_days, axis=1)
+    df["peding"] = df.apply(pending, axis=1)
+    df["type"] = df.apply(type_, axis=1)
+
     return df.to_dict(orient="records"), 200
 
 

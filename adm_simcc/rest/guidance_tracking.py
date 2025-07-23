@@ -13,7 +13,8 @@ guidance_tracking_bp = Blueprint("guidance_tracking", __name__)
 
 @guidance_tracking_bp.route("/guidance_tracking/", methods=["GET"])
 def get_all():
-    return get_all_guidance_trackings()
+    data = request.args
+    return get_all_guidance_trackings(data)
 
 
 @guidance_tracking_bp.route(
