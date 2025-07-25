@@ -11,13 +11,13 @@ adm_database = Connection()
 def get_all_guidance_trackings(data):
     filters = str()
 
-    if "supervisor_researcher_id" in data:
+    if data.get("supervisor_researcher_id"):
         filters += """
             AND supervisor_researcher_id = %(supervisor_researcher_id)s
             """
 
     SCRIPT_SQL = f"""
-        SELECT 
+        SELECT
             id,
             student_researcher_id,
             supervisor_researcher_id,
