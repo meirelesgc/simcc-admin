@@ -109,12 +109,15 @@ def researcher_basic_query(
     researcher_name: str = None,
     rows: int = None,
     lattes_id: str = None,
+    researcher_id: str = None,
 ):
     parameters = list()
     filter_name = str()
     filter_limit = str()
     filter_institution = str()
     filter_lattes_id = str()
+
+    one = False
 
     if institution_id:
         filter_institution = """
@@ -132,8 +135,14 @@ def researcher_basic_query(
         parameters += [rows]
 
     if lattes_id:
+        one = True
         filter_lattes_id = "AND lattes_id = %s"
         parameters += [lattes_id]
+
+    if researcher_id:
+        one = True
+        filter_lattes_id = "AND researcher_id = %s"
+        parameters += [researcher_id]
 
     SCRIPT_SQL = f"""
         SELECT DISTINCT
@@ -177,6 +186,8 @@ def researcher_basic_query(
     )
 
     data_frame = data_frame.drop(columns=["created_at"])
+    if one:
+        return data_frame.to_dict(orient="records")[0]
     return data_frame.to_dict(orient="records")
 
 

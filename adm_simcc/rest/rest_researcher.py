@@ -54,12 +54,14 @@ def researcher_basic_query():
     researcher_name = request.args.get("name")
     rows = request.args.get("count")
     lattes_id = request.args.get("lattes_id")
+    researcher_id = request.args.get("researcher_id")
 
     researchers = dao_researcher.researcher_basic_query(
         institution_id=institution_id,
         researcher_name=researcher_name,
         rows=rows,
         lattes_id=lattes_id,
+        researcher_id=researcher_id,
     )
     return jsonify(researchers), HTTPStatus.OK
 
