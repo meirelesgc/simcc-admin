@@ -57,6 +57,12 @@ async def chat_message_ws(
                     text = await websocket.receive_text()
                     sender_id = str(current_user.user_id)
                     msg = {'sender_id': sender_id, 'content': text}
+                    message = chat_model.Message(
+                        chat_id=chat_id,
+                        sender_id=current_user.user_id,
+                        content=text,
+                    )
+                    await chat_repository.chat_message_post(conn, message)
                     await redis.publish(key, json.dumps(msg))
 
             listen_task = asyncio.create_task(listen_redis())

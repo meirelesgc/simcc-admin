@@ -97,7 +97,6 @@ async def shibboleth_login(
     app_token = create_access_token(data={'sub': user.email})
 
     URL = f'{Settings().FRONTEND_URL}authentication?token={app_token}'
-    print(URL)
     return RedirectResponse(url=URL, status_code=302)
 
 

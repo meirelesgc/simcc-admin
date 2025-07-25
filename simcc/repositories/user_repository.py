@@ -54,7 +54,7 @@ async def get_user(
         )
         SELECT u.user_id, u.username, u.email, u.password, u.created_at,
             u.updated_at, COALESCE(r.roles, '[]'::json) AS roles,
-            linkedin, photo_url, lattes_id
+            linkedin, photo_url, lattes_id, institution_id
         FROM public.users u
             LEFT JOIN roles_ r
                 ON r.user_id = u.user_id

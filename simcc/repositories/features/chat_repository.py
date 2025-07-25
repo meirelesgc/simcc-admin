@@ -39,7 +39,7 @@ async def chat_message_post(conn, message):
     params = message.model_dump()
     SCRIPT_SQL = """
         INSERT INTO feature.messages (message_id, chat_id, sender_id, content,
-            created_at)
+            sent_at)
         VALUES (%(message_id)s, %(chat_id)s, %(sender_id)s, %(content)s,
             %(created_at)s);
         """
