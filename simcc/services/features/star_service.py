@@ -9,11 +9,9 @@ from simcc.repositories.features import star_repository
 async def post_star(
     conn: Connection, star_data: star_models.CreateStar, user: user_model.User
 ):
-    new_star_record = await star_repository.create_star(
-        conn, star_data=star_data, user_id=user.user_id
-    )
-
-    return star_models.Star(**new_star_record)
+    star = star_models.Star(**star_data.model_dump(), user_id=user.user_id)
+    await star_repository.create_star(conn, star)
+    return star
 
 
 async def get_stars(

@@ -125,27 +125,29 @@ async def test_websocket_send_and_receive_between_two_different_users(
 ):
     alice = await create_user()
     bob = await create_user()
+
     alice_token = get_token(alice)
     bob_token = get_token(bob)
-    url_alice = f'/ws/chat/user/{bob.user_id}/?token={alice_token}'
-    url_bob = f'/ws/chat/user/{alice.user_id}/?token={bob_token}'
 
-    with (
-        client.websocket_connect(url_alice) as ws_alice,
-        client.websocket_connect(url_bob) as ws_bob,
-    ):
-        assert json.loads(ws_alice.receive_text()) == {'status': 'connected'}
-        assert json.loads(ws_bob.receive_text()) == {'status': 'connected'}
+    URL_A = f'/ws/chat/user/{bob.user_id}/?token={alice_token}'
+    URL_B = f'/ws/chat/user/{alice.user_id}/?token={bob_token}'
 
-        ws_alice.send_text('Oi Bob!')
-        msg_bob = json.loads(ws_bob.receive_text())
-        assert msg_bob['sender_id'] == str(alice.user_id)
-        assert msg_bob['content'] == 'Oi Bob!'
+    with client.websocket_connect(URL_A) as ws_a:
+        assert json.loads(ws_a.receive_text()) == {'status': 'connected'}
+        with client.websocket_connect(URL_B) as ws_b:
+            assert json.loads(ws_b.receive_text()) == {'status': 'connected'}
 
-        ws_bob.send_text('Tudo bem Alice?')
-        msg_alice = json.loads(ws_alice.receive_text())
-        assert msg_alice['sender_id'] == str(bob.user_id)
-        assert msg_alice['content'] == 'Tudo bem Alice?'
+            ws_a.send_text('Oi Bob!')
+            echo_data = json.loads(ws_b.receive_text())
+
+            assert echo_data['sender_id'] == str(alice.user_id)
+            assert echo_data['content'] == 'Oi Bob!'
+
+            ws_b.send_text('Tudo bem Alice?')
+            alice_receives_msg = ws_a.receive_text()
+            msg_from_bob = json.loads(alice_receives_msg)
+            assert msg_from_bob['sender_id'] == str(bob.user_id)
+            assert msg_from_bob['content'] == 'Tudo bem Alice?'
 
 
 @pytest.mark.asyncio

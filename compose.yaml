@@ -1,11 +1,13 @@
 services:
   db:
-    container_name: db
     image: pgvector/pgvector:pg17
+    container_name: ${CONTAINER_DB}
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "5432:5432"
-    env_file:
-      - .env.postgres
+      - "${DB_PORT}:5432"
     volumes:
       - db:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -15,27 +17,43 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
+    networks:
+      - jade-network
 
   cache:
-    container_name: cache
     image: redis:latest
+    container_name: ${CONTAINER_CACHE}
     ports:
       - "6379:6379"
     volumes:
       - cache:/data
     restart: unless-stopped
+    networks:
+      - jade-network
 
   api:
-    container_name: api
     image: gleidsoncosta/jade-admin-api:latest
+    container_name: ${CONTAINER_ADMIN_API}
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "${API_PORT}:8000"
     depends_on:
+      - db
       - cache
-    restart: unless-stopped
     volumes:
       - ./.env:/app/.env
+    restart: unless-stopped
+    networks:
+      - jade-network
 
 volumes:
   db:
   cache:
+
+
+networks:
+  jade-network:
+    name: ${CONTAINER_NETWORK}
+    external: true

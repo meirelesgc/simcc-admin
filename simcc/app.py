@@ -87,3 +87,8 @@ if Settings().PROD:
 @app.get('/')
 async def read_root():
     return {'message': 'Working!'}
+
+
+@app.get('/favicon.ico')
+async def icon():
+    return {'message': 'Working!'}

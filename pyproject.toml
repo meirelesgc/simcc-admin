@@ -61,6 +61,6 @@ src_dir = "src"
 [tool.taskipy.tasks]
 format = 'ruff check --fix; ruff format'
 run = 'fastapi dev simcc/app.py'
-test = 'task format; PROD=false pytest -s -x --cov=simcc'
+test = 'PROD=false pytest -s -x -vv --cov=simcc'
 cov = 'coverage html'
 debug = 'task format; pytest -s -x --cov=simcc -vv --lf'

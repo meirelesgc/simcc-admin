@@ -4,14 +4,8 @@ from simcc.core.connection import Connection
 from simcc.models.features import star_models
 
 
-async def create_star(
-    conn: Connection, star_data: star_models.CreateStar, user_id: UUID
-):
-    params = {
-        'user_id': user_id,
-        'entry_id': star_data.entry_id,
-        'type': star_data.type,
-    }
+async def create_star(conn: Connection, star: star_models.Star):
+    params = star.model_dump()
     SCRIPT_SQL = """
         INSERT INTO feature.stars (user_id, entry_id, type)
         VALUES (%(user_id)s, %(entry_id)s, %(type)s)

@@ -13,6 +13,8 @@ class CreateNotification(BaseModel):
         'LATTES_REMINDER',
         'ORCID_REMINDER',
         'NEW_LOGIN',
+        'MESSAGE',
+        'SYSTEM',
     ]
     data: dict
     user_id: UUID | Literal['*']
