@@ -141,7 +141,7 @@ CREATE TABLE public.graduate_program_researcher (
   graduate_program_id UUID NOT NULL,
   researcher_id UUID NOT NULL,
   year INT[],
-  RELATIONSHIP_type RELATIONSHIP,
+  type_ RELATIONSHIP,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW(),
   deleted_at TIMESTAMP,
@@ -160,10 +160,41 @@ CREATE TABLE public.graduate_program_student (
   FOREIGN KEY (researcher_id) REFERENCES public.researcher(researcher_id) ON DELETE CASCADE ON UPDATE CASCADE,
   FOREIGN KEY (graduate_program_id) REFERENCES public.graduate_program(graduate_program_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
-
-
-
-
+CREATE TABLE IF NOT EXISTS public.guidance_tracking
+(
+    id uuid NOT NULL DEFAULT uuid_generate_v4(),
+    student_researcher_id uuid NOT NULL,
+    supervisor_researcher_id uuid NOT NULL,
+    co_supervisor_researcher_id uuid NOT NULL,
+    graduate_program_id uuid NOT NULL,
+    start_date date NOT NULL,
+    planned_date_project date NOT NULL,
+    done_date_project date,
+    planned_date_qualification date NOT NULL,
+    done_date_qualification date,
+    planned_date_conclusion date NOT NULL,
+    done_date_conclusion date,
+    created_at timestamp without time zone NOT NULL DEFAULT now(),
+    updated_at timestamp without time zone,
+    deleted_at timestamp without time zone,
+    CONSTRAINT guidance_tracking_pkey PRIMARY KEY (id),
+    CONSTRAINT "FKco_supervisor_researcher" FOREIGN KEY (co_supervisor_researcher_id)
+        REFERENCES public.researcher (researcher_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT "FKgraduate_program" FOREIGN KEY (graduate_program_id)
+        REFERENCES public.graduate_program (graduate_program_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT "FKsudent_researcher" FOREIGN KEY (student_researcher_id)
+        REFERENCES public.researcher (researcher_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT "FKsupervisor_researcher" FOREIGN KEY (supervisor_researcher_id)
+        REFERENCES public.researcher (researcher_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+);
 CREATE SCHEMA IF NOT EXISTS ufmg;
 CREATE TABLE IF NOT EXISTS ufmg.researcher (
     researcher_id UUID PRIMARY KEY REFERENCES public.researcher(researcher_id) ON DELETE CASCADE ON UPDATE CASCADE,
