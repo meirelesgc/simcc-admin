@@ -155,8 +155,7 @@ def researcher_basic_query(
         FROM
             researcher r
         WHERE
-            r.researcher_id NOT IN
-            (SELECT researcher_id FROM graduate_program_student)
+            {"r.researcher_id NOT IN (SELECT researcher_id FROM graduate_program_student)" if not one else ""}
             {filter_institution}
             {filter_name}
             {filter_lattes_id}
