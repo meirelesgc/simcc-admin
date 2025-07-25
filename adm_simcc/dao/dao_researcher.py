@@ -111,40 +111,41 @@ def researcher_basic_query(
     lattes_id: str = None,
     researcher_id: str = None,
 ):
-    parameters = list()
-    filter_name = str()
-    filter_limit = str()
-    filter_institution = str()
-    filter_lattes_id = str()
+    params = {}
+    where_conditions = []
 
-    one = False
+    one = bool(lattes_id or researcher_id)
+
+    if not one:
+        where_conditions.append(
+            "r.researcher_id NOT IN (SELECT researcher_id FROM graduate_program_student)"
+        )
 
     if institution_id:
-        filter_institution = """
-            AND r.institution_id = %s
-            """
-        parameters += [institution_id]
+        where_conditions.append("r.institution_id = %(institution_id)s")
+        params["institution_id"] = str(institution_id)
 
     if researcher_name:
-        filter_name = """
-            AND name ILIKE %s
-            """
-        parameters += [researcher_name]
-    if rows:
-        filter_limit = "LIMIT %s"
-        parameters += [rows]
-
-    if lattes_id:
-        one = True
-        filter_lattes_id = "AND lattes_id = %s"
-        parameters += [lattes_id]
+        where_conditions.append("r.name ILIKE %(researcher_name)s")
+        params["researcher_name"] = f"%{researcher_name}%"
 
     if researcher_id:
-        one = True
-        filter_lattes_id = "AND researcher_id = %s"
-        parameters += [researcher_id]
+        where_conditions.append("r.researcher_id = %(researcher_id)s")
+        params["researcher_id"] = researcher_id
+    elif lattes_id:
+        where_conditions.append("r.lattes_id = %(lattes_id)s")
+        params["lattes_id"] = lattes_id
 
-    SCRIPT_SQL = f"""
+    where_clause = ""
+    if where_conditions:
+        where_clause = f"WHERE {' AND '.join(where_conditions)}"
+
+    limit_clause = ""
+    if rows:
+        limit_clause = "LIMIT %(rows)s"
+        params["rows"] = rows
+
+    script_sql = f"""
         SELECT DISTINCT
             r.researcher_id,
             r.name,
@@ -154,23 +155,16 @@ def researcher_basic_query(
             r.status
         FROM
             researcher r
-        WHERE
-            {"r.researcher_id NOT IN (SELECT researcher_id FROM graduate_program_student)" if not one else ""}
-            {filter_institution}
-            {filter_name}
-            {filter_lattes_id}
-        GROUP BY
-            r.researcher_id,
-            r.name,
-            r.lattes_id,
-            r.institution_id,
-            r.created_at
+        {where_clause}
         ORDER BY
             r.created_at DESC
-            {filter_limit};
-        """
+        {limit_clause};
+    """
 
-    registry = adm_database.select(SCRIPT_SQL, parameters)
+    registry = adm_database.select(script_sql, params)
+
+    if not registry:
+        return {} if one else []
 
     data_frame = pd.DataFrame(
         registry,
@@ -182,12 +176,11 @@ def researcher_basic_query(
             "created_at",
             "status",
         ],
-    )
+    ).drop(columns=["created_at"])
 
-    data_frame = data_frame.drop(columns=["created_at"])
-    if one:
-        return data_frame.to_dict(orient="records")[0]
-    return data_frame.to_dict(orient="records")
+    records = data_frame.to_dict(orient="records")
+
+    return records[0] if one and records else records
 
 
 def researcher_count(institution_id: UUID4 = None):
