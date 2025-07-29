@@ -1,13 +1,13 @@
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr, Field, HttpUrl
+from pydantic import BaseModel, EmailStr, Field
 
 
 class UserModel(BaseModel):
     displayName: Optional[str] = None
     email: EmailStr
     uid: str
-    photoURL: Optional[HttpUrl] = None
+    photoURL: Optional[str] = None
     shib_id: Optional[str] = None
     shib_code: Optional[str] = None
     linkedin: Optional[str] = None

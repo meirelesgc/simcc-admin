@@ -1,6 +1,7 @@
 from datetime import datetime
 
 import pandas as pd
+from pandas import NaT
 from pydantic import UUID4
 
 from ..dao import Connection
@@ -29,10 +30,7 @@ def get_all_guidance_trackings(data):
             planned_date_qualification,
             done_date_qualification,
             planned_date_conclusion,
-            done_date_conclusion,
-            created_at,
-            updated_at,
-            deleted_at
+            done_date_conclusion
         FROM guidance_tracking
         WHERE deleted_at IS NULL
             {filters}
@@ -52,9 +50,6 @@ def get_all_guidance_trackings(data):
         "done_date_qualification",
         "planned_date_conclusion",
         "done_date_conclusion",
-        "created_at",
-        "updated_at",
-        "deleted_at",
     ]
     df = pd.DataFrame(records, columns=columns)
     today = datetime.now().date()
@@ -113,6 +108,8 @@ def get_all_guidance_trackings(data):
     df["peding"] = df.apply(pending, axis=1)
     df["type"] = df.apply(type_, axis=1)
 
+    df = df.replace(NaT, None)
+    print(df)
     return df.to_dict(orient="records"), 200
 
 
