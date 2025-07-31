@@ -56,25 +56,27 @@ def get_all_guidance_trackings(data):
         "done_date_conclusion",
     ]
     df = pd.DataFrame(records, columns=columns)
+    if df.empty:
+        return []
+
     today = datetime.now().date()
 
-    def peding_days(row):
-        delays = []
-        if row["done_date_conclusion"] is None:
-            if row["planned_date_conclusion"] < today:
-                days = (today - row["planned_date_conclusion"]).days
-                delays.append(days)
-        if row["done_date_qualification"] is None:
-            if row["planned_date_qualification"] < today:
-                days = (today - row["planned_date_qualification"]).days
-                delays.append(days)
-        if row["done_date_project"] is None:
-            if row["planned_date_project"] < today:
-                days = (today - row["planned_date_project"]).days
-                delays.append(days)
-        if delays:
-            return max(delays)
-        return (row["planned_date_conclusion"] - today).days
+    def peding_days(student):
+        if not student["done_date_project"]:
+            planned = student["planned_date_project"]
+            return (planned - today).days if planned else None
+
+        if not student["done_date_qualification"]:
+            planned = student["planned_date_qualification"]
+            return (planned - today).days if planned else None
+
+        if not student["done_date_conclusion"]:
+            planned = student["planned_date_conclusion"]
+            return (planned - today).days if planned else None
+
+        done_conclusion = student["done_date_conclusion"]
+        if done_conclusion:
+            return (today - done_conclusion).days
 
     def peding_days_(row):
         delays = []
@@ -113,7 +115,7 @@ def get_all_guidance_trackings(data):
     df["type"] = df.apply(type_, axis=1)
 
     df = df.replace(NaT, None)
-    print(df)
+
     return df.to_dict(orient="records"), 200
 
 
