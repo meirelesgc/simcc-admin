@@ -41,19 +41,6 @@ def student_basic_query(
     lattes_id: str = None,
     oriented: int = None,
 ):
-    filter_oriented = str()
-    if oriented == 1:
-        filter_oriented = """
-            AND gps.researcher_id IN
-            (SELECT student_researcher_id FROM guidance_tracking)
-            """
-
-    if oriented == 2:  # noqa: PLR2004
-        filter_oriented = """
-            AND gps.researcher_id NOT IN
-            (SELECT student_researcher_id FROM guidance_tracking)
-            """
-
     if lattes_id:
         filter_lattes_id = f"AND r.lattes_id = '{lattes_id}'"
     else:
@@ -75,18 +62,24 @@ def student_basic_query(
         SELECT
             r.name,
             r.lattes_id,
-            'DISCENTE' as type_,
+            'DISCENTE' AS type_,
             gps.researcher_id,
-            gps.year
+            gps.year,
+            CASE
+                WHEN gps.researcher_id IN (
+                    SELECT student_researcher_id
+                    FROM guidance_tracking
+                ) THEN 1
+                ELSE 0
+            END AS oriented
         FROM
             graduate_program_student gps
         LEFT JOIN researcher r ON
-        r.researcher_id = gps.researcher_id
+            r.researcher_id = gps.researcher_id
         WHERE
             1 = 1
             {filter_graduate_program}
             {filter_institution}
-            {filter_oriented}
             {filter_lattes_id};
     """
     registry = adm_database.select(SCRIPT_SQL)
@@ -98,9 +91,10 @@ def student_basic_query(
             "type_",
             "researcher_id",
             "years",
+            "oriented",
         ],
     )
-
+    data_frame["oriented"] = data_frame["oriented"].astype(bool)
     return data_frame.to_dict(orient="records")
 
 
