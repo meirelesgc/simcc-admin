@@ -16,6 +16,10 @@ def get_all_guidance_trackings(data):
         filters += """
             AND supervisor_researcher_id = %(supervisor_researcher_id)s
             """
+    if data.get("graduate_program_id"):
+        filters += """
+            AND graduate_program_id = %(graduate_program_id)s
+            """
 
     SCRIPT_SQL = f"""
         SELECT
@@ -115,7 +119,7 @@ def get_all_guidance_trackings(data):
 
 def get_guidance_tracking_by_id(guidance_id: UUID4):
     SCRIPT_SQL = """
-        SELECT 
+        SELECT
             id,
             student_researcher_id,
             supervisor_researcher_id,
