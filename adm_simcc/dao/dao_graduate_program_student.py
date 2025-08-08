@@ -69,6 +69,7 @@ def student_basic_query(
                 WHEN gps.researcher_id IN (
                     SELECT student_researcher_id
                     FROM guidance_tracking
+                    WHERE deleted_at IS NULL
                 ) THEN 1
                 ELSE 0
             END AS oriented
