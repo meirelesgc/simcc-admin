@@ -39,8 +39,23 @@ class User(BaseModel):
     updated_at: datetime | None = None
 
 
-class UserPublic(User):
+class UserPublicAdmin(User):
     password: str = Field(exclude=True)
+    created_at: datetime = Field(exclude=True)
+    updated_at: datetime | None = Field(exclude=True)
+
+
+class UserPublic(User):
+    email: EmailStr = Field(exclude=True)
+    password: str = Field(exclude=True)
+
+    provider: str = Field(exclude=True)
+    verify: bool = Field(exclude=True)
+    institution_id: UUID | None = Field(exclude=True)
+
+    permissions: list = Field(exclude=True)
+    roles: list = Field(exclude=True)
+
     created_at: datetime = Field(exclude=True)
     updated_at: datetime | None = Field(exclude=True)
 

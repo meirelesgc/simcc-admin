@@ -93,12 +93,12 @@ async def get_current_user(
     if not user:
         raise credentials_exception
 
-    return user_model.UserPublic(**user)
+    return user_model.UserPublicAdmin(**user)
 
 
 def authorize_user(allowed_roles: List[str]):
     async def role_checker(
-        current_user: user_model.UserPublic = Depends(get_current_user),
+        current_user: user_model.UserPublicAdmin = Depends(get_current_user),
     ):
         user_roles = {role.name for role in current_user.roles}
 
