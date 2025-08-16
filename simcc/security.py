@@ -22,7 +22,6 @@ SECRET_KEY = 'your-secret-key'  # Buscar do .env
 ALGORITHM = 'HS256'
 ACCESS_TOKEN_EXPIRE_MINUTES = 10080
 pwd_context = PasswordHash.recommended()
-# O OAuth2PasswordBearer continua sendo útil para documentação do OpenAPI (Swagger)
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='token')
 
 ORCID_TOKEN_URL = 'https://orcid.org/oauth/token'
