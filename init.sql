@@ -309,9 +309,10 @@ CREATE TABLE feature.notifications (
   FOREIGN KEY (user_id) REFERENCES public.users(user_id) ON DELETE CASCADE ON UPDATE CASCADE,
   FOREIGN KEY (sender_id) REFERENCES public.users(user_id) ON DELETE SET NULL ON UPDATE CASCADE
 );
+
 CREATE TABLE feature.chats (
-    chat_id  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    chat_name VARCHAR(255),
+    chat_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    chat_name VARCHAR,
     is_group BOOLEAN NOT NULL DEFAULT FALSE,
 
     created_at TIMESTAMP DEFAULT NOW(),
@@ -319,22 +320,16 @@ CREATE TABLE feature.chats (
     deleted_at TIMESTAMP
 );
 
-CREATE UNIQUE INDEX UQ_CHAT_NAME_IS_GROUP
-ON feature.chats(chat_name, is_group);
+CREATE TABLE feature.chat_participants (
+    chat_id UUID NOT NULL,
+    user_id UUID NOT NULL,
+    joined_at TIMESTAMP DEFAULT NOW(),
+    is_admin BOOLEAN NOT NULL DEFAULT FALSE,
 
-CREATE TABLE feature.chat_participants  (
-    chat_id UUID NOT NULL REFERENCES feature.chats(chat_id) ON DELETE CASCADE,
-    user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-    PRIMARY KEY (chat_id, user_id)
-);
-CREATE TABLE feature.messages (
-    message_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    PRIMARY KEY (chat_id, user_id),
+    FOREIGN KEY (chat_id) REFERENCES feature.chats (chat_id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES public.users (user_id) ON DELETE CASCADE ON UPDATE CASCADE,
 
-    chat_id UUID NOT NULL REFERENCES feature.chats(chat_id) ON DELETE CASCADE,
-    sender_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-    content TEXT NOT NULL,
-    
-    ---
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW(),
     deleted_at TIMESTAMP

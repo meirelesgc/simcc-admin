@@ -97,10 +97,8 @@ async def shibboleth_login(
     )
     app_token = create_access_token(data={'sub': user.email})
 
-    # Cria a resposta de redirecionamento
     response = RedirectResponse(url=Settings().FRONTEND_URL, status_code=302)
 
-    # Armazena o token no cookie com as flags de segurança
     response.set_cookie(
         key='access_token',
         value=app_token,

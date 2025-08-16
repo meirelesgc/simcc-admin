@@ -30,7 +30,6 @@ ORCID_JWKS_URL = 'https://orcid.org/oauth/jwks'
 GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token'
 
 
-# Nova função de dependência para extrair o token do cookie
 async def get_token_from_cookie(request: Request) -> str:
     token = request.cookies.get('access_token')
     if not token:

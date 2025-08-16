@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from simcc.config import Settings
 from simcc.core.database import conn, get_conn
 from simcc.routers import auth, institution, rbac, researcher, users
-from simcc.routers.features import collection, notification, star
+from simcc.routers.features import chat, collection, notification, star
 from simcc.security import get_current_user
 
 
@@ -25,14 +25,15 @@ app = FastAPI(
     docs_url='/swagger',
 )
 
-app.include_router(auth.router, tags=['Authentication'])
-app.include_router(users.router, tags=['Users'])
-app.include_router(institution.router, tags=['Institution'])
-app.include_router(collection.router, tags=['Collection'])
-app.include_router(star.router, tags=['Star'])
-app.include_router(rbac.router, tags=['Roles & Permissions'])
-app.include_router(researcher.router, tags=['Researcher'])
-app.include_router(notification.router, tags=['Notification'])
+app.include_router(auth.router)
+app.include_router(users.router)
+app.include_router(institution.router)
+app.include_router(collection.router)
+app.include_router(star.router)
+app.include_router(rbac.router)
+app.include_router(researcher.router)
+app.include_router(notification.router)
+app.include_router(chat.router)
 
 
 app.add_middleware(
