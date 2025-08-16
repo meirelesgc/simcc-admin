@@ -28,16 +28,8 @@ async def post_user(user: user_model.UserSchema, conn: Conn):
     return await user_service.post_user(conn, user)
 
 
-@router.get(
-    '/s/user/all',
-    deprecated=True,
-    include_in_schema=False,
-)
-@router.get(
-    '/s/user/entrys',
-    deprecated=True,
-    include_in_schema=False,
-)
+@router.get('/s/user/all', include_in_schema=False)
+@router.get('/s/user/entrys', include_in_schema=False)
 @router.get('/user/', response_model=list[user_model.UserPublic])
 async def get_user(current_user: CurrentUser, conn: Conn):
     if not set(current_user.permissions) & set(ALLOWED):
@@ -45,7 +37,7 @@ async def get_user(current_user: CurrentUser, conn: Conn):
     return await user_service.get_user(conn)
 
 
-@router.get('/s/user', response_model=user_model.UserPublic, deprecated=True)
+@router.get('/s/user', include_in_schema=False)
 @router.get('/user/my-self/', response_model=user_model.UserPublic)
 async def get_me(current_user: CurrentUser, conn: Conn):
     return await user_service.get_user(conn, current_user.user_id)
@@ -60,14 +52,9 @@ async def get_single_user(id: UUID, current_user: CurrentUser, conn: Conn):
     return await user_service.get_user(conn, id)
 
 
-@router.put(
-    '/user/',
-    response_model=user_model.User,
-)
+@router.put('/user/', response_model=user_model.User)
 async def put_user(
-    user: user_model.User,
-    current_user: user_model.User = Depends(get_current_user),
-    conn: Connection = Depends(get_conn),
+    user: user_model.User, current_user: CurrentUser, conn: Conn
 ):
     has_permission = any(p in current_user.permissions for p in ALLOWED)
     is_self = current_user.user_id == user.user_id
@@ -76,15 +63,8 @@ async def put_user(
     return await user_service.put_user(conn, user)
 
 
-@router.delete(
-    '/user/{id}/',
-    status_code=HTTPStatus.NO_CONTENT,
-)
-async def delete_user(
-    id: UUID,
-    current_user: user_model.User = Depends(get_current_user),
-    conn: Connection = Depends(get_conn),
-):
+@router.delete('/user/{id}/', status_code=HTTPStatus.NO_CONTENT)
+async def delete_user(id: UUID, current_user: CurrentUser, conn: Conn):
     has_permission = any(p in current_user.permissions for p in ALLOWED)
     is_self = current_user.user_id == id
     if not (has_permission or is_self):
@@ -92,11 +72,6 @@ async def delete_user(
     return await user_service.delete_user(conn, id)
 
 
-@router.post(
-    '/user/role/',
-    status_code=HTTPStatus.CREATED,
-)
-async def user_role_post(
-    user_role: rbac_model.CreateUserRole, conn: Connection = Depends(get_conn)
-):
+@router.post('/user/role/', status_code=HTTPStatus.CREATED)
+async def user_role_post(user_role: rbac_model.CreateUserRole, conn: Conn):
     return await rbac_service.post_user_role(conn, user_role)

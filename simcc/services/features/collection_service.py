@@ -92,11 +92,10 @@ async def post_entries(
 
 async def get_entries(
     conn: Connection, collection_id: UUID, user: user_model.User
-) -> list[collection_models.CollectionEntry] | None:
+):
     collection = await collection_repositoy.get_any_collection_by_id(
         conn, collection_id
     )
-
     if not collection:
         return None
     if not collection['visible']:

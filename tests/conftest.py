@@ -157,14 +157,6 @@ def create_role(conn):
 
 
 @pytest.fixture
-def auth_header(get_token):
-    def _auth_header(user):
-        return {'Authorization': f'Bearer {get_token(user)}'}
-
-    return _auth_header
-
-
-@pytest.fixture
 def get_token(client):
     def _get_token(user):
         data = {'username': user.email, 'password': user.password}
@@ -172,6 +164,16 @@ def get_token(client):
         return response.json()['access_token']
 
     return _get_token
+
+
+@pytest.fixture
+def login_and_set_cookie(client, get_token):
+    def _login_and_set_cookie(user):
+        token = get_token(user)
+        client.cookies.set('access_token', token)
+        return client
+
+    return _login_and_set_cookie
 
 
 @pytest.fixture
@@ -197,14 +199,13 @@ def create_researcher(conn):
 
 
 @pytest.fixture
-def create_entry_in_collection(client, get_token):
+def create_entry_in_collection(login_and_set_cookie):
     async def _create_entry(collection, user):
-        token = get_token(user)
+        client = login_and_set_cookie(user)
         entry_data = collection_factory.CreateCollectionEntryFactory()
         entry_data = entry_data.model_dump(mode='json')
         response = client.post(
             f'/collection/{collection.collection_id}/entries/',
-            headers={'Authorization': f'Bearer {token}'},
             json=entry_data,
         )
         assert response.status_code == HTTPStatus.CREATED

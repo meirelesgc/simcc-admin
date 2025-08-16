@@ -2,8 +2,6 @@
 
 # import pytest
 
-# from simcc.schemas import user_model
-
 
 # @pytest.mark.asyncio
 # async def test_get_token(client, create_user):

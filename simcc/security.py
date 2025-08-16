@@ -1,10 +1,10 @@
 from datetime import datetime, timedelta
 from http import HTTPStatus
-from typing import List
+from typing import Annotated, List
 from zoneinfo import ZoneInfo
 
 import httpx
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, Request
 from fastapi.security import OAuth2PasswordBearer
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
@@ -22,6 +22,7 @@ SECRET_KEY = 'your-secret-key'  # Buscar do .env
 ALGORITHM = 'HS256'
 ACCESS_TOKEN_EXPIRE_MINUTES = 10080
 pwd_context = PasswordHash.recommended()
+# O OAuth2PasswordBearer continua sendo útil para documentação do OpenAPI (Swagger)
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='token')
 
 ORCID_TOKEN_URL = 'https://orcid.org/oauth/token'
@@ -30,8 +31,20 @@ ORCID_JWKS_URL = 'https://orcid.org/oauth/jwks'
 GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token'
 
 
+# Nova função de dependência para extrair o token do cookie
+async def get_token_from_cookie(request: Request) -> str:
+    token = request.cookies.get('access_token')
+    if not token:
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail='Not authenticated',
+            headers={'WWW-Authenticate': 'Bearer'},
+        )
+    return token
+
+
 async def get_current_user(
-    token: str = Depends(oauth2_scheme),
+    token: Annotated[str, Depends(get_token_from_cookie)],
     conn: Connection = Depends(get_conn),
 ):
     credentials_exception = HTTPException(
@@ -76,7 +89,6 @@ async def get_current_user(
             ON p.user_id = u.user_id
         WHERE email = %(email)s;
         """
-
     user = await conn.select(SCRIPT_SQL, {'email': subject_email}, True)
 
     if not user:
@@ -86,12 +98,15 @@ async def get_current_user(
 
 
 def authorize_user(allowed_roles: List[str]):
-    async def role_checker(current_user: dict = Depends(get_current_user)):
-        user_role = current_user.get('role')
-        if user_role not in allowed_roles:
+    async def role_checker(
+        current_user: user_model.UserPublic = Depends(get_current_user),
+    ):
+        user_roles = {role.name for role in current_user.roles}
+
+        if not user_roles.intersection(allowed_roles):
             raise HTTPException(
                 status_code=HTTPStatus.FORBIDDEN,
-                detail='Not enough permissions',
+                detail='Operation not permitted for this user role',
             )
         return current_user
 
