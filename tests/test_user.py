@@ -2,15 +2,17 @@ from http import HTTPStatus
 
 import pytest
 
-from simcc.schemas import user_model
 from tests.factories import user_factory
 
 
-def test_post_user(client):
+@pytest.mark.asyncio
+async def test_post_user(client, conn):
+    EXPECTED_COUNT = 1
     user = user_factory.UserFactory()
     response = client.post('/user/', json=user.model_dump(mode='json'))
     assert response.status_code == HTTPStatus.CREATED
-    assert user_model.UserPublic(**response.json())
+    COUNT = await conn.select('SELECT COUNT(*) FROM users', one=True)
+    assert COUNT.get('count') == EXPECTED_COUNT
 
 
 def test_get_users_unauthorized(client):
@@ -24,7 +26,6 @@ async def test_get_users_forbidden_to_default_user(
 ):
     user = await create_user()
     headers = {'Authorization': f'Bearer {get_token(user)}'}
-
     response = client.get('/user/', headers=headers)
     assert response.status_code == HTTPStatus.FORBIDDEN
 
@@ -33,13 +34,13 @@ async def test_get_users_forbidden_to_default_user(
 async def test_get_users_as_admin(
     client, create_user, create_admin_user, auth_header
 ):
-    AMONG = 2
+    EXPECTED_COUNT = 2
     await create_user()
     admin = await create_admin_user()
 
     response = client.get('/user/', headers=auth_header(admin))
     assert response.status_code == HTTPStatus.OK
-    assert len(response.json()) == AMONG
+    assert len(response.json()) == EXPECTED_COUNT
 
 
 @pytest.mark.asyncio
@@ -47,8 +48,7 @@ async def test_get_single_user(client, create_user, auth_header):
     user = await create_user()
     response = client.get(f'/user/{user.user_id}/', headers=auth_header(user))
     assert response.status_code == HTTPStatus.OK
-    data = user_model.UserPublic(**response.json())
-    assert data.user_id == user.user_id
+    assert response.json().get('user_id') == str(user.user_id)
 
 
 @pytest.mark.asyncio
@@ -60,8 +60,7 @@ async def test_get_single_user_by_admin(
 
     response = client.get(f'/user/{user.user_id}/', headers=auth_header(admin))
     assert response.status_code == HTTPStatus.OK
-    data = user_model.UserPublic(**response.json())
-    assert data.user_id == user.user_id
+    assert response.json().get('user_id') == str(user.user_id)
 
 
 @pytest.mark.asyncio
@@ -69,8 +68,7 @@ async def test_get_me(client, create_user, auth_header):
     user = await create_user()
     response = client.get('/user/my-self/', headers=auth_header(user))
     assert response.status_code == HTTPStatus.OK
-    data = user_model.UserPublic(**response.json())
-    assert data.user_id == user.user_id
+    assert response.json().get('user_id') == str(user.user_id)
 
 
 @pytest.mark.asyncio
@@ -83,8 +81,8 @@ async def test_put_my_user(client, create_user, auth_header):
         json=user.model_dump(mode='json'),
     )
     assert response.status_code == HTTPStatus.OK
-    assert response.json()['username'] == 'updated name'
-    assert response.json()['updated_at']
+    assert response.json().get('username') == 'updated name'
+    assert response.json().get('updated_at')
 
 
 @pytest.mark.asyncio
@@ -119,7 +117,7 @@ async def test_put_user_by_admin(
     )
 
     assert response.status_code == HTTPStatus.OK
-    assert response.json()['username'] == 'admin update'
+    assert response.json().get('username') == 'admin update'
 
 
 @pytest.mark.asyncio

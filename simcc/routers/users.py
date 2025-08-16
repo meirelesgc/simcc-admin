@@ -1,4 +1,5 @@
 from http import HTTPStatus
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
@@ -14,16 +15,16 @@ router = APIRouter()
 
 ALLOWED = ['ADMIN']
 
+Conn = Annotated[Connection, Depends(get_conn)]
+CurrentUser = Annotated[user_model.User, Depends(get_current_user)]
+
 
 @router.post(
     '/user/',
     status_code=HTTPStatus.CREATED,
     response_model=user_model.UserPublic,
 )
-async def post_user(
-    user: user_model.UserSchema,
-    conn: Connection = Depends(get_conn),
-):
+async def post_user(user: user_model.UserSchema, conn: Conn):
     return await user_service.post_user(conn, user)
 
 
@@ -37,14 +38,8 @@ async def post_user(
     deprecated=True,
     include_in_schema=False,
 )
-@router.get(
-    '/user/',
-    response_model=list[user_model.UserPublic],
-)
-async def get_user(
-    current_user: user_model.User = Depends(get_current_user),
-    conn: Connection = Depends(get_conn),
-):
+@router.get('/user/', response_model=list[user_model.UserPublic])
+async def get_user(current_user: CurrentUser, conn: Conn):
     if not set(current_user.permissions) & set(ALLOWED):
         raise ForbiddenException
     return await user_service.get_user(conn)
@@ -52,22 +47,12 @@ async def get_user(
 
 @router.get('/s/user', response_model=user_model.UserPublic, deprecated=True)
 @router.get('/user/my-self/', response_model=user_model.UserPublic)
-async def get_me(
-    current_user: user_model.User = Depends(get_current_user),
-    conn: Connection = Depends(get_conn),
-):
+async def get_me(current_user: CurrentUser, conn: Conn):
     return await user_service.get_user(conn, current_user.user_id)
 
 
-@router.get(
-    '/user/{id}/',
-    response_model=user_model.UserPublic,
-)
-async def get_single_user(
-    id: UUID,
-    current_user: user_model.User = Depends(get_current_user),
-    conn: Connection = Depends(get_conn),
-):
+@router.get('/user/{id}/', response_model=user_model.UserPublic)
+async def get_single_user(id: UUID, current_user: CurrentUser, conn: Conn):
     has_permission = any(p in current_user.permissions for p in ALLOWED)
     is_self = current_user.user_id == id
     if not (has_permission or is_self):

@@ -38,26 +38,29 @@ async def get_user(
 
     SCRIPT_SQL = f"""
         WITH roles_ AS (
-            SELECT
-            ur.user_id,
-            json_agg(
-                json_build_object(
-                'id', r.role_id,
-                'role_id', r.name,
-                'created_at', r.created_at,
-                'updated_at', r.updated_at
-                )
-            ) AS roles
+            SELECT ur.user_id, json_agg(row_to_json(r_)) AS roles
             FROM public.user_roles ur
-            JOIN public.roles r ON ur.role_id = r.role_id
+            JOIN (SELECT r.role_id, r.name, r.created_at, r.updated_at
+                FROM public.roles r) r_ ON ur.role_id = r_.role_id
             GROUP BY ur.user_id
-        )
-        SELECT u.user_id, u.username, u.email, u.password, u.created_at,
-            u.updated_at, COALESCE(r.roles, '[]'::json) AS roles,
+        ), permissions_ AS (
+            SELECT u.user_id, ARRAY_REMOVE(ARRAY_AGG(DISTINCT p.name), NULL) AS
+                permissions
+            FROM public.users u
+                LEFT JOIN user_roles ur ON ur.user_id = u.user_id
+                LEFT JOIN role_permissions rp ON rp.role_id = ur.role_id
+                LEFT JOIN permissions p ON p.permission_id = rp.permission_id
+            GROUP BY u.user_id
+        ) SELECT u.user_id, u.username, u.email, u.password,
+            u.created_at, u.updated_at,
+            COALESCE(r.roles, '[]'::json) AS roles,
+            COALESCE(p.permissions, ARRAY[]::text[]) AS permissions,
             linkedin, photo_url, lattes_id, institution_id
         FROM public.users u
-            LEFT JOIN roles_ r
-                ON r.user_id = u.user_id
+        LEFT JOIN roles_ r
+            ON r.user_id = u.user_id
+        LEFT JOIN permissions_ p
+            ON p.user_id = u.user_id
         WHERE 1 = 1
             {filters}
             {filters}

@@ -16,14 +16,11 @@ from simcc.security import (
 )
 
 
-async def post_user(
-    conn: Connection,
-    user: user_model.UserSchema,
-):
-    user = user_model.User(**user.model_dump())
-    user.password = get_password_hash(user.password)
-    await user_repository.post_user(conn, user)
-    return user
+async def post_user(conn: Connection, user_data: user_model.UserSchema):
+    user_data.password = get_password_hash(user_data.password)
+    new_user = user_model.User(**user_data.model_dump())
+    await user_repository.post_user(conn, new_user)
+    return new_user
 
 
 async def get_user(conn: Connection, id: UUID = None, email: EmailStr = None):

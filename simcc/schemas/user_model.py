@@ -3,7 +3,7 @@ from secrets import token_urlsafe
 from typing import Optional
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field
 
 
 class Token(BaseModel):
@@ -25,35 +25,24 @@ class User(BaseModel):
 
     provider: str = 'LOCAL'
     verify: bool = False
-    institution_id: Optional[UUID] = None
+    institution_id: UUID | None = None
 
-    linkedin: Optional[str] = None
-    photo_url: Optional[str] = None
-    lattes_id: Optional[str] = None
+    orcid_id: str | None = None
+    linkedin: str | None = None
+    photo_url: str | None = None
+    lattes_id: str | None = None
 
     permissions: list = []
-
-    created_at: datetime = Field(default_factory=datetime.now)
-    updated_at: Optional[datetime] = None
-
-
-class UserPublic(BaseModel):
-    user_id: UUID
-    username: str
-    email: EmailStr
-
-    provider: str = 'LOCAL'
-    verify: bool = False
-    institution_id: Optional[UUID] = None
-
-    linkedin: Optional[str] = None
-    photo_url: Optional[str] = None
-    lattes_id: Optional[str] = None
-
     roles: list = []
 
-    permissions: list = []
-    model_config = ConfigDict(from_attributes=True)
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime | None = None
+
+
+class UserPublic(User):
+    password: str = Field(exclude=True)
+    created_at: datetime = Field(exclude=True)
+    updated_at: datetime | None = Field(exclude=True)
 
 
 class CreateKey(BaseModel):
