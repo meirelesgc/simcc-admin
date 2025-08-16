@@ -8,7 +8,7 @@ from simcc.schemas import user_model
 
 class CreateUserFactory(factory.Factory):
     class Meta:
-        model = user_model.CreateUser
+        model = user_model.UserSchema
 
     username = factory.Faker('user_name')
     email = factory.Faker('email')

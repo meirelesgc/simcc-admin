@@ -18,10 +18,10 @@ ALLOWED = ['ADMIN']
 @router.post(
     '/user/',
     status_code=HTTPStatus.CREATED,
-    response_model=user_model.UserResponse,
+    response_model=user_model.UserPublic,
 )
 async def post_user(
-    user: user_model.CreateUser,
+    user: user_model.UserSchema,
     conn: Connection = Depends(get_conn),
 ):
     return await user_service.post_user(conn, user)
@@ -39,7 +39,7 @@ async def post_user(
 )
 @router.get(
     '/user/',
-    response_model=list[user_model.UserResponse],
+    response_model=list[user_model.UserPublic],
 )
 async def get_user(
     current_user: user_model.User = Depends(get_current_user),
@@ -50,8 +50,8 @@ async def get_user(
     return await user_service.get_user(conn)
 
 
-@router.get('/s/user', response_model=user_model.UserResponse, deprecated=True)
-@router.get('/user/my-self/', response_model=user_model.UserResponse)
+@router.get('/s/user', response_model=user_model.UserPublic, deprecated=True)
+@router.get('/user/my-self/', response_model=user_model.UserPublic)
 async def get_me(
     current_user: user_model.User = Depends(get_current_user),
     conn: Connection = Depends(get_conn),
@@ -61,7 +61,7 @@ async def get_me(
 
 @router.get(
     '/user/{id}/',
-    response_model=user_model.UserResponse,
+    response_model=user_model.UserPublic,
 )
 async def get_single_user(
     id: UUID,

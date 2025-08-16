@@ -10,7 +10,7 @@ def test_post_user(client):
     user = user_factory.UserFactory()
     response = client.post('/user/', json=user.model_dump(mode='json'))
     assert response.status_code == HTTPStatus.CREATED
-    assert user_model.UserResponse(**response.json())
+    assert user_model.UserPublic(**response.json())
 
 
 def test_get_users_unauthorized(client):
@@ -47,7 +47,7 @@ async def test_get_single_user(client, create_user, auth_header):
     user = await create_user()
     response = client.get(f'/user/{user.user_id}/', headers=auth_header(user))
     assert response.status_code == HTTPStatus.OK
-    data = user_model.UserResponse(**response.json())
+    data = user_model.UserPublic(**response.json())
     assert data.user_id == user.user_id
 
 
@@ -60,7 +60,7 @@ async def test_get_single_user_by_admin(
 
     response = client.get(f'/user/{user.user_id}/', headers=auth_header(admin))
     assert response.status_code == HTTPStatus.OK
-    data = user_model.UserResponse(**response.json())
+    data = user_model.UserPublic(**response.json())
     assert data.user_id == user.user_id
 
 
@@ -69,7 +69,7 @@ async def test_get_me(client, create_user, auth_header):
     user = await create_user()
     response = client.get('/user/my-self/', headers=auth_header(user))
     assert response.status_code == HTTPStatus.OK
-    data = user_model.UserResponse(**response.json())
+    data = user_model.UserPublic(**response.json())
     assert data.user_id == user.user_id
 
 

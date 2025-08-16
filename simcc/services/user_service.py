@@ -18,7 +18,7 @@ from simcc.security import (
 
 async def post_user(
     conn: Connection,
-    user: user_model.CreateUser,
+    user: user_model.UserSchema,
 ):
     user = user_model.User(**user.model_dump())
     user.password = get_password_hash(user.password)
@@ -81,7 +81,7 @@ async def get_or_create_user_by_orcid(
     if user:
         return user_model.User(**user)
 
-    new_user_data = user_model.CreateUser(
+    new_user_data = user_model.UserSchema(
         email=f'{orcid_id}@orcid.email',
         username=orcid_claims.get('name', orcid_id),
         password='a-random-password-since-login-is-external',
@@ -106,7 +106,7 @@ async def get_or_create_user_by_shibboleth(
     if user:
         return user_model.User(**user)
 
-    user = user_model.CreateUser(
+    user = user_model.UserSchema(
         email=shib_data.get('email'),
         username=shib_data.get('name', email).strip(),
         password='shibboleth-user-no-local-password',
@@ -129,7 +129,7 @@ async def get_or_create_user_by_google(conn: Connection, google_payload: dict):
     if user:
         return user_model.User(**user)
 
-    user = user_model.CreateUser(
+    user = user_model.UserSchema(
         email=google_payload.get('email'),
         username=google_payload.get('name', email).strip(),
         password='google-user-no-local-password',

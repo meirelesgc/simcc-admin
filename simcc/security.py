@@ -68,7 +68,7 @@ async def get_current_user(
     if not user:
         raise credentials_exception
 
-    return user_model.UserResponse(**user)
+    return user_model.UserPublic(**user)
 
 
 def authorize_user(allowed_roles: List[str]):

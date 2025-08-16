@@ -11,7 +11,7 @@ class Token(BaseModel):
     token_type: str
 
 
-class CreateUser(BaseModel):
+class UserSchema(BaseModel):
     username: str
     email: EmailStr
     password: str
@@ -37,7 +37,7 @@ class User(BaseModel):
     updated_at: Optional[datetime] = None
 
 
-class UserResponse(BaseModel):
+class UserPublic(BaseModel):
     user_id: UUID
     username: str
     email: EmailStr
