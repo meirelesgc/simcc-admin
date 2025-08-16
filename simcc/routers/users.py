@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends
 from simcc.core.connection import Connection
 from simcc.core.database import get_conn
 from simcc.exceptions import ForbiddenException
-from simcc.models import rbac_model, user_model
+from simcc.schemas import rbac_model, user_model
 from simcc.security import get_current_user
 from simcc.services import rbac_service, user_service
 

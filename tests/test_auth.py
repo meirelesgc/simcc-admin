@@ -2,7 +2,7 @@
 
 # import pytest
 
-# from simcc.models import user_model
+# from simcc.schemas import user_model
 
 
 # @pytest.mark.asyncio

@@ -1,8 +1,8 @@
 from uuid import UUID
 
 from simcc.core.connection import Connection
-from simcc.models import user_model
-from simcc.models.features import collection_models
+from simcc.schemas import user_model
+from simcc.schemas.features import collection_models
 
 
 async def post_collection(

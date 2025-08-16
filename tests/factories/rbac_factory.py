@@ -3,7 +3,7 @@ from uuid import uuid4
 
 import factory
 
-from simcc.models import rbac_model
+from simcc.schemas import rbac_model
 
 
 class CreateRoleFactory(factory.Factory):

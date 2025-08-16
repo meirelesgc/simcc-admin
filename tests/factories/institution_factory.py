@@ -3,7 +3,7 @@ from uuid import uuid4
 
 import factory
 
-from simcc.models import institution_model
+from simcc.schemas import institution_model
 
 
 class CreateInstitutionFactory(factory.Factory):

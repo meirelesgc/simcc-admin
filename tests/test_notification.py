@@ -2,7 +2,7 @@ from http import HTTPStatus
 
 import pytest
 
-from simcc.models.features import notification_models
+from simcc.schemas.features import notification_models
 from tests.factories.features import notification_factory
 
 

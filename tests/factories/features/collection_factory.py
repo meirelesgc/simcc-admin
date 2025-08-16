@@ -2,8 +2,8 @@ from uuid import uuid4
 
 import factory
 
-from simcc.models.features import collection_models
-from simcc.models.features.collection_models import CreateCollection
+from simcc.schemas.features import collection_models
+from simcc.schemas.features.collection_models import CreateCollection
 
 
 class CreateCollectionFactory(factory.Factory):

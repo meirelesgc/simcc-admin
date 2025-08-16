@@ -1,7 +1,7 @@
 from datetime import datetime
 
-from simcc.models import researcher_model
 from simcc.repositories import researcher_repository
+from simcc.schemas import researcher_model
 
 
 async def researcher_post(conn, researcher):

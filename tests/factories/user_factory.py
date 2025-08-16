@@ -3,7 +3,7 @@ from datetime import datetime
 
 import factory
 
-from simcc.models import user_model
+from simcc.schemas import user_model
 
 
 class CreateUserFactory(factory.Factory):

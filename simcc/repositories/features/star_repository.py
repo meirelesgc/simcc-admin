@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from simcc.core.connection import Connection
-from simcc.models.features import star_models
+from simcc.schemas.features import star_models
 
 
 async def create_star(conn: Connection, star: star_models.Star):

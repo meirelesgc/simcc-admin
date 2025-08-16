@@ -3,7 +3,7 @@ from uuid import uuid4
 
 import pytest
 
-from simcc.models.features import star_models
+from simcc.schemas.features import star_models
 from tests.factories.features import star_factory
 
 

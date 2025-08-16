@@ -8,7 +8,7 @@ from starlette.responses import RedirectResponse
 from simcc.config import Settings
 from simcc.core.connection import Connection
 from simcc.core.database import get_conn
-from simcc.models import user_model
+from simcc.schemas import user_model
 from simcc.security import (
     create_access_token,
     get_current_user,

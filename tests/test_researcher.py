@@ -2,7 +2,7 @@ from http import HTTPStatus
 
 import pytest
 
-from simcc.models import researcher_model
+from simcc.schemas import researcher_model
 from tests.factories import researcher_factory
 
 

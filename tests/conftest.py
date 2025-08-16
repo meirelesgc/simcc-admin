@@ -9,8 +9,8 @@ from testcontainers.redis import AsyncRedisContainer
 from simcc.app import app
 from simcc.core.connection import Connection
 from simcc.core.database import get_cache_conn, get_conn
-from simcc.models import rbac_model
-from simcc.models.features import collection_models
+from simcc.schemas import rbac_model
+from simcc.schemas.features import collection_models
 from simcc.services import (
     institution_service,
     rbac_service,

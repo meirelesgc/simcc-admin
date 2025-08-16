@@ -5,9 +5,9 @@ from uuid import UUID
 from fastapi import HTTPException
 
 from simcc.core.connection import Connection
-from simcc.models import user_model
-from simcc.models.features import collection_models
 from simcc.repositories.features import collection_repositoy
+from simcc.schemas import user_model
+from simcc.schemas.features import collection_models
 
 
 async def post_collection(

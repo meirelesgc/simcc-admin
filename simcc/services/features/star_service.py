@@ -1,9 +1,9 @@
 from uuid import UUID
 
 from simcc.core.connection import Connection
-from simcc.models import user_model
-from simcc.models.features import star_models
 from simcc.repositories.features import star_repository
+from simcc.schemas import user_model
+from simcc.schemas.features import star_models
 
 
 async def post_star(

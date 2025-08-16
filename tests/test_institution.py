@@ -2,7 +2,7 @@ from http import HTTPStatus
 
 import pytest
 
-from simcc.models import institution_model
+from simcc.schemas import institution_model
 from tests.factories import institution_factory
 
 

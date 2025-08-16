@@ -16,7 +16,7 @@ from pwdlib import PasswordHash
 from simcc.config import Settings
 from simcc.core.connection import Connection
 from simcc.core.database import get_conn
-from simcc.models import user_model
+from simcc.schemas import user_model
 
 SECRET_KEY = 'your-secret-key'  # Buscar do .env
 ALGORITHM = 'HS256'

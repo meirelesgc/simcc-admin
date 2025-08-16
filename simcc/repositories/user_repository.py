@@ -3,7 +3,7 @@ from uuid import UUID
 from pydantic import EmailStr
 
 from simcc.core.connection import Connection
-from simcc.models import user_model
+from simcc.schemas import user_model
 
 
 async def post_user(conn: Connection, user: user_model.User):

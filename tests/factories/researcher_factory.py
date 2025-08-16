@@ -2,7 +2,7 @@ import uuid
 
 import factory
 
-from simcc.models import researcher_model
+from simcc.schemas import researcher_model
 
 
 class CreateResearcherFactory(factory.Factory):

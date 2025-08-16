@@ -2,8 +2,8 @@ from datetime import datetime
 from uuid import UUID
 
 from simcc.core.connection import Connection
-from simcc.models import rbac_model
 from simcc.repositories import rbac_repository
+from simcc.schemas import rbac_model
 
 
 async def post_role(conn: Connection, role: rbac_model.CreateRole):

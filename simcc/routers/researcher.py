@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends
 
 from simcc.core.connection import Connection
 from simcc.core.database import get_conn
-from simcc.models import researcher_model
+from simcc.schemas import researcher_model
 from simcc.services import researcher_service
 
 router = APIRouter()

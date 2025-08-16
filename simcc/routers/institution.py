@@ -5,7 +5,7 @@ from fastapi import APIRouter, Body, Depends, HTTPException
 
 from simcc.core.connection import Connection
 from simcc.core.database import get_conn
-from simcc.models import institution_model, user_model
+from simcc.schemas import institution_model, user_model
 from simcc.security import get_current_user
 from simcc.services import institution_service
 

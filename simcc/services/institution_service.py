@@ -1,8 +1,8 @@
 from datetime import datetime
 
 from simcc.core.connection import Connection
-from simcc.models import institution_model
 from simcc.repositories import institution_repository
+from simcc.schemas import institution_model
 
 
 async def post_institution(institution, conn: Connection):

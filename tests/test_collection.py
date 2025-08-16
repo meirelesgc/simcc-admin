@@ -3,7 +3,7 @@ from uuid import uuid4
 
 import pytest
 
-from simcc.models.features import collection_models
+from simcc.schemas.features import collection_models
 from tests.factories.features import collection_factory
 
 

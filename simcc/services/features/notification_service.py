@@ -1,5 +1,5 @@
-from simcc.models.features import notification_models
 from simcc.repositories.features import notification_repository
+from simcc.schemas.features import notification_models
 
 
 async def notifications_get(conn, current_user):

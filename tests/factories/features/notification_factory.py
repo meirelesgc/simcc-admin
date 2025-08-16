@@ -3,7 +3,7 @@ from uuid import uuid4
 
 import factory
 
-from simcc.models.features import notification_models
+from simcc.schemas.features import notification_models
 
 
 class CreateNotificationFactory(factory.Factory):

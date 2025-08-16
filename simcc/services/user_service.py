@@ -7,8 +7,8 @@ from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import EmailStr
 
 from simcc.core.connection import Connection
-from simcc.models import user_model
 from simcc.repositories import user_repository
+from simcc.schemas import user_model
 from simcc.security import (
     create_access_token,
     get_password_hash,
