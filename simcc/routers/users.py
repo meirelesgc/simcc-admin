@@ -35,9 +35,15 @@ async def get_user(current_user: CurrentUser, conn: Conn):
     return await user_service.get_user(conn)
 
 
+@router.get('/s/user', include_in_schema=False)
 @router.get('/user/my-self/', response_model=user_model.UserPublicAdmin)
 async def get_me(current_user: CurrentUser):
     return current_user
+
+
+@router.get('/user/public/', response_model=list[user_model.UserPublic])
+async def get_public_users(conn: Conn, username: str = None):
+    return await user_service.get_user(conn, None, None, username)
 
 
 @router.get('/user/{id}/', response_model=user_model.UserPublicAdmin)
@@ -46,11 +52,6 @@ async def get_single_user(id: UUID, current_user: CurrentUser, conn: Conn):
     is_self = current_user.user_id == id
     if not (has_permission or is_self):
         raise ForbiddenException
-    return await user_service.get_user(conn, id)
-
-
-@router.get('/user/public/', response_model=user_model.UserPublic)
-async def get_public_users(conn: Conn):
     return await user_service.get_user(conn, id)
 
 

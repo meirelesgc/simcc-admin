@@ -1,7 +1,7 @@
 from http import HTTPStatus
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, Response
 from fastapi.exceptions import HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from starlette.responses import RedirectResponse
@@ -32,11 +32,24 @@ CurrentUser = Annotated[user_model.User, Depends(get_current_user)]
 router = APIRouter()
 
 
-@router.post('/token', response_model=user_model.Token)
+@router.post('/login', response_model=user_model.Token)
 async def login_for_access_token(
-    conn: Conn, form_data: OAuth2PasswordRequestForm = Depends()
+    response: Response,
+    conn: Conn,
+    form_data: OAuth2PasswordRequestForm = Depends(),
 ):
-    return await user_service.login_for_access_token(conn, form_data)
+    token_data = await user_service.login_for_access_token(conn, form_data)
+
+    response.set_cookie(
+        key='access_token',
+        value=token_data,
+        httponly=False,
+        samesite='lax',
+        secure=False,
+        max_age=1800,
+    )
+
+    return token_data
 
 
 @router.get('/auth/orcid/login')
@@ -57,16 +70,16 @@ async def orcid_callback(code: str, conn: Conn):
     user = await user_service.get_or_create_user_by_orcid(conn, orcid_claims)
     app_token = create_access_token(data={'sub': user.email})
 
-    # Cria a resposta de redirecionamento
-    response = RedirectResponse(url=Settings().FRONTEND_URL, status_code=302)
+    URL = f'{Settings().FRONTEND_URL}authentication?token={app_token}'
+    response = RedirectResponse(url=URL, status_code=302)
 
-    # Armazena o token no cookie com as flags de segurança
     response.set_cookie(
         key='access_token',
         value=app_token,
-        httponly=True,
-        samesite='strict',
-        # secure=True  # Usar em produção com HTTPS
+        httponly=False,
+        samesite='lax',
+        secure=False,
+        max_age=1800,
     )
     return response
 
@@ -96,15 +109,16 @@ async def shibboleth_login(
         conn, shib_user_data
     )
     app_token = create_access_token(data={'sub': user.email})
-
-    response = RedirectResponse(url=Settings().FRONTEND_URL, status_code=302)
+    URL = f'{Settings().FRONTEND_URL}authentication?token={app_token}'
+    response = RedirectResponse(url=URL, status_code=302)
 
     response.set_cookie(
         key='access_token',
         value=app_token,
-        httponly=True,
-        samesite='strict',
-        # secure=True # Usar em produção com HTTPS
+        httponly=False,
+        samesite='lax',
+        secure=False,
+        max_age=1800,
     )
     return response
 
@@ -134,9 +148,10 @@ async def google_callback(code: str, conn: Conn):
     response.set_cookie(
         key='access_token',
         value=access_token,
-        httponly=True,
-        samesite='strict',
-        # secure=True  # Usar em produção com HTTPS
+        httponly=False,
+        samesite='lax',
+        secure=False,
+        max_age=1800,
     )
     return response
 

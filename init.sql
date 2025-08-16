@@ -334,6 +334,21 @@ CREATE TABLE feature.chat_participants (
     updated_at TIMESTAMP DEFAULT NOW(),
     deleted_at TIMESTAMP
 );
+
+CREATE TABLE feature.chat_messages (
+    message_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    chat_id UUID NOT NULL,
+    sender_id UUID NOT NULL,
+    content TEXT NOT NULL,
+    
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    deleted_at TIMESTAMP,
+
+    FOREIGN KEY (chat_id) REFERENCES feature.chats (chat_id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (sender_id) REFERENCES public.users (user_id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
 COMMIT;
 
 ROLLBACK;

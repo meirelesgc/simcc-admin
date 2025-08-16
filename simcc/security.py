@@ -4,7 +4,14 @@ from typing import Annotated, List
 from zoneinfo import ZoneInfo
 
 import httpx
-from fastapi import Depends, HTTPException, Request
+from fastapi import (
+    Depends,
+    HTTPException,
+    Request,
+    WebSocket,
+    WebSocketException,
+    status,
+)
 from fastapi.security import OAuth2PasswordBearer
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
@@ -30,19 +37,25 @@ ORCID_JWKS_URL = 'https://orcid.org/oauth/jwks'
 GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token'
 
 
-async def get_token_from_cookie(request: Request) -> str:
+async def get_token_from_request(request: Request) -> str:
     token = request.cookies.get('access_token')
+    if not token:
+        auth_header = request.headers.get('Authorization')
+        if auth_header and auth_header.startswith('Bearer '):
+            token = auth_header.split(' ', 1)[1]
+
     if not token:
         raise HTTPException(
             status_code=HTTPStatus.UNAUTHORIZED,
             detail='Not authenticated',
             headers={'WWW-Authenticate': 'Bearer'},
         )
+
     return token
 
 
 async def get_current_user(
-    token: Annotated[str, Depends(get_token_from_cookie)],
+    token: Annotated[str, Depends(get_token_from_request)],
     conn: Connection = Depends(get_conn),
 ):
     credentials_exception = HTTPException(
@@ -59,40 +72,33 @@ async def get_current_user(
     except (DecodeError, ExpiredSignatureError):
         raise credentials_exception
 
-    SCRIPT_SQL = """
-        WITH roles_ AS (
-            SELECT ur.user_id, json_agg(row_to_json(r_)) AS roles
-            FROM public.user_roles ur
-            JOIN (SELECT r.role_id, r.name, r.created_at, r.updated_at
-                FROM public.roles r) r_ ON ur.role_id = r_.role_id
-            GROUP BY ur.user_id
-        ), permissions_ AS (
-            SELECT u.user_id, ARRAY_REMOVE(ARRAY_AGG(DISTINCT p.name), NULL) AS
-                permissions
-            FROM public.users u
-                LEFT JOIN user_roles ur ON ur.user_id = u.user_id
-                LEFT JOIN role_permissions rp ON rp.role_id = ur.role_id
-                LEFT JOIN permissions p ON p.permission_id = rp.permission_id
-            WHERE email = %(email)s
-            GROUP BY u.user_id
-        ) SELECT u.user_id, u.username, u.email, u.password,
-            u.created_at, u.updated_at,
-            COALESCE(r.roles, '[]'::json) AS roles,
-            COALESCE(p.permissions, '{}') AS permissions,
-            linkedin, photo_url, lattes_id, institution_id
-        FROM public.users u
-        LEFT JOIN roles_ r
-            ON r.user_id = u.user_id
-        LEFT JOIN permissions_ p
-            ON p.user_id = u.user_id
-        WHERE email = %(email)s;
-        """
-    user = await conn.select(SCRIPT_SQL, {'email': subject_email}, True)
+    return await _get_user_by_email(subject_email, conn)
 
-    if not user:
-        raise credentials_exception
 
-    return user_model.UserPublicAdmin(**user)
+async def get_current_user_from_websocket(
+    websocket: WebSocket, conn: Connection = Depends(get_conn)
+):
+    token = websocket.cookies.get('access_token')
+    if not token:
+        raise WebSocketException(
+            code=status.WS_1008_POLICY_VIOLATION, reason='Not authenticated'
+        )
+
+    try:
+        payload = decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        subject_email = payload.get('sub')
+        if not subject_email:
+            raise WebSocketException(
+                code=status.WS_1008_POLICY_VIOLATION,
+                reason='Invalid token payload',
+            )
+    except (DecodeError, ExpiredSignatureError):
+        raise WebSocketException(
+            code=status.WS_1008_POLICY_VIOLATION,
+            reason='Invalid or expired token',
+        )
+
+    return await _get_user_by_email(subject_email, conn)
 
 
 def authorize_user(allowed_roles: List[str]):
@@ -235,3 +241,48 @@ async def validate_google_token(code: str) -> dict:
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
             detail=f'Erro inesperado no processamento do token: {e}',
         )
+
+
+async def _get_user_by_email(
+    email: str, conn: Connection
+) -> user_model.UserPublicAdmin:
+    credentials_exception = HTTPException(
+        status_code=HTTPStatus.UNAUTHORIZED,
+        detail='Could not validate credentials',
+        headers={'WWW-Authenticate': 'Bearer'},
+    )
+
+    SCRIPT_SQL = """
+        WITH roles_ AS (
+            SELECT ur.user_id, json_agg(row_to_json(r_)) AS roles
+            FROM public.user_roles ur
+            JOIN (SELECT r.role_id AS id, r.name AS role_id
+                FROM public.roles r) r_ ON ur.role_id = r_.id
+            GROUP BY ur.user_id
+        ), permissions_ AS (
+            SELECT u.user_id, ARRAY_REMOVE(ARRAY_AGG(DISTINCT p.name), NULL) AS
+                permissions
+            FROM public.users u
+                LEFT JOIN user_roles ur ON ur.user_id = u.user_id
+                LEFT JOIN role_permissions rp ON rp.role_id = ur.role_id
+                LEFT JOIN permissions p ON p.permission_id = rp.permission_id
+            WHERE email = %(email)s
+            GROUP BY u.user_id
+        ) SELECT u.user_id, u.username, u.email, u.password,
+            u.created_at, u.updated_at,
+            COALESCE(r.roles, '[]'::json) AS roles,
+            COALESCE(p.permissions, '{}') AS permissions,
+            linkedin, photo_url, lattes_id, institution_id
+        FROM public.users u
+        LEFT JOIN roles_ r
+            ON r.user_id = u.user_id
+        LEFT JOIN permissions_ p
+            ON p.user_id = u.user_id
+        WHERE email = %(email)s;
+    """
+    user_data = await conn.select(SCRIPT_SQL, {'email': email}, True)
+
+    if not user_data:
+        raise credentials_exception
+
+    return user_model.User(**user_data)

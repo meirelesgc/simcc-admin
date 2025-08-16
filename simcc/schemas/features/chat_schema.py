@@ -19,6 +19,15 @@ class Chat(BaseModel):
     updated_at: datetime | None = None
 
 
+class Message(BaseModel):
+    message_id: UUID = Field(default_factory=uuid4)
+    chat_id: UUID
+    sender_id: UUID
+    content: str
+    created_at: datetime = Field(default_factory=datetime.now)
+
+
 class ChatPubic(Chat):
+    last_message: Message | None = None
     created_at: datetime = Field(exclude=True)
     updated_at: datetime | None = Field(exclude=True)

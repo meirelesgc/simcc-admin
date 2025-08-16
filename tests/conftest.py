@@ -10,7 +10,7 @@ from simcc.app import app
 from simcc.core.connection import Connection
 from simcc.core.database import get_cache_conn, get_conn
 from simcc.schemas import rbac_model
-from simcc.schemas.features import collection_models
+from simcc.schemas.features import chat_schema, collection_models
 from simcc.services import (
     institution_service,
     rbac_service,
@@ -18,6 +18,7 @@ from simcc.services import (
     user_service,
 )
 from simcc.services.features import (
+    chat_service,
     collection_service,
     notification_service,
     star_service,
@@ -160,7 +161,7 @@ def create_role(conn):
 def get_token(client):
     def _get_token(user):
         data = {'username': user.email, 'password': user.password}
-        response = client.post('/token/', data=data)
+        response = client.post('/login', data=data)
         return response.json()['access_token']
 
     return _get_token
@@ -234,3 +235,23 @@ def create_notification(conn):
         return created_notification
 
     return _create_notification
+
+
+@pytest.fixture
+def create_private_chat(conn):
+    async def _create_private_chat(user1, user2):
+        users_id = [str(user1.user_id), str(user2.user_id)]
+
+        chat_data = chat_schema.ChatSchema(
+            chat_name='Private Chat',
+            is_group=False,
+            users=users_id,
+        )
+
+        created_chat = await chat_service.create_private_chat(
+            conn, user1, chat_data
+        )
+
+        return created_chat
+
+    return _create_private_chat

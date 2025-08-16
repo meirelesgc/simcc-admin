@@ -23,8 +23,13 @@ async def post_user(conn: Connection, user_data: user_model.UserSchema):
     return new_user
 
 
-async def get_user(conn: Connection, id: UUID = None, email: EmailStr = None):
-    users = await user_repository.get_user(conn, id, email)
+async def get_user(
+    conn: Connection,
+    id: UUID = None,
+    email: EmailStr = None,
+    username: str = None,
+):
+    users = await user_repository.get_user(conn, id, email, username)
     return users
 
 
