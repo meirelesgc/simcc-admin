@@ -1,14 +1,17 @@
+import os
 from contextlib import asynccontextmanager
 from http import HTTPStatus
 
 import httpx
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from simcc.config import Settings
 from simcc.core.database import conn, get_conn
-from simcc.routers import auth, institution, rbac, researcher, users
+from simcc.routers import auth, institution, rbac, researcher
 from simcc.routers.features import chat, collection, notification, star
+from simcc.routers.users import uploads, users
 from simcc.security import get_current_user
 
 
@@ -25,8 +28,21 @@ app = FastAPI(
     docs_url='/swagger',
 )
 
+UPLOAD_DIR = 'simcc/storage/upload'
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+app.mount(
+    '/upload',
+    StaticFiles(directory='simcc/storage/upload'),
+    name='upload',
+)
+
 app.include_router(auth.router, tags=['authentication & authorization'])
-app.include_router(users.router, tags=['authentication & authorization'])
+app.include_router(
+    users.router, tags=['authentication & authorization', 'account, base']
+)
+
+app.include_router(uploads.router, tags=['account, upload'])
 
 app.include_router(institution.router, tags=['core, institution'])
 app.include_router(researcher.router, tags=['core, researcher'])

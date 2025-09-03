@@ -26,3 +26,5 @@ class UserFactory(factory.Factory):
     password = factory.Faker('password')
     created_at = factory.LazyFunction(lambda: datetime.now().date())
     updated_atdate = None
+    profile_image_url = factory.Faker('image_url')
+    background_image_url = factory.Faker('image_url')

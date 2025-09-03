@@ -27,6 +27,9 @@ class User(BaseModel):
     verify: bool = False
     institution_id: UUID | None = None
 
+    profile_image_url: str | None = None
+    background_image_url: str | None = None
+
     orcid_id: str | None = None
     linkedin: str | None = None
     photo_url: str | None = None

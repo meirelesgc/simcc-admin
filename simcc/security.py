@@ -272,7 +272,8 @@ async def _get_user_by_email(
             u.created_at, u.updated_at,
             COALESCE(r.roles, '[]'::json) AS roles,
             COALESCE(p.permissions, '{}') AS permissions,
-            linkedin, photo_url, lattes_id, institution_id
+            linkedin, photo_url, lattes_id, institution_id,
+            profile_image_url, background_image_url
         FROM public.users u
         LEFT JOIN roles_ r
             ON r.user_id = u.user_id

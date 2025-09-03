@@ -42,6 +42,9 @@ CREATE TABLE IF NOT EXISTS users (
     lattes_id VARCHAR(16),
     linkedin VARCHAR(255),
 
+    profile_image_url TEXT,
+    background_image_url TEXT,
+
     PRIMARY KEY (user_id),
     FOREIGN KEY (institution_id) REFERENCES public.institution (institution_id) ON DELETE SET NULL ON UPDATE CASCADE,
 

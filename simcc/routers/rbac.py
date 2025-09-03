@@ -70,6 +70,7 @@ async def role_delete(role_id: UUID, conn: Conn):
     await rbac_service.delete_role(conn, role_id)
 
 
+@router.get('/s/permission', include_in_schema=False)
 @router.get('/permission/', response_model=list[rbac_model.Permission])
 async def permissions_get(conn: Conn):
     return await rbac_service.get_permissions(conn, None)

@@ -1,4 +1,6 @@
+import io
 from http import HTTPStatus
+from pathlib import Path
 
 import pytest
 
@@ -178,3 +180,173 @@ async def test_delete_user(client, create_user, login_and_set_cookie):
 
     response = authenticated_client.get(f'/user/{user.user_id}/')
     assert response.status_code == HTTPStatus.FORBIDDEN or HTTPStatus.NOT_FOUND
+
+
+@pytest.mark.asyncio
+async def test_upload_profile_image(create_user, login_and_set_cookie):
+    user = await create_user()
+    client = login_and_set_cookie(user)
+    file_content = b'fake image content'
+    file_name = 'test_image.png'
+
+    response = client.post(
+        '/user/upload/profile_image',
+        files={'file': (file_name, io.BytesIO(file_content), 'image/png')},
+    )
+
+    assert response.status_code == HTTPStatus.CREATED
+    data = response.json()
+    file_name_from_response = Path(data['path']).name
+    upload_dir = Path('simcc/storage/upload')
+    final_path = upload_dir / file_name_from_response
+    assert final_path.is_file()
+
+
+@pytest.mark.asyncio
+async def test_delete_profile_image(create_user, login_and_set_cookie):
+    user = await create_user()
+    client = login_and_set_cookie(user)
+
+    upload_response = client.post(
+        '/user/upload/profile_image',
+        files={
+            'file': (
+                'image_to_delete.png',
+                io.BytesIO(b'content'),
+                'image/png',
+            )
+        },
+    )
+    assert upload_response.status_code == HTTPStatus.CREATED
+
+    data = upload_response.json()
+    uploaded_path = Path(data['path'])
+    physical_file_path = Path('simcc/storage/upload') / uploaded_path.name
+    assert physical_file_path.exists()
+
+    # Act: Envia a requisição para deletar a imagem
+    delete_response = client.delete('/user/upload/profile_image')
+
+    # Assert: Verifica se a operação foi bem-sucedida
+    assert delete_response.status_code == HTTPStatus.OK
+    assert (
+        delete_response.json()['message']
+        == 'Imagem de perfil excluída com sucesso.'
+    )
+    assert (
+        not physical_file_path.exists()
+    )  # Garante que o arquivo físico foi removido
+
+
+@pytest.mark.asyncio
+async def test_delete_profile_image_not_found(
+    create_user, login_and_set_cookie
+):
+    # Arrange: Cria um usuário sem imagem de perfil
+    user = await create_user()
+    client = login_and_set_cookie(user)
+
+    # Act
+    response = client.delete('/user/upload/profile_image')
+
+    # Assert
+    assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+@pytest.mark.asyncio
+async def test_upload_background_image(create_user, login_and_set_cookie):
+    # Arrange
+    user = await create_user()
+    client = login_and_set_cookie(user)
+    file_content = b'fake background content'
+    file_name = 'background.jpg'
+
+    # Act
+    response = client.post(
+        '/user/upload/background_image',
+        files={'file': (file_name, io.BytesIO(file_content), 'image/jpeg')},
+    )
+
+    # Assert
+    assert response.status_code == HTTPStatus.CREATED
+    data = response.json()
+    file_name_from_response = Path(data['path']).name
+    final_path = Path('simcc/storage/upload') / file_name_from_response
+    assert final_path.is_file()
+
+
+@pytest.mark.asyncio
+async def test_upload_background_image_replaces_old_one(
+    create_user, login_and_set_cookie
+):
+    # Arrange: Faz o upload de uma primeira imagem
+    user = await create_user()
+    client = login_and_set_cookie(user)
+
+    first_response = client.post(
+        '/user/upload/background_image',
+        files={'file': ('first.png', io.BytesIO(b'first'), 'image/png')},
+    )
+    assert first_response.status_code == HTTPStatus.CREATED
+    old_path = Path(first_response.json()['path'])
+    old_physical_path = Path('simcc/storage/upload') / old_path.name
+    assert old_physical_path.exists()
+
+    # Act: Faz o upload de uma segunda imagem
+    second_response = client.post(
+        '/user/upload/background_image',
+        files={'file': ('second.png', io.BytesIO(b'second'), 'image/png')},
+    )
+
+    # Assert: Verifica se a nova imagem existe e a antiga foi removida
+    assert second_response.status_code == HTTPStatus.CREATED
+    new_path = Path(second_response.json()['path'])
+    new_physical_path = Path('simcc/storage/upload') / new_path.name
+
+    assert new_physical_path.exists()
+    assert not old_physical_path.exists()
+
+
+@pytest.mark.asyncio
+async def test_delete_background_image(create_user, login_and_set_cookie):
+    # Arrange: Cria um usuário e faz o upload de uma imagem de fundo
+    user = await create_user()
+    client = login_and_set_cookie(user)
+
+    upload_response = client.post(
+        '/user/upload/background_image',
+        files={
+            'file': ('bg_to_delete.png', io.BytesIO(b'content'), 'image/png')
+        },
+    )
+    assert upload_response.status_code == HTTPStatus.CREATED
+
+    data = upload_response.json()
+    physical_file_path = Path('simcc/storage/upload') / Path(data['path']).name
+    assert physical_file_path.exists()
+
+    # Act: Envia a requisição para deletar
+    delete_response = client.delete('/user/upload/background_image')
+
+    # Assert
+    assert delete_response.status_code == HTTPStatus.OK
+    assert (
+        delete_response.json()['message']
+        == 'Imagem de fundo excluída com sucesso.'
+    )
+    assert not physical_file_path.exists()
+
+
+@pytest.mark.asyncio
+async def test_delete_background_image_not_found(
+    create_user, login_and_set_cookie
+):
+    # Arrange: Cria um usuário sem imagem de fundo
+    user = await create_user()
+    client = login_and_set_cookie(user)
+
+    # Act
+    response = client.delete('/user/upload/background_image')
+
+    # Assert
+    assert response.status_code == HTTPStatus.NOT_FOUND
