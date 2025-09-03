@@ -13,39 +13,44 @@ def get_all_guidance_trackings(data):
     filters = str()
 
     if data.get("supervisor_researcher_id"):
-        filters += """
-            AND supervisor_researcher_id = %(supervisor_researcher_id)s
-            """
+        filters += (
+            "AND gt.supervisor_researcher_id = %(supervisor_researcher_id)s"
+        )
     if data.get("graduate_program_id"):
-        filters += """
-            AND graduate_program_id = %(graduate_program_id)s
-            """
+        filters += "AND gt.graduate_program_id = %(graduate_program_id)s"
 
     SCRIPT_SQL = f"""
         SELECT
-            id,
-            student_researcher_id,
-            supervisor_researcher_id,
-            co_supervisor_researcher_id,
-            graduate_program_id,
-            start_date,
-            planned_date_project,
-            done_date_project,
-            planned_date_qualification,
-            done_date_qualification,
-            planned_date_conclusion,
-            done_date_conclusion
-        FROM guidance_tracking
-        WHERE deleted_at IS NULL
+            gt.id,
+            gt.student_researcher_id,
+            gt.supervisor_researcher_id,
+            gt.graduate_program_id,
+            gt.start_date,
+            gt.planned_date_project,
+            gt.done_date_project,
+            gt.planned_date_qualification,
+            gt.done_date_qualification,
+            gt.planned_date_conclusion,
+            gt.done_date_conclusion,
+            COALESCE(ARRAY_AGG(gcs.co_supervisor_researcher_id) FILTER (WHERE gcs.co_supervisor_researcher_id IS NOT NULL), '{{}}') as co_supervisor_ids
+        FROM
+            guidance_tracking gt
+        LEFT JOIN
+            guidance_co_supervisors gcs ON gt.id = gcs.guidance_tracking_id
+        WHERE
+            gt.deleted_at IS NULL
             {filters}
-        ORDER BY created_at DESC;
+        GROUP BY
+            gt.id
+        ORDER BY
+            gt.created_at DESC;
     """
     records = adm_database.select(SCRIPT_SQL, data)
+
     columns = [
         "id",
         "student_researcher_id",
         "supervisor_researcher_id",
-        "co_supervisor_researcher_id",
         "graduate_program_id",
         "start_date",
         "planned_date_project",
@@ -54,6 +59,7 @@ def get_all_guidance_trackings(data):
         "done_date_qualification",
         "planned_date_conclusion",
         "done_date_conclusion",
+        "co_supervisor_ids",
     ]
     df = pd.DataFrame(records, columns=columns)
     if df.empty:
@@ -65,41 +71,37 @@ def get_all_guidance_trackings(data):
         if not student["done_date_project"]:
             planned = student["planned_date_project"]
             return (planned - today).days if planned else None
-
         if not student["done_date_qualification"]:
             planned = student["planned_date_qualification"]
             return (planned - today).days if planned else None
-
         if not student["done_date_conclusion"]:
             planned = student["planned_date_conclusion"]
             return (planned - today).days if planned else None
-
         done_conclusion = student["done_date_conclusion"]
         if done_conclusion:
             return (today - done_conclusion).days
 
     def peding_days_(row):
         delays = []
-        if row["done_date_conclusion"] is None:
-            if row["planned_date_conclusion"] < today:
-                days = (today - row["planned_date_conclusion"]).days
-                delays.append(days)
-        if row["done_date_qualification"] is None:
-            if row["planned_date_qualification"] < today:
-                days = (today - row["planned_date_qualification"]).days
-                delays.append(days)
-        if row["done_date_project"] is None:
-            if row["planned_date_project"] < today:
-                days = (today - row["planned_date_project"]).days
-                delays.append(days)
-        if delays:
-            return max(delays)
-        return 0
+        if (
+            row["done_date_conclusion"] is None
+            and row["planned_date_conclusion"] < today
+        ):
+            delays.append((today - row["planned_date_conclusion"]).days)
+        if (
+            row["done_date_qualification"] is None
+            and row["planned_date_qualification"] < today
+        ):
+            delays.append((today - row["planned_date_qualification"]).days)
+        if (
+            row["done_date_project"] is None
+            and row["planned_date_project"] < today
+        ):
+            delays.append((today - row["planned_date_project"]).days)
+        return max(delays) if delays else 0
 
     def pending(row):
-        if peding_days_(row) > 0:
-            return "EM ATRASO"
-        return "EM DIA"
+        return "EM ATRASO" if peding_days_(row) > 0 else "EM DIA"
 
     def type_(row):
         if row["done_date_project"] is None:
@@ -113,7 +115,6 @@ def get_all_guidance_trackings(data):
     df["peding_days"] = df.apply(peding_days, axis=1)
     df["peding"] = df.apply(pending, axis=1)
     df["type"] = df.apply(type_, axis=1)
-
     df = df.replace(NaT, None)
 
     return df.to_dict(orient="records"), 200
@@ -122,33 +123,37 @@ def get_all_guidance_trackings(data):
 def get_guidance_tracking_by_id(guidance_id: UUID4):
     SCRIPT_SQL = """
         SELECT
-            id,
-            student_researcher_id,
-            supervisor_researcher_id,
-            co_supervisor_researcher_id,
-            graduate_program_id,
-            start_date,
-            planned_date_project,
-            done_date_project,
-            planned_date_qualification,
-            done_date_qualification,
-            planned_date_conclusion,
-            done_date_conclusion,
-            created_at,
-            updated_at,
-            deleted_at
-        FROM guidance_tracking
-        WHERE id = %(guidance_id)s AND deleted_at IS NULL;
+            gt.id,
+            gt.student_researcher_id,
+            gt.supervisor_researcher_id,
+            gt.graduate_program_id,
+            gt.start_date,
+            gt.planned_date_project,
+            gt.done_date_project,
+            gt.planned_date_qualification,
+            gt.done_date_qualification,
+            gt.planned_date_conclusion,
+            gt.done_date_conclusion,
+            gt.created_at,
+            gt.updated_at,
+            gt.deleted_at,
+            COALESCE(ARRAY_AGG(gcs.co_supervisor_researcher_id) FILTER (WHERE gcs.co_supervisor_researcher_id IS NOT NULL), '{{}}') as co_supervisor_ids
+        FROM
+            guidance_tracking gt
+        LEFT JOIN
+            guidance_co_supervisors gcs ON gt.id = gcs.guidance_tracking_id
+        WHERE gt.id = %(guidance_id)s AND gt.deleted_at IS NULL
+        GROUP BY gt.id;
     """
     params = {"guidance_id": guidance_id}
     result = adm_database.select(SCRIPT_SQL, params)
     if not result:
         return {"message": "Registro não encontrado."}, 404
+
     columns = [
         "id",
         "student_researcher_id",
         "supervisor_researcher_id",
-        "co_supervisor_researcher_id",
         "graduate_program_id",
         "start_date",
         "planned_date_project",
@@ -160,64 +165,99 @@ def get_guidance_tracking_by_id(guidance_id: UUID4):
         "created_at",
         "updated_at",
         "deleted_at",
+        "co_supervisor_ids",
     ]
     df = pd.DataFrame(result, columns=columns)
     return df.to_dict(orient="records")[0], 200
 
 
+import uuid
+
+
 def create_guidance_tracking(data: dict):
-    SCRIPT_SQL = """
-        INSERT INTO guidance_tracking (
-            student_researcher_id,
-            supervisor_researcher_id,
-            co_supervisor_researcher_id,
-            graduate_program_id,
-            start_date,
-            planned_date_project,
-            done_date_project,
-            planned_date_qualification,
-            done_date_qualification,
-            planned_date_conclusion,
-            done_date_conclusion
-        ) VALUES (
-            %(student_researcher_id)s,
-            %(supervisor_researcher_id)s,
-            %(co_supervisor_researcher_id)s,
-            %(graduate_program_id)s,
-            %(start_date)s,
-            %(planned_date_project)s,
-            %(done_date_project)s,
-            %(planned_date_qualification)s,
-            %(done_date_qualification)s,
-            %(planned_date_conclusion)s,
-            %(done_date_conclusion)s
-        );
-    """
-    adm_database.exec(SCRIPT_SQL, data)
-    return {"message": "Registro criado com sucesso."}, 201
+    co_supervisor_ids = data.pop("co_supervisor_ids", [])
+    new_guidance_id = str(uuid.uuid4())
+    data["id"] = new_guidance_id
+
+    try:
+        SQL_INSERT_GUIDANCE = """
+            INSERT INTO guidance_tracking (
+                id, student_researcher_id, supervisor_researcher_id, graduate_program_id,
+                start_date, planned_date_project, done_date_project,
+                planned_date_qualification, done_date_qualification,
+                planned_date_conclusion, done_date_conclusion
+            ) VALUES (
+                %(id)s, %(student_researcher_id)s, %(supervisor_researcher_id)s, %(graduate_program_id)s,
+                %(start_date)s, %(planned_date_project)s, %(done_date_project)s,
+                %(planned_date_qualification)s, %(done_date_qualification)s,
+                %(planned_date_conclusion)s, %(done_date_conclusion)s
+            );
+        """
+        adm_database.exec(SQL_INSERT_GUIDANCE, data)
+
+        if co_supervisor_ids:
+            SQL_INSERT_CO_SUPERVISOR = """
+                INSERT INTO guidance_co_supervisors (guidance_tracking_id, co_supervisor_researcher_id)
+                VALUES (%(guidance_id)s, %(co_supervisor_id)s);
+            """
+            for co_supervisor_id in co_supervisor_ids:
+                params = {
+                    "guidance_id": new_guidance_id,
+                    "co_supervisor_id": co_supervisor_id,
+                }
+                adm_database.exec(SQL_INSERT_CO_SUPERVISOR, params)
+
+        return {
+            "message": "Registro criado com sucesso.",
+            "id": new_guidance_id,
+        }, 201
+    except Exception as e:
+        return {"message": f"Erro ao criar registro: {e}"}, 500
 
 
 def update_guidance_tracking(guidance_id: UUID4, data: dict):
-    SCRIPT_SQL = """
-        UPDATE guidance_tracking SET
-            student_researcher_id = %(student_researcher_id)s,
-            supervisor_researcher_id = %(supervisor_researcher_id)s,
-            co_supervisor_researcher_id = %(co_supervisor_researcher_id)s,
-            graduate_program_id = %(graduate_program_id)s,
-            start_date = %(start_date)s,
-            planned_date_project = %(planned_date_project)s,
-            done_date_project = %(done_date_project)s,
-            planned_date_qualification = %(planned_date_qualification)s,
-            done_date_qualification = %(done_date_qualification)s,
-            planned_date_conclusion = %(planned_date_conclusion)s,
-            done_date_conclusion = %(done_date_conclusion)s,
-            updated_at = NOW()
-        WHERE id = %(guidance_id)s AND deleted_at IS NULL;
-    """
+    co_supervisor_ids = data.pop("co_supervisor_ids", [])
     params = data.copy()
     params["guidance_id"] = guidance_id
-    adm_database.exec(SCRIPT_SQL, params)
-    return {"message": "Registro atualizado com sucesso."}, 200
+
+    try:
+        SQL_UPDATE_GUIDANCE = """
+            UPDATE guidance_tracking SET
+                student_researcher_id = %(student_researcher_id)s,
+                supervisor_researcher_id = %(supervisor_researcher_id)s,
+                graduate_program_id = %(graduate_program_id)s,
+                start_date = %(start_date)s,
+                planned_date_project = %(planned_date_project)s,
+                done_date_project = %(done_date_project)s,
+                planned_date_qualification = %(planned_date_qualification)s,
+                done_date_qualification = %(done_date_qualification)s,
+                planned_date_conclusion = %(planned_date_conclusion)s,
+                done_date_conclusion = %(done_date_conclusion)s,
+                updated_at = NOW()
+            WHERE id = %(guidance_id)s AND deleted_at IS NULL;
+        """
+        adm_database.exec(SQL_UPDATE_GUIDANCE, params)
+
+        SQL_DELETE_CO_SUPERVISORS = "DELETE FROM guidance_co_supervisors WHERE guidance_tracking_id = %(guidance_id)s;"
+        adm_database.exec(
+            SQL_DELETE_CO_SUPERVISORS, {"guidance_id": guidance_id}
+        )
+
+        if co_supervisor_ids:
+            SQL_INSERT_CO_SUPERVISOR = """
+                INSERT INTO guidance_co_supervisors (guidance_tracking_id, co_supervisor_researcher_id)
+                VALUES (%(guidance_id)s, %(co_supervisor_id)s);
+            """
+            for co_supervisor_id in co_supervisor_ids:
+                insert_params = {
+                    "guidance_id": guidance_id,
+                    "co_supervisor_id": co_supervisor_id,
+                }
+                adm_database.exec(SQL_INSERT_CO_SUPERVISOR, insert_params)
+
+        return {"message": "Registro atualizado com sucesso."}, 200
+    except Exception as e:
+        return {"message": f"Erro ao atualizar registro: {e}"}, 500
 
 
 def delete_guidance_tracking(guidance_id: UUID4):
@@ -279,7 +319,7 @@ def get_all_guidance_configs(data: dict):
         "updated_at",
     ]
     df = pd.DataFrame(records, columns=columns)
-    return df.to_dict(orient="records"), 200
+    return df.to_dict(orient="records")
 
 
 def update_guidance_config(data: dict):

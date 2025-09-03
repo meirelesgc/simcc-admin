@@ -179,45 +179,51 @@ CREATE TABLE IF NOT EXISTS public.feedback (
     description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-CREATE TABLE IF NOT EXISTS public.guidance_tracking
-(
-id uuid NOT NULL DEFAULT uuid_generate_v4(),
-student_researcher_id uuid NOT NULL,
-supervisor_researcher_id uuid NOT NULL,
-co_supervisor_researcher_id uuid,
-graduate_program_id uuid NOT NULL,
-start_date date NOT NULL,
-planned_date_project date NOT NULL,
-done_date_project date,
-planned_date_qualification date NOT NULL,
-done_date_qualification date,
-planned_date_conclusion date NOT NULL,
-done_date_conclusion date,
-created_at timestamp without time zone NOT NULL DEFAULT now(),
-updated_at timestamp without time zone,
-deleted_at timestamp without time zone,
-CONSTRAINT guidance_tracking_pkey PRIMARY KEY (id),
-CONSTRAINT different_supervisors CHECK (supervisor_researcher_id <> co_supervisor_researcher_id),
-CONSTRAINT "FKco_supervisor_researcher" FOREIGN KEY (co_supervisor_researcher_id)
-	REFERENCES public.researcher (researcher_id) MATCH SIMPLE
-	ON UPDATE CASCADE
-	ON DELETE CASCADE,
-CONSTRAINT "FKgraduate_program" FOREIGN KEY (graduate_program_id)
-	REFERENCES public.graduate_program (graduate_program_id) MATCH SIMPLE
-	ON UPDATE CASCADE
-	ON DELETE CASCADE,
-CONSTRAINT "FKsudent_researcher" FOREIGN KEY (student_researcher_id)
-	REFERENCES public.researcher (researcher_id) MATCH SIMPLE
-	ON UPDATE CASCADE
-	ON DELETE CASCADE,
-CONSTRAINT "FKsupervisor_researcher" FOREIGN KEY (supervisor_researcher_id)
-	REFERENCES public.researcher (researcher_id) MATCH SIMPLE
-	ON UPDATE CASCADE
-	ON DELETE CASCADE
+CREATE TABLE IF NOT EXISTS public.guidance_tracking (
+    id uuid NOT NULL DEFAULT uuid_generate_v4(),
+    student_researcher_id uuid NOT NULL,
+    supervisor_researcher_id uuid NOT NULL,
+    graduate_program_id uuid NOT NULL,
+    start_date date NOT NULL,
+    planned_date_project date NOT NULL,
+    done_date_project date,
+    planned_date_qualification date NOT NULL,
+    done_date_qualification date,
+    planned_date_conclusion date NOT NULL,
+    done_date_conclusion date,
+    created_at timestamp without time zone NOT NULL DEFAULT now(),
+    updated_at timestamp without time zone,
+    deleted_at timestamp without time zone,
+    CONSTRAINT guidance_tracking_pkey PRIMARY KEY (id),
+    CONSTRAINT "FKgraduate_program" FOREIGN KEY (graduate_program_id)
+        REFERENCES public.graduate_program (graduate_program_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT "FKsudent_researcher" FOREIGN KEY (student_researcher_id)
+        REFERENCES public.researcher (researcher_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT "FKsupervisor_researcher" FOREIGN KEY (supervisor_researcher_id)
+        REFERENCES public.researcher (researcher_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
 );
 CREATE UNIQUE INDEX unique_student_program_undel ON public.guidance_tracking (student_researcher_id, graduate_program_id)
 WHERE deleted_at IS NULL;
-
+CREATE TABLE IF NOT EXISTS public.guidance_co_supervisors
+(
+    guidance_tracking_id uuid NOT NULL,
+    co_supervisor_researcher_id uuid NOT NULL,
+    CONSTRAINT guidance_co_supervisors_pkey PRIMARY KEY (guidance_tracking_id, co_supervisor_researcher_id), 
+    CONSTRAINT "FK_guidance" FOREIGN KEY (guidance_tracking_id)
+        REFERENCES public.guidance_tracking (id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT "FK_co_supervisor" FOREIGN KEY (co_supervisor_researcher_id)
+        REFERENCES public.researcher (researcher_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+);
 CREATE TABLE IF NOT EXISTS guidance_config (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 
@@ -234,7 +240,6 @@ CREATE TABLE IF NOT EXISTS guidance_config (
     CONSTRAINT duration_qualification_positive CHECK (duration_qualification_months >= 0),
     CONSTRAINT duration_conclusion_positive CHECK (duration_conclusion_months >= 0)
 );
-
 
 CREATE SCHEMA IF NOT EXISTS ufmg;
 

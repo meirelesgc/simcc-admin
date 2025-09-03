@@ -49,16 +49,17 @@ def delete(guidance_id):
     return delete_guidance_tracking(guidance_id)
 
 
+@guidance_tracking_bp.route("/guidance_config/", methods=["GET"])
+def get_all_guidance_configs_():
+    data = request.args
+    json = get_all_guidance_configs(data)
+    return json, 200
+
+
 @guidance_tracking_bp.route("/guidance_config/", methods=["POST"])
 def create_guidance_config_():
     data = request.get_json()
     return create_guidance_config(data)
-
-
-@guidance_tracking_bp.route("/guidance_config/", methods=["GET"])
-def get_all_guidance_configs_():
-    data = request.get_json()
-    return get_all_guidance_configs(data)
 
 
 @guidance_tracking_bp.route(
