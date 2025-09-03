@@ -178,8 +178,7 @@ def create_guidance_tracking(data: dict):
             planned_date_qualification,
             done_date_qualification,
             planned_date_conclusion,
-            done_date_conclusion,
-            created_at
+            done_date_conclusion
         ) VALUES (
             %(student_researcher_id)s,
             %(supervisor_researcher_id)s,
@@ -191,8 +190,7 @@ def create_guidance_tracking(data: dict):
             %(planned_date_qualification)s,
             %(done_date_qualification)s,
             %(planned_date_conclusion)s,
-            %(done_date_conclusion)s,
-            NOW()
+            %(done_date_conclusion)s
         );
     """
     adm_database.exec(SCRIPT_SQL, data)
@@ -231,3 +229,80 @@ def delete_guidance_tracking(guidance_id: UUID4):
     params = {"guidance_id": guidance_id}
     adm_database.exec(SCRIPT_SQL, params)
     return {"message": "Registro excluído com sucesso."}, 200
+
+
+def create_guidance_config(data: dict):
+    SCRIPT_SQL = """
+        INSERT INTO guidance_config (
+            duration_project_months,
+            duration_qualification_months,
+            duration_conclusion_months,
+            config_name
+        ) VALUES (
+            %(duration_project_months)s,
+            %(duration_qualification_months)s,
+            %(duration_conclusion_months)s,
+            %(config_name)s);
+    """
+    adm_database.exec(SCRIPT_SQL, data)
+    return {"message": "Configuração criada com sucesso."}, 201
+
+
+def get_all_guidance_configs(data: dict):
+    filters = str()
+
+    if data.get("config_name"):
+        filters += " AND config_name = %(config_name)s"
+
+    SCRIPT_SQL = f"""
+        SELECT
+            id,
+            duration_project_months,
+            duration_qualification_months,
+            duration_conclusion_months,
+            config_name,
+            created_at,
+            updated_at
+        FROM guidance_config
+        WHERE 1=1
+            {filters}
+        ORDER BY created_at DESC;
+    """
+    records = adm_database.select(SCRIPT_SQL, data)
+    columns = [
+        "id",
+        "duration_project_months",
+        "duration_qualification_months",
+        "duration_conclusion_months",
+        "config_name",
+        "created_at",
+        "updated_at",
+    ]
+    df = pd.DataFrame(records, columns=columns)
+    return df.to_dict(orient="records"), 200
+
+
+def update_guidance_config(data: dict):
+    SCRIPT_SQL = """
+        UPDATE guidance_config SET
+            duration_project_months = %(duration_project_months)s,
+            duration_qualification_months = %(duration_qualification_months)s,
+            duration_conclusion_months = %(duration_conclusion_months)s,
+            config_name = %(config_name)s,
+            updated_at = NOW()
+        WHERE id = %(config_id)s;
+    """
+    params = data.copy()
+    params["config_id"] = data.get("id")
+    adm_database.exec(SCRIPT_SQL, params)
+    return {"message": "Configuração atualizada com sucesso."}, 200
+
+
+def delete_guidance_config(config_id: UUID4):
+    SCRIPT_SQL = """
+        DELETE FROM guidance_config
+        WHERE id = %(config_id)s;
+    """
+    params = {"config_id": config_id}
+    adm_database.exec(SCRIPT_SQL, params)
+    return {"message": "Configuração excluída com sucesso."}, 200

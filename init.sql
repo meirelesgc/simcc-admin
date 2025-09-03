@@ -217,6 +217,25 @@ CONSTRAINT "FKsupervisor_researcher" FOREIGN KEY (supervisor_researcher_id)
 );
 CREATE UNIQUE INDEX unique_student_program_undel ON public.guidance_tracking (student_researcher_id, graduate_program_id)
 WHERE deleted_at IS NULL;
+
+CREATE TABLE IF NOT EXISTS guidance_config (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+
+    duration_project_months INT NOT NULL,
+    duration_qualification_months INT NOT NULL,
+    duration_conclusion_months INT NOT NULL,
+
+    config_name VARCHAR NOT NULL,
+
+    created_at timestamp without time zone NOT NULL DEFAULT now(),
+    updated_at timestamp without time zone,
+
+    CONSTRAINT duration_project_positive CHECK (duration_project_months >= 0),
+    CONSTRAINT duration_qualification_positive CHECK (duration_qualification_months >= 0),
+    CONSTRAINT duration_conclusion_positive CHECK (duration_conclusion_months >= 0)
+);
+
+
 CREATE SCHEMA IF NOT EXISTS ufmg;
 
 CREATE TABLE IF NOT EXISTS ufmg.researcher (
