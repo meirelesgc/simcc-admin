@@ -116,35 +116,158 @@ async def test_delete_institution(
     assert get_response.status_code == HTTPStatus.NOT_FOUND
 
 
-# WIP - Proteger as rotas
-# @pytest.mark.asyncio
-# async def test_put_institution_forbidden(
-#     client, create_user, create_institution, login_and_set_cookie
-# ):
-#     user = await create_user()
-#     inst = await create_institution()
-#     authenticated_client = login_and_set_cookie(user)
+import io
+from pathlib import Path
 
-#     inst.name = 'Attempted Update'
-
-#     response = authenticated_client.put(
-#         '/institution/',
-#         json=inst.model_dump(mode='json'),
-#     )
-
-#     assert response.status_code == HTTPStatus.FORBIDDEN
+import pytest
 
 
-# @pytest.mark.asyncio
-# async def test_delete_institution_forbidden(
-#     client, create_user, create_institution, login_and_set_cookie
-# ):
-#     user = await create_user()
-#     institution = await create_institution()
-#     authenticated_client = login_and_set_cookie(user)
+@pytest.mark.asyncio
+async def test_upload_institution_profile_image(create_institution, client):
+    institution = await create_institution()
+    file_content = b'fake image content'
+    file_name = 'test_image.png'
 
-#     response = authenticated_client.delete(
-#         f'/institution/{institution.institution_id}/',
-#     )
+    response = client.post(
+        f'/institution/upload/{institution.institution_id}/profile_image',
+        files={'file': (file_name, io.BytesIO(file_content), 'image/png')},
+    )
 
-#     assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.status_code == HTTPStatus.CREATED
+    data = response.json()
+    file_name_from_response = Path(data['path']).name
+    upload_dir = Path('simcc/storage/upload')
+    final_path = upload_dir / file_name_from_response
+    assert final_path.is_file()
+
+
+@pytest.mark.asyncio
+async def test_delete_institution_profile_image(create_institution, client):
+    institution = await create_institution()
+    upload_response = client.post(
+        f'/institution/upload/{institution.institution_id}/profile_image',
+        files={
+            'file': (
+                'image_to_delete.png',
+                io.BytesIO(b'content'),
+                'image/png',
+            )
+        },
+    )
+    assert upload_response.status_code == HTTPStatus.CREATED
+
+    data = upload_response.json()
+    uploaded_path = Path(data['path'])
+    physical_file_path = Path('simcc/storage/upload') / uploaded_path.name
+    assert physical_file_path.exists()
+
+    delete_response = client.delete(
+        f'/institution/upload/{institution.institution_id}/profile_image'
+    )
+
+    assert delete_response.status_code == HTTPStatus.OK
+    assert (
+        delete_response.json()['message']
+        == 'Imagem geral excluída com sucesso.'
+    )
+    assert not physical_file_path.exists()
+
+
+@pytest.mark.asyncio
+async def test_delete_institution_profile_image_not_found(
+    create_institution, client
+):
+    institution = await create_institution()
+
+    response = client.delete(
+        f'/institution/upload/{institution.institution_id}/profile_image'
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+@pytest.mark.asyncio
+async def test_upload_institution_background_image(create_institution, client):
+    institution = await create_institution()
+    file_content = b'fake background content'
+    file_name = 'background.jpg'
+
+    response = client.post(
+        f'/institution/upload/{institution.institution_id}/background_image',
+        files={'file': (file_name, io.BytesIO(file_content), 'image/jpeg')},
+    )
+
+    assert response.status_code == HTTPStatus.CREATED
+    data = response.json()
+    file_name_from_response = Path(data['path']).name
+    final_path = Path('simcc/storage/upload') / file_name_from_response
+    assert final_path.is_file()
+
+
+@pytest.mark.asyncio
+async def test_upload_institution_background_image_replaces_old_one(
+    create_institution, client
+):
+    institution = await create_institution()
+
+    first_response = client.post(
+        f'/institution/upload/{institution.institution_id}/background_image',
+        files={'file': ('first.png', io.BytesIO(b'first'), 'image/png')},
+    )
+    assert first_response.status_code == HTTPStatus.CREATED
+    old_path = Path(first_response.json()['path'])
+    old_physical_path = Path('simcc/storage/upload') / old_path.name
+    assert old_physical_path.exists()
+
+    second_response = client.post(
+        f'/institution/upload/{institution.institution_id}/background_image',
+        files={'file': ('second.png', io.BytesIO(b'second'), 'image/png')},
+    )
+
+    assert second_response.status_code == HTTPStatus.CREATED
+    new_path = Path(second_response.json()['path'])
+    new_physical_path = Path('simcc/storage/upload') / new_path.name
+
+    assert new_physical_path.exists()
+    assert not old_physical_path.exists()
+
+
+@pytest.mark.asyncio
+async def test_delete_institution_background_image(create_institution, client):
+    institution = await create_institution()
+
+    upload_response = client.post(
+        f'/institution/upload/{institution.institution_id}/background_image',
+        files={
+            'file': ('bg_to_delete.png', io.BytesIO(b'content'), 'image/png')
+        },
+    )
+    assert upload_response.status_code == HTTPStatus.CREATED
+
+    data = upload_response.json()
+    physical_file_path = Path('simcc/storage/upload') / Path(data['path']).name
+    assert physical_file_path.exists()
+
+    delete_response = client.delete(
+        f'/institution/upload/{institution.institution_id}/background_image'
+    )
+
+    assert delete_response.status_code == HTTPStatus.OK
+    assert (
+        delete_response.json()['message']
+        == 'Imagem de fundo excluída com sucesso.'
+    )
+    assert not physical_file_path.exists()
+
+
+@pytest.mark.asyncio
+async def test_delete_institution_background_image_not_found(
+    create_institution, client
+):
+    institution = await create_institution()
+
+    response = client.delete(
+        f'/institution/upload/{institution.institution_id}/background_image'
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
