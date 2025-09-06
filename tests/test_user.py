@@ -183,14 +183,15 @@ async def test_delete_user(client, create_user, login_and_set_cookie):
 
 
 @pytest.mark.asyncio
-async def test_upload_profile_image(create_user, login_and_set_cookie):
+async def test_upload_icon(create_user, login_and_set_cookie):
+    """Testa o upload de uma imagem de ícone para o usuário."""
     user = await create_user()
     client = login_and_set_cookie(user)
     file_content = b'fake image content'
     file_name = 'test_image.png'
 
     response = client.post(
-        '/user/upload/profile_image',
+        '/user/upload/icon',
         files={'file': (file_name, io.BytesIO(file_content), 'image/png')},
     )
 
@@ -203,12 +204,13 @@ async def test_upload_profile_image(create_user, login_and_set_cookie):
 
 
 @pytest.mark.asyncio
-async def test_delete_profile_image(create_user, login_and_set_cookie):
+async def test_delete_icon(create_user, login_and_set_cookie):
+    """Testa a exclusão de uma imagem de ícone do usuário."""
     user = await create_user()
     client = login_and_set_cookie(user)
 
     upload_response = client.post(
-        '/user/upload/profile_image',
+        '/user/upload/icon',
         files={
             'file': (
                 'image_to_delete.png',
@@ -224,50 +226,37 @@ async def test_delete_profile_image(create_user, login_and_set_cookie):
     physical_file_path = Path('simcc/storage/upload') / uploaded_path.name
     assert physical_file_path.exists()
 
-    # Act: Envia a requisição para deletar a imagem
-    delete_response = client.delete('/user/upload/profile_image')
+    delete_response = client.delete('/user/upload/icon')
 
-    # Assert: Verifica se a operação foi bem-sucedida
     assert delete_response.status_code == HTTPStatus.OK
-    assert (
-        delete_response.json()['message']
-        == 'Imagem de perfil excluída com sucesso.'
-    )
-    assert (
-        not physical_file_path.exists()
-    )  # Garante que o arquivo físico foi removido
+    assert delete_response.json()['message'] == 'Ícone excluído com sucesso.'
+    assert not physical_file_path.exists()
 
 
 @pytest.mark.asyncio
-async def test_delete_profile_image_not_found(
-    create_user, login_and_set_cookie
-):
-    # Arrange: Cria um usuário sem imagem de perfil
+async def test_delete_icon_not_found(create_user, login_and_set_cookie):
+    """Testa a tentativa de exclusão quando não há ícone."""
     user = await create_user()
     client = login_and_set_cookie(user)
 
-    # Act
-    response = client.delete('/user/upload/profile_image')
+    response = client.delete('/user/upload/icon')
 
-    # Assert
     assert response.status_code == HTTPStatus.NOT_FOUND
 
 
 @pytest.mark.asyncio
-async def test_upload_background_image(create_user, login_and_set_cookie):
-    # Arrange
+async def test_upload_cover(create_user, login_and_set_cookie):
+    """Testa o upload de uma imagem de capa para o usuário."""
     user = await create_user()
     client = login_and_set_cookie(user)
     file_content = b'fake background content'
     file_name = 'background.jpg'
 
-    # Act
     response = client.post(
-        '/user/upload/background_image',
+        '/user/upload/cover',
         files={'file': (file_name, io.BytesIO(file_content), 'image/jpeg')},
     )
 
-    # Assert
     assert response.status_code == HTTPStatus.CREATED
     data = response.json()
     file_name_from_response = Path(data['path']).name
@@ -276,15 +265,15 @@ async def test_upload_background_image(create_user, login_and_set_cookie):
 
 
 @pytest.mark.asyncio
-async def test_upload_background_image_replaces_old_one(
+async def test_upload_cover_replaces_old_one(
     create_user, login_and_set_cookie
 ):
-    # Arrange: Faz o upload de uma primeira imagem
+    """Testa se o upload de uma nova capa substitui a antiga."""
     user = await create_user()
     client = login_and_set_cookie(user)
 
     first_response = client.post(
-        '/user/upload/background_image',
+        '/user/upload/cover',
         files={'file': ('first.png', io.BytesIO(b'first'), 'image/png')},
     )
     assert first_response.status_code == HTTPStatus.CREATED
@@ -292,13 +281,11 @@ async def test_upload_background_image_replaces_old_one(
     old_physical_path = Path('simcc/storage/upload') / old_path.name
     assert old_physical_path.exists()
 
-    # Act: Faz o upload de uma segunda imagem
     second_response = client.post(
-        '/user/upload/background_image',
+        '/user/upload/cover',
         files={'file': ('second.png', io.BytesIO(b'second'), 'image/png')},
     )
 
-    # Assert: Verifica se a nova imagem existe e a antiga foi removida
     assert second_response.status_code == HTTPStatus.CREATED
     new_path = Path(second_response.json()['path'])
     new_physical_path = Path('simcc/storage/upload') / new_path.name
@@ -308,13 +295,13 @@ async def test_upload_background_image_replaces_old_one(
 
 
 @pytest.mark.asyncio
-async def test_delete_background_image(create_user, login_and_set_cookie):
-    # Arrange: Cria um usuário e faz o upload de uma imagem de fundo
+async def test_delete_cover(create_user, login_and_set_cookie):
+    """Testa a exclusão de uma imagem de capa."""
     user = await create_user()
     client = login_and_set_cookie(user)
 
     upload_response = client.post(
-        '/user/upload/background_image',
+        '/user/upload/cover',
         files={
             'file': ('bg_to_delete.png', io.BytesIO(b'content'), 'image/png')
         },
@@ -325,28 +312,22 @@ async def test_delete_background_image(create_user, login_and_set_cookie):
     physical_file_path = Path('simcc/storage/upload') / Path(data['path']).name
     assert physical_file_path.exists()
 
-    # Act: Envia a requisição para deletar
-    delete_response = client.delete('/user/upload/background_image')
+    delete_response = client.delete('/user/upload/cover')
 
-    # Assert
     assert delete_response.status_code == HTTPStatus.OK
     assert (
         delete_response.json()['message']
-        == 'Imagem de fundo excluída com sucesso.'
+        == 'Imagem de capa excluída com sucesso.'
     )
     assert not physical_file_path.exists()
 
 
 @pytest.mark.asyncio
-async def test_delete_background_image_not_found(
-    create_user, login_and_set_cookie
-):
-    # Arrange: Cria um usuário sem imagem de fundo
+async def test_delete_cover_not_found(create_user, login_and_set_cookie):
+    """Testa a tentativa de exclusão de uma capa inexistente."""
     user = await create_user()
     client = login_and_set_cookie(user)
 
-    # Act
-    response = client.delete('/user/upload/background_image')
+    response = client.delete('/user/upload/cover')
 
-    # Assert
     assert response.status_code == HTTPStatus.NOT_FOUND

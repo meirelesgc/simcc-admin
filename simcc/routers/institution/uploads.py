@@ -15,14 +15,12 @@ router = APIRouter(prefix='/institution/upload')
 Conn = Annotated[Connection, Depends(get_conn)]
 
 
-@router.post('/{institution_id}/profile_image', status_code=HTTPStatus.CREATED)
-async def upload_institution_profile_image(
-    institution_id: str,
-    conn: Conn,
-    file: UploadFile = File(...),
-):
+async def get_institution_and_check_existence(institution_id: str, conn: Conn):
+    """
+    Função utilitária para buscar a instituição e verificar sua existência.
+    """
     SCRIPT_SELECT = """
-        SELECT profile_image_url
+        SELECT *
         FROM institution
         WHERE institution_id = %(institution_id)s
     """
@@ -34,9 +32,21 @@ async def upload_institution_profile_image(
             status_code=HTTPStatus.NOT_FOUND,
             detail='Instituição não encontrada.',
         )
+    return institution
 
-    if institution['profile_image_url']:
-        old_filename = os.path.basename(institution['profile_image_url'])
+
+@router.post('/{institution_id}/icon', status_code=HTTPStatus.CREATED)
+async def upload_institution_icon(
+    institution_id: str,
+    conn: Conn,
+    file: UploadFile = File(...),
+):
+    institution = await get_institution_and_check_existence(
+        institution_id, conn
+    )
+
+    if institution['icon_url']:
+        old_filename = os.path.basename(institution['icon_url'])
         old_file_path = os.path.join(UPLOAD_DIR, old_filename)
         try:
             if os.path.exists(old_file_path):
@@ -53,7 +63,7 @@ async def upload_institution_profile_image(
     public_path = f'/institution/uploads/{institution_id}/{filename}'
     SCRIPT_SQL = """
         UPDATE institution
-        SET profile_image_url = %(public_path)s
+        SET icon_url = %(public_path)s
         WHERE institution_id = %(institution_id)s
     """
     await conn.exec(
@@ -63,29 +73,19 @@ async def upload_institution_profile_image(
     return {'filename': file.filename, 'path': public_path}
 
 
-@router.delete('/{institution_id}/profile_image', status_code=HTTPStatus.OK)
-async def delete_institution_profile_image(institution_id: str, conn: Conn):
-    SCRIPT_SELECT = """
-        SELECT profile_image_url
-        FROM institution
-        WHERE institution_id = %(institution_id)s
-    """
-    institution = await conn.select(
-        SCRIPT_SELECT, params={'institution_id': institution_id}, one=True
+@router.delete('/{institution_id}/icon', status_code=HTTPStatus.OK)
+async def delete_institution_icon(institution_id: str, conn: Conn):
+    institution = await get_institution_and_check_existence(
+        institution_id, conn
     )
-    if not institution:
+
+    if not institution['icon_url']:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
-            detail='Instituição não encontrada.',
+            detail='Nenhum ícone para excluir.',
         )
 
-    if not institution['profile_image_url']:
-        raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND,
-            detail='Nenhuma imagem geral para excluir.',
-        )
-
-    filename = os.path.basename(institution['profile_image_url'])
+    filename = os.path.basename(institution['icon_url'])
     file_path = os.path.join(UPLOAD_DIR, filename)
 
     try:
@@ -96,47 +96,35 @@ async def delete_institution_profile_image(institution_id: str, conn: Conn):
 
     SCRIPT_SQL = """
         UPDATE institution
-        SET profile_image_url = NULL
+        SET icon_url = NULL
         WHERE institution_id = %(institution_id)s
     """
     await conn.exec(
         SCRIPT_SQL,
         params={'institution_id': institution_id},
     )
-    return {'message': 'Imagem geral excluída com sucesso.'}
+    return {'message': 'Ícone excluído com sucesso.'}
 
 
-@router.post(
-    '/{institution_id}/background_image', status_code=HTTPStatus.CREATED
-)
-async def upload_institution_background_image(
+@router.post('/{institution_id}/cover', status_code=HTTPStatus.CREATED)
+async def upload_institution_cover(
     institution_id: str,
     conn: Conn,
     file: UploadFile = File(...),
 ):
-    SCRIPT_SELECT = """
-        SELECT background_image_url
-        FROM institution
-        WHERE institution_id = %(institution_id)s
-    """
-    institution = await conn.select(
-        SCRIPT_SELECT, params={'institution_id': institution_id}, one=True
+    institution = await get_institution_and_check_existence(
+        institution_id, conn
     )
-    if not institution:
-        raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND,
-            detail='Instituição não encontrada.',
-        )
 
-    if institution['background_image_url']:
-        old_filename = os.path.basename(institution['background_image_url'])
+    if institution['cover_url']:
+        old_filename = os.path.basename(institution['cover_url'])
         old_file_path = os.path.join(UPLOAD_DIR, old_filename)
         try:
             if os.path.exists(old_file_path):
                 os.remove(old_file_path)
         except OSError as e:
             print(
-                f'Erro ao deletar o arquivo de fundo antigo {old_file_path}: {e}'
+                f'Erro ao deletar o arquivo de capa antigo {old_file_path}: {e}'
             )
 
     filename = f'{uuid4()}{os.path.splitext(file.filename)[1]}'
@@ -148,7 +136,7 @@ async def upload_institution_background_image(
     public_path = f'/institution/uploads/{institution_id}/{filename}'
     SCRIPT_SQL = """
         UPDATE institution
-        SET background_image_url = %(public_path)s
+        SET cover_url = %(public_path)s
         WHERE institution_id = %(institution_id)s
     """
     await conn.exec(
@@ -158,29 +146,19 @@ async def upload_institution_background_image(
     return {'filename': file.filename, 'path': public_path}
 
 
-@router.delete('/{institution_id}/background_image', status_code=HTTPStatus.OK)
-async def delete_institution_background_image(institution_id: str, conn: Conn):
-    SCRIPT_SELECT = """
-        SELECT background_image_url
-        FROM institution
-        WHERE institution_id = %(institution_id)s
-    """
-    institution = await conn.select(
-        SCRIPT_SELECT, params={'institution_id': institution_id}, one=True
+@router.delete('/{institution_id}/cover', status_code=HTTPStatus.OK)
+async def delete_institution_cover(institution_id: str, conn: Conn):
+    institution = await get_institution_and_check_existence(
+        institution_id, conn
     )
-    if not institution:
+
+    if not institution['cover_url']:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
-            detail='Instituição não encontrada.',
+            detail='Nenhuma imagem de capa para excluir.',
         )
 
-    if not institution['background_image_url']:
-        raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND,
-            detail='Nenhuma imagem de fundo para excluir.',
-        )
-
-    filename = os.path.basename(institution['background_image_url'])
+    filename = os.path.basename(institution['cover_url'])
     file_path = os.path.join(UPLOAD_DIR, filename)
 
     try:
@@ -191,11 +169,11 @@ async def delete_institution_background_image(institution_id: str, conn: Conn):
 
     SCRIPT_SQL = """
         UPDATE institution
-        SET background_image_url = NULL
+        SET cover_url = NULL
         WHERE institution_id = %(institution_id)s
     """
     await conn.exec(
         SCRIPT_SQL,
         params={'institution_id': institution_id},
     )
-    return {'message': 'Imagem de fundo excluída com sucesso.'}
+    return {'message': 'Imagem de capa excluída com sucesso.'}

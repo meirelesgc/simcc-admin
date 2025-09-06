@@ -18,14 +18,14 @@ Conn = Annotated[Connection, Depends(get_conn)]
 CurrentUser = Annotated[user_model.User, Depends(get_current_user)]
 
 
-@router.post('/profile_image', status_code=HTTPStatus.CREATED)
-async def upload_profile_image(
+@router.post('/icon', status_code=HTTPStatus.CREATED)
+async def upload_icon_image(
     conn: Conn,
     current_user: CurrentUser,
     file: UploadFile = File(...),
 ):
-    if current_user.profile_image_url:
-        old_filename = os.path.basename(current_user.profile_image_url)
+    if current_user.icon_url:
+        old_filename = os.path.basename(current_user.icon_url)
         old_file_path = os.path.join(UPLOAD_DIR, old_filename)
         try:
             if os.path.exists(old_file_path):
@@ -42,7 +42,7 @@ async def upload_profile_image(
     public_path = f'/uploads/{filename}'
     SCRIPT_SQL = """
         UPDATE users
-        SET profile_image_url = %(public_path)s
+        SET icon_url = %(public_path)s
         WHERE user_id = %(user_id)s
         """
     await conn.exec(
@@ -52,15 +52,15 @@ async def upload_profile_image(
     return {'filename': file.filename, 'path': public_path}
 
 
-@router.delete('/profile_image', status_code=HTTPStatus.OK)
-async def delete_profile_image(conn: Conn, current_user: CurrentUser):
-    if not current_user.profile_image_url:
+@router.delete('/icon', status_code=HTTPStatus.OK)
+async def delete_icon_image(conn: Conn, current_user: CurrentUser):
+    if not current_user.icon_url:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
-            detail='Nenhuma imagem de perfil para excluir.',
+            detail='Nenhum ícone para excluir.',
         )
 
-    filename = os.path.basename(current_user.profile_image_url)
+    filename = os.path.basename(current_user.icon_url)
     file_path = os.path.join(UPLOAD_DIR, filename)
 
     try:
@@ -71,31 +71,31 @@ async def delete_profile_image(conn: Conn, current_user: CurrentUser):
 
     SCRIPT_SQL = """
         UPDATE users
-        SET profile_image_url = NULL
+        SET icon_url = NULL
         WHERE user_id = %(user_id)s
         """
     await conn.exec(
         SCRIPT_SQL,
         params={'user_id': current_user.user_id},
     )
-    return {'message': 'Imagem de perfil excluída com sucesso.'}
+    return {'message': 'Ícone excluído com sucesso.'}
 
 
-@router.post('/background_image', status_code=HTTPStatus.CREATED)
-async def upload_background_image(
+@router.post('/cover', status_code=HTTPStatus.CREATED)
+async def upload_cover_image(
     conn: Conn,
     current_user: CurrentUser,
     file: UploadFile = File(...),
 ):
-    if current_user.background_image_url:
-        old_filename = os.path.basename(current_user.background_image_url)
+    if current_user.cover_url:
+        old_filename = os.path.basename(current_user.cover_url)
         old_file_path = os.path.join(UPLOAD_DIR, old_filename)
         try:
             if os.path.exists(old_file_path):
                 os.remove(old_file_path)
         except OSError as e:
             print(
-                f'Erro ao deletar o arquivo de fundo antigo {old_file_path}: {e}'
+                f'Erro ao deletar o arquivo de capa antigo {old_file_path}: {e}'
             )
 
     filename = f'{uuid4()}{os.path.splitext(file.filename)[1]}'
@@ -107,7 +107,7 @@ async def upload_background_image(
     public_path = f'/uploads/{filename}'
     SCRIPT_SQL = """
         UPDATE users
-        SET background_image_url = %(public_path)s
+        SET cover_url = %(public_path)s
         WHERE user_id = %(user_id)s
         """
     await conn.exec(
@@ -117,15 +117,15 @@ async def upload_background_image(
     return {'filename': file.filename, 'path': public_path}
 
 
-@router.delete('/background_image', status_code=HTTPStatus.OK)
-async def delete_background_image(conn: Conn, current_user: CurrentUser):
-    if not current_user.background_image_url:
+@router.delete('/cover', status_code=HTTPStatus.OK)
+async def delete_cover_image(conn: Conn, current_user: CurrentUser):
+    if not current_user.cover_url:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
-            detail='Nenhuma imagem de fundo para excluir.',
+            detail='Nenhuma imagem de capa para excluir.',
         )
 
-    filename = os.path.basename(current_user.background_image_url)
+    filename = os.path.basename(current_user.cover_url)
     file_path = os.path.join(UPLOAD_DIR, filename)
 
     try:
@@ -136,11 +136,11 @@ async def delete_background_image(conn: Conn, current_user: CurrentUser):
 
     SCRIPT_SQL = """
         UPDATE users
-        SET background_image_url = NULL
+        SET cover_url = NULL
         WHERE user_id = %(user_id)s
         """
     await conn.exec(
         SCRIPT_SQL,
         params={'user_id': current_user.user_id},
     )
-    return {'message': 'Imagem de fundo excluída com sucesso.'}
+    return {'message': 'Imagem de capa excluída com sucesso.'}

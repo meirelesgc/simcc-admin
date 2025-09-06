@@ -1,4 +1,6 @@
+import io
 from http import HTTPStatus
+from pathlib import Path
 from uuid import uuid4
 
 import pytest
@@ -216,62 +218,115 @@ async def test_post_entry_permission_denied(
     assert response.status_code == HTTPStatus.FORBIDDEN
 
 
-# @pytest.mark.asyncio
-# async def test_get_entries_permission_logic(
-#     client,
-#     create_user,
-#     login_and_set_cookie,
-#     create_collection,
-#     create_entry_in_collection,
-# ):
-#     owner = await create_user(username='dono')
-#     viewer = await create_user(username='visitante')
+@pytest.mark.asyncio
+async def test_upload_collection_cover(
+    create_user, login_and_set_cookie, create_collection
+):
+    """Testa o upload de uma imagem de capa para uma coleção."""
+    user = await create_user()
+    client = login_and_set_cookie(user)
+    collection = await create_collection(user=user)
+    file_content = b'fake cover content'
+    file_name = 'test_collection_cover.jpg'
 
-#     # Loga o dono
-#     client.cookies.clear()
-#     owner_client = login_and_set_cookie(owner)
+    # Endpoint para upload de capa da coleção
+    response = client.post(
+        f'/collection/upload/{collection.collection_id}/cover',
+        files={'file': (file_name, io.BytesIO(file_content), 'image/jpeg')},
+    )
 
-#     # Loga o visitante
-#     client.cookies.clear()
-#     viewer_client = login_and_set_cookie(viewer)
-
-#     private_collection = await create_collection(user=owner)
-#     await create_entry_in_collection(private_collection, owner)
-
-#     response_private = viewer_client.get(
-#         f'/collection/{private_collection.collection_id}/entries/'
-#     )
-#     assert response_private.status_code == HTTPStatus.NOT_FOUND
-
-#     public_collection = await create_collection(user=owner, visible=True)
-#     owner_client.put(
-#         '/collection/',
-#         json=public_collection.model_dump(mode='json'),
-#     )
-#     await create_entry_in_collection(public_collection, owner)
-
-#     response_public = viewer_client.get(
-#         f'/collection/{public_collection.collection_id}/entries/'
-#     )
-#     assert response_public.status_code == HTTPStatus.OK
-#     assert len(response_public.json()) == 1
+    assert response.status_code == HTTPStatus.CREATED
+    data = response.json()
+    file_name_from_response = Path(data['path']).name
+    upload_dir = Path('simcc/storage/upload')
+    final_path = upload_dir / file_name_from_response
+    assert final_path.is_file()
 
 
-# @pytest.mark.asyncio
-# async def test_delete_entry_permission_denied(
-#     client,
-#     create_user,
-#     login_and_set_cookie,
-#     create_collection,
-#     create_entry_in_collection,
-# ):
-#     owner = await create_user(username='dono')
-#     attacker = await create_user(username='atacante')
-#     attacker_client = login_and_set_cookie(attacker)
-#     collection = await create_collection(user=owner)
-#     entry = await create_entry_in_collection(collection, owner)
+@pytest.mark.asyncio
+async def test_upload_collection_cover_replaces_old_one(
+    create_user, login_and_set_cookie, create_collection
+):
+    """Testa se o upload de uma nova capa substitui a antiga."""
+    user = await create_user()
+    client = login_and_set_cookie(user)
+    collection = await create_collection(user=user)
 
-#     response = attacker_client.delete(
-#         f'/collection/{collection.collection_id}/entries/{entry.entry_id}/'
-#     )
-#     assert response.status_code == HTTPStatus.NOT_FOUND
+    # Faz o upload da primeira imagem de capa
+    first_response = client.post(
+        f'/collection/upload/{collection.collection_id}/cover',
+        files={'file': ('first.png', io.BytesIO(b'first'), 'image/png')},
+    )
+    assert first_response.status_code == HTTPStatus.CREATED
+    old_path = Path(first_response.json()['path'])
+    old_physical_path = Path('simcc/storage/upload') / old_path.name
+    assert old_physical_path.exists()
+
+    # Faz o upload da segunda imagem de capa
+    second_response = client.post(
+        f'/collection/upload/{collection.collection_id}/cover',
+        files={'file': ('second.png', io.BytesIO(b'second'), 'image/png')},
+    )
+
+    # Verifica se a nova imagem existe e a antiga foi removida
+    assert second_response.status_code == HTTPStatus.CREATED
+    new_path = Path(second_response.json()['path'])
+    new_physical_path = Path('simcc/storage/upload') / new_path.name
+    assert new_physical_path.exists()
+    assert not old_physical_path.exists()
+
+
+@pytest.mark.asyncio
+async def test_delete_collection_cover(
+    create_user, login_and_set_cookie, create_collection
+):
+    """Testa a exclusão de uma imagem de capa de uma coleção."""
+    user = await create_user()
+    client = login_and_set_cookie(user)
+    collection = await create_collection(user=user)
+
+    # Simula o upload da imagem de capa
+    upload_response = client.post(
+        f'/collection/upload/{collection.collection_id}/cover',
+        files={
+            'file': (
+                'cover_to_delete.png',
+                io.BytesIO(b'content'),
+                'image/png',
+            )
+        },
+    )
+    assert upload_response.status_code == HTTPStatus.CREATED
+
+    data = upload_response.json()
+    physical_file_path = Path('simcc/storage/upload') / Path(data['path']).name
+    assert physical_file_path.exists()
+
+    # Endpoint para exclusão de capa da coleção
+    delete_response = client.delete(
+        f'/collection/upload/{collection.collection_id}/cover'
+    )
+
+    assert delete_response.status_code == HTTPStatus.OK
+    assert (
+        delete_response.json()['message']
+        == 'Imagem de capa excluída com sucesso.'
+    )
+    assert not physical_file_path.exists()
+
+
+@pytest.mark.asyncio
+async def test_delete_collection_cover_not_found(
+    create_user, login_and_set_cookie, create_collection
+):
+    """Testa a tentativa de exclusão de uma capa inexistente."""
+    user = await create_user()
+    client = login_and_set_cookie(user)
+    collection = await create_collection(user=user)
+
+    # Não faz o upload da imagem. Apenas tenta deletar.
+    response = client.delete(
+        f'/collection/upload/{collection.collection_id}/cover'
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND

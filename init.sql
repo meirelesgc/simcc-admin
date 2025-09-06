@@ -25,8 +25,8 @@ CREATE TABLE public.institution (
     acronym VARCHAR(16) UNIQUE,
     lattes_id VARCHAR(16),
 
-    profile_image_url TEXT,
-    background_image_url TEXT,
+    icon_url TEXT,
+    cover_url TEXT,
 
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW(),
@@ -48,8 +48,8 @@ CREATE TABLE IF NOT EXISTS users (
     lattes_id VARCHAR(16),
     linkedin VARCHAR(255),
 
-    profile_image_url TEXT,
-    background_image_url TEXT,
+    icon_url TEXT,
+    cover_url TEXT,
 
     PRIMARY KEY (user_id),
     FOREIGN KEY (institution_id) REFERENCES public.institution (institution_id) ON DELETE SET NULL ON UPDATE CASCADE,
@@ -286,6 +286,9 @@ CREATE TABLE IF NOT EXISTS feature.collection (
     name VARCHAR(255) NOT NULL,
     description TEXT,
     visible BOOLEAN DEFAULT TRUE,
+
+    icon_url TEXT,
+    cover_url TEXT,
 
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW(),
