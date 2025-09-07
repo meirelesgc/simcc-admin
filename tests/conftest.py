@@ -12,6 +12,7 @@ from simcc.core.database import get_cache_conn, get_conn
 from simcc.schemas import rbac_model
 from simcc.schemas.features import chat_schema, collection_models
 from simcc.services import (
+    group_service,
     institution_service,
     rbac_service,
     researcher_service,
@@ -20,18 +21,18 @@ from simcc.services import (
 from simcc.services.features import (
     chat_service,
     collection_service,
-    notification_service,
     star_service,
 )
 from tests.factories import (
+    group_factory,
     institution_factory,
+    program_factory,
     rbac_factory,
     researcher_factory,
     user_factory,
 )
 from tests.factories.features import (
     collection_factory,
-    notification_factory,
     star_factory,
 )
 
@@ -226,15 +227,30 @@ def create_star(conn):
 
 
 @pytest.fixture
-def create_notification(conn):
-    async def _create_notification(user, **kwargs):
-        notification = notification_factory.CreateNotificationFactory(**kwargs)
-        created_notification = await notification_service.notification_post(
-            conn, user, notification
-        )
-        return created_notification
+def create_group(conn):
+    async def _create_group():
+        group = group_factory.GroupFactory()
+        return await group_service.create_group(conn, group)
 
-    return _create_notification
+    return _create_group
+
+
+@pytest.fixture
+def create_program(conn, create_institution):
+    async def _create_program(**kwargs):
+        program_data = program_factory.GraduateProgramFactory(**kwargs)
+        institution = await create_institution()
+        program_data['institution_id'] = institution.institution_id
+        columns = ', '.join(program_data.keys())
+        placeholders = ', '.join(f'%({key})s' for key in program_data.keys())
+        sql = f"""
+            INSERT INTO public.graduate_program ({columns})
+            VALUES ({placeholders});
+        """
+        await conn.exec(sql, program_data)
+        return program_data
+
+    return _create_program
 
 
 @pytest.fixture

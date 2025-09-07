@@ -13,10 +13,13 @@ from simcc.routers import auth, rbac, researcher
 from simcc.routers.features import chat, notification, star
 from simcc.routers.features.collection import collection
 from simcc.routers.features.collection import upload as c_uploads
+from simcc.routers.group import group
+from simcc.routers.group import upload as rg_uploads
 from simcc.routers.institution import institution
 from simcc.routers.institution import uploads as i_uploads
+from simcc.routers.program import upload as p_uploads
 from simcc.routers.users import uploads as u_uploads
-from simcc.routers.users import users
+from simcc.routers.users import user
 from simcc.security import get_current_user
 
 
@@ -42,23 +45,24 @@ app.mount(
     name='upload',
 )
 
-app.include_router(auth.router, tags=['authentication & authorization'])
-app.include_router(
-    users.router, tags=['authentication & authorization', 'account, base']
-)
+app.include_router(auth.router, tags=['Authentication', 'Authorization'])
+app.include_router(user.router, tags=['Account', 'User Management'])
 
-app.include_router(u_uploads.router, tags=['account, upload'])
-app.include_router(i_uploads.router, tags=['institution, upload'])
-app.include_router(c_uploads.router, tags=['feature, collection, upload'])
+app.include_router(u_uploads.router, tags=['Account', 'Uploads'])
+app.include_router(i_uploads.router, tags=['Institution', 'Uploads'])
+app.include_router(c_uploads.router, tags=['Collection', 'Uploads'])
+app.include_router(p_uploads.router, tags=['Program', 'Uploads'])
+app.include_router(rg_uploads.router, tags=['Group', 'Uploads'])
 
-app.include_router(institution.router, tags=['core, institution'])
-app.include_router(researcher.router, tags=['core, researcher'])
+app.include_router(institution.router, tags=['Core', 'Institution'])
+app.include_router(researcher.router, tags=['Core', 'Researcher'])
+app.include_router(group.router, tags=['Core', 'Group'])
 
-app.include_router(collection.router, tags=['feature, collection'])
-app.include_router(star.router, tags=['feature, star'])
-app.include_router(rbac.router, tags=['feature, roles & permissions'])
-app.include_router(notification.router, tags=['feature, notification'])
-app.include_router(chat.router, tags=['feature, chat'])
+app.include_router(collection.router, tags=['Feature', 'Collection'])
+app.include_router(star.router, tags=['Feature', 'Star'])
+app.include_router(rbac.router, tags=['Feature', 'Roles & Permissions'])
+app.include_router(notification.router, tags=['Feature', 'Notification'])
+app.include_router(chat.router, tags=['Feature', 'Chat'])
 
 
 app.add_middleware(
