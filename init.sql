@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS public.graduate_program(
 CREATE TABLE IF NOT EXISTS public.graduate_program_researcher(
       graduate_program_id uuid NOT NULL,
       researcher_id uuid NOT NULL,
-      year INT [],
+      year INT,
       type_ relationship,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

@@ -1,5 +1,4 @@
 from typing import Optional
-from uuid import uuid4
 
 from pydantic import UUID4, BaseModel, field_validator
 
@@ -18,17 +17,3 @@ class GraduateProgramResearcher(BaseModel):
 
 class ListResearcher(BaseModel):
     researcher_list: list[GraduateProgramResearcher]
-
-
-if __name__ == "__main__":
-    data = [
-        {
-            "graduate_program_id": uuid4(),
-            "researcher_id": uuid4(),
-            "year": "2020; 2021; 2034",
-            "type_": "COLABORADOR",
-            "lattes_id": "!@#",
-        }
-    ]
-
-    lista = ListResearcher(researcher_list=data)

@@ -3,103 +3,39 @@ from uuid import UUID
 import pandas as pd
 
 from ..dao import Connection
-from ..models.graduate_program_resarcher import ListResearcher
 
 adm_database = Connection()
 
 
-def graduate_program_researcher_insert(
-    ListResearcher: ListResearcher,
-):
-    parameters = list()
+def gpr_insert(gpr):
+    SCRIPT_SQL = """
+        INSERT INTO graduate_program_researcher(
+            graduate_program_id, researcher_id, year, type_)
+        VALUES (%(graduate_program_id)s, %(researcher_id)s, 
+            %(year)s, %(type_)s);
+        """
+    return adm_database.execmany(SCRIPT_SQL, gpr)
 
-    # fmt: 0ff
-    for researcher in ListResearcher.researcher_list:
-        parameters.append(
-            (
-                researcher.graduate_program_id,
-                researcher.researcher_id,
-                researcher.year,
-                researcher.type_,
-            )
-        )
-    # fmt: on
 
+def graduate_program_researcher_insert_lattes(gpr):
     SCRIPT_SQL = """
         INSERT INTO graduate_program_researcher(
         graduate_program_id, researcher_id, year, type_)
-        VALUES (%s, %s, %s, %s);
+        SELECT %(graduate_program_id)s, researcher_id, %(year)s, %(type_)s
+        FROM researcher
+        WHERE lattes_id = %(lattes_id)s;
         """
-    adm_database.execmany(SCRIPT_SQL, parameters)
+    adm_database.execmany(SCRIPT_SQL, gpr)
 
 
-def graduate_program_researcher_insert_lattes(ListResearcher: ListResearcher):
-    parameters = list()
-    # fmt: 0ff
-    for researcher in ListResearcher.researcher_list:
-        parameters.append(
-            (
-                researcher.graduate_program_id,
-                researcher.year,
-                researcher.type_,
-                researcher.lattes_id,
-            )
-        )
-    # fmt: on
-
-    SCRIPT_SQL = """
-        INSERT INTO graduate_program_researcher(
-        graduate_program_id, researcher_id, year, type_)
-        SELECT %s, researcher_id, %s, %s FROM researcher
-        WHERE lattes_id = %s;
-        """
-    adm_database.execmany(SCRIPT_SQL, parameters)
-
-
-def graduate_program_researcher_update(
-    ListResearcher: ListResearcher,
-):
-    parameters = list()
-
-    # fmt: 0ff
-    for researcher in ListResearcher.researcher_list:
-        parameters.append(
-            (
-                researcher.year,
-                researcher.type_,
-                researcher.lattes_id,
-                researcher.graduate_program_id,
-            )
-        )
-    # fmt: on
-
-    SCRIPT_SQL = """
-        UPDATE graduate_program_researcher AS gpr
-        SET
-            year = %s,
-            type_ = %s
-        FROM researcher AS r
-        WHERE
-            gpr.researcher_id = r.researcher_id
-            AND r.lattes_id = %s
-            AND gpr.graduate_program_id = %s;
-        """
-    adm_database.execmany(SCRIPT_SQL, parameters)
-
-
-def graduate_program_researcher_delete(
-    lattes_id: UUID, graduate_program_id: UUID
-):
-    parameters = [lattes_id, graduate_program_id]
+def gpr_delete(gpr):
     SCRIPT_SQL = """
         DELETE FROM graduate_program_researcher
-        WHERE
-            researcher_id = (
-                SELECT researcher_id
-                FROM researcher
-                WHERE lattes_id = %s)
-            AND graduate_program_id = %s;"""
-    adm_database.exec(SCRIPT_SQL, parameters)
+        WHERE researcher_id = %(researcher_id)s
+          AND graduate_program_id = %(graduate_program_id)s
+          AND year = %(year)s;
+    """
+    return adm_database.execmany(SCRIPT_SQL, gpr)
 
 
 def graduate_program_researcher_count(
@@ -110,35 +46,27 @@ def graduate_program_researcher_count(
     filter_institution = str()
     if institution_id:
         filter_institution = """
-            WHERE
-                graduate_program_id IN (
-                    SELECT
-                        graduate_program_id
-                    FROM
-                        graduate_program
-                    WHERE
-                        institution_id = %s)"""
+            WHERE graduate_program_id IN (
+                    SELECT graduate_program_id
+                    FROM graduate_program
+                    WHERE institution_id = %s)"""
         parameters.append(institution_id)
 
+    filter_graduate_program = str()
     if graduate_program_id:
         filter_graduate_program = """
-            WHERE
-                graduate_program_id = %s"""
+            WHERE graduate_program_id = %s"""
         parameters.append(graduate_program_id)
-    else:
-        filter_graduate_program = str()
 
     SCRIPT_SQL = f"""
-        SELECT
-            COUNT(*)
-        FROM
-            graduate_program_researcher
+        SELECT COUNT(*)
+        FROM graduate_program_researcher
         {filter_institution}
-        {filter_graduate_program};
+        {filter_graduate_program}
+        GROUP BY graduate_program_id;
         """
 
     registry = adm_database.select(SCRIPT_SQL, parameters)
-
     return registry[0][0]
 
 
@@ -147,44 +75,36 @@ def graduate_program_researcher_basic_query(
 ):
     parameters = []
     filter_program = str()
+
     if graduate_program_id:
         parameters.append(graduate_program_id)
         filter_program = "AND gpr.graduate_program_id = %s"
+
+    type_filter = str()
     if type_:
         type_filter = "AND type_ = %s"
         parameters.append(type_)
-    else:
-        type_filter = "AND type_ IN ('PERMANENTE', 'COLABORADOR')"
 
     SCRIPT_SQL = f"""
-        SELECT
-            r.name, r.lattes_id,
-            gpr.type_, gpr.created_at,
-            gpr.year,
-            gpr.researcher_id
-        FROM
-            graduate_program_researcher gpr
-            JOIN researcher r ON r.researcher_id = gpr.researcher_id
-        WHERE
-            1 = 1
-            {filter_program}
-            {type_filter}
-        ORDER BY
-            gpr.created_at DESC
+        WITH gpr_cte AS (
+            SELECT researcher_id, json_agg(row_to_json(gpr)) AS gpr_json
+            FROM graduate_program_researcher gpr
+            WHERE 1 = 1
+                {filter_program}
+                {type_filter}
+            GROUP BY researcher_id)
+        SELECT r.researcher_id, r.name, r.lattes_id, gpr_cte.gpr_json
+            AS participation
+        FROM researcher r
+        INNER JOIN gpr_cte
+            ON r.researcher_id = gpr_cte.researcher_id
         """
 
     registry = adm_database.select(SCRIPT_SQL, parameters)
 
     data_frame = pd.DataFrame(
         registry,
-        columns=[
-            "name",
-            "lattes_id",
-            "type_",
-            "created_at",
-            "years",
-            "researcher_id",
-        ],
+        columns=["researcher_id", "name", "lattes_id", "participation"],
     )
 
     return data_frame.to_dict(orient="records")

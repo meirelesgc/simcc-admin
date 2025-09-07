@@ -1,10 +1,8 @@
 from http import HTTPStatus
 
-import psycopg2
 from flask import Blueprint, jsonify, request
 
 from ..dao import dao_graduate_program_researcher as dao
-from ..models.graduate_program_resarcher import ListResearcher
 
 rest_graduate_program_researcher = Blueprint(
     "rest_graduate_program_researcher",
@@ -15,52 +13,30 @@ rest_graduate_program_researcher = Blueprint(
 
 @rest_graduate_program_researcher.route("/Insert", methods=["POST"])
 def graduate_program_researcher_insert():
-    try:
-        list_instance = request.get_json()
-        researcher_instance = ListResearcher(researcher_list=list_instance)
-        dao.graduate_program_researcher_insert(researcher_instance)
+    gpr = request.get_json()
+    if not isinstance(gpr, list):
+        gpr = [gpr]
+    if dao.gpr_insert(gpr):
         return jsonify({"message": "ok"}), HTTPStatus.CREATED
-    except psycopg2.errors.UniqueViolation:
-        return (
-            jsonify({"message": "pesquisador já cadastrado no programa"}),
-            HTTPStatus.CONFLICT,
-        )
+    return jsonify({"message": "error"}), HTTPStatus.INTERNAL_SERVER_ERROR
 
 
 @rest_graduate_program_researcher.route("/Insert/Lattes", methods=["POST"])
 def graduate_program_researcher_insert_lattes():
-    try:
-        list_instance = request.get_json()
-        researcher_instance = ListResearcher(researcher_list=list_instance)
-        dao.graduate_program_researcher_insert_lattes(researcher_instance)
+    gpr = request.get_json()
+    if not isinstance(gpr, list):
+        gpr = [gpr]
+    if dao.graduate_program_researcher_insert_lattes(gpr):
         return jsonify({"message": "ok"}), HTTPStatus.CREATED
-    except psycopg2.errors.UniqueViolation:
-        return (
-            jsonify({"message": "pesquisador já cadastrado no programa"}),
-            HTTPStatus.CONFLICT,
-        )
-
-
-@rest_graduate_program_researcher.route("/Update", methods=["PUT"])
-def graduate_program_researcher_update():
-    try:
-        list_instance = request.get_json()
-        researcher_instance = ListResearcher(researcher_list=list_instance)
-        dao.graduate_program_researcher_update(researcher_instance)
-        return jsonify({"message": "ok"}), HTTPStatus.CREATED
-    except psycopg2.errors.UniqueViolation:
-        return (
-            jsonify({"message": "pesquisador já cadastrado no programa"}),
-            HTTPStatus.CONFLICT,
-        )
+    return jsonify({"message": "error"}), HTTPStatus.INTERNAL_SERVER_ERROR
 
 
 @rest_graduate_program_researcher.route("/Delete", methods=["DELETE"])
-def graduate_program_researcher_delete():
-    researcher = request.get_json()
-    lattes_id = researcher[0]["lattes_id"]
-    graduate_program_id = researcher[0]["graduate_program_id"]
-    dao.graduate_program_researcher_delete(lattes_id, graduate_program_id)
+def gpr_delete():
+    gpr = request.get_json()
+    if not isinstance(gpr, list):
+        gpr = [gpr]
+    dao.gpr_delete(gpr)
     return jsonify(), HTTPStatus.NO_CONTENT
 
 
