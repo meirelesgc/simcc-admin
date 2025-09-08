@@ -16,9 +16,8 @@ def graduate_program_researcher_insert():
     gpr = request.get_json()
     if not isinstance(gpr, list):
         gpr = [gpr]
-    if dao.gpr_insert(gpr):
-        return jsonify({"message": "ok"}), HTTPStatus.CREATED
-    return jsonify({"message": "error"}), HTTPStatus.INTERNAL_SERVER_ERROR
+    dao.gpr_insert(gpr)
+    return jsonify({"message": "ok"}), HTTPStatus.CREATED
 
 
 @rest_graduate_program_researcher.route("/Insert/Lattes", methods=["POST"])
@@ -26,9 +25,8 @@ def graduate_program_researcher_insert_lattes():
     gpr = request.get_json()
     if not isinstance(gpr, list):
         gpr = [gpr]
-    if dao.graduate_program_researcher_insert_lattes(gpr):
-        return jsonify({"message": "ok"}), HTTPStatus.CREATED
-    return jsonify({"message": "error"}), HTTPStatus.INTERNAL_SERVER_ERROR
+    dao.graduate_program_researcher_insert_lattes(gpr)
+    return jsonify({"message": "ok"}), HTTPStatus.CREATED
 
 
 @rest_graduate_program_researcher.route("/Delete", methods=["DELETE"])

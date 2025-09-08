@@ -8,20 +8,28 @@ adm_database = Connection()
 
 
 def gpr_insert(gpr):
+    """
+    Insere registros na tabela graduate_program_researcher,
+    agora incluindo a coluna 'tag'.
+    """
     SCRIPT_SQL = """
         INSERT INTO graduate_program_researcher(
-            graduate_program_id, researcher_id, year, type_)
-        VALUES (%(graduate_program_id)s, %(researcher_id)s, 
-            %(year)s, %(type_)s);
+            graduate_program_id, researcher_id, year, type_, tag)
+        VALUES (%(graduate_program_id)s, %(researcher_id)s,
+            %(year)s, %(type_)s, %(tag)s);
         """
     return adm_database.execmany(SCRIPT_SQL, gpr)
 
 
 def graduate_program_researcher_insert_lattes(gpr):
+    """
+    Insere registros na tabela graduate_program_researcher a partir do lattes_id,
+    agora incluindo a coluna 'tag'.
+    """
     SCRIPT_SQL = """
         INSERT INTO graduate_program_researcher(
-        graduate_program_id, researcher_id, year, type_)
-        SELECT %(graduate_program_id)s, researcher_id, %(year)s, %(type_)s
+            graduate_program_id, researcher_id, year, type_, tag)
+        SELECT %(graduate_program_id)s, researcher_id, %(year)s, %(type_)s, %(tag)s
         FROM researcher
         WHERE lattes_id = %(lattes_id)s;
         """
