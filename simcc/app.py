@@ -45,24 +45,24 @@ app.mount(
     name='upload',
 )
 
-app.include_router(auth.router, tags=['Authentication', 'Authorization'])
-app.include_router(user.router, tags=['Account', 'User Management'])
+app.include_router(auth.router, tags=['Authentication'])
+app.include_router(user.router, tags=['User Management'])
 
-app.include_router(u_uploads.router, tags=['Account', 'Uploads'])
-app.include_router(i_uploads.router, tags=['Institution', 'Uploads'])
-app.include_router(c_uploads.router, tags=['Collection', 'Uploads'])
-app.include_router(p_uploads.router, tags=['Program', 'Uploads'])
-app.include_router(rg_uploads.router, tags=['Group', 'Uploads'])
+app.include_router(u_uploads.router, tags=['User Uploads'])
+app.include_router(i_uploads.router, tags=['Institution Uploads'])
+app.include_router(c_uploads.router, tags=['Collection Uploads'])
+app.include_router(p_uploads.router, tags=['Program Uploads'])
+app.include_router(rg_uploads.router, tags=['Group Uploads'])
 
-app.include_router(institution.router, tags=['Core', 'Institution'])
-app.include_router(researcher.router, tags=['Core', 'Researcher'])
-app.include_router(group.router, tags=['Core', 'Group'])
+app.include_router(institution.router, tags=['Institution'])
+app.include_router(researcher.router, tags=['Researcher'])
+app.include_router(group.router, tags=['Group'])
 
-app.include_router(collection.router, tags=['Feature', 'Collection'])
-app.include_router(star.router, tags=['Feature', 'Star'])
-app.include_router(rbac.router, tags=['Feature', 'Roles & Permissions'])
-app.include_router(notification.router, tags=['Feature', 'Notification'])
-app.include_router(chat.router, tags=['Feature', 'Chat'])
+app.include_router(collection.router, tags=['Collection'])
+app.include_router(star.router, tags=['Star'])
+app.include_router(rbac.router, tags=['Roles & Permissions'])
+app.include_router(notification.router, tags=['Notification'])
+app.include_router(chat.router, tags=['Chat'])
 
 
 app.add_middleware(
