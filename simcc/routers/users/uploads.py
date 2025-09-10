@@ -1,9 +1,10 @@
+import glob
 import os
 from http import HTTPStatus
 from typing import Annotated
-from uuid import uuid4
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi.responses import FileResponse
 
 from simcc.core.connection import Connection
 from simcc.core.database import get_conn
@@ -17,130 +18,115 @@ router = APIRouter(prefix='/user/upload')
 Conn = Annotated[Connection, Depends(get_conn)]
 CurrentUser = Annotated[user_model.User, Depends(get_current_user)]
 
+# --- Funções Genéricas Reutilizáveis (Idênticas às anteriores) ---
+
+
+async def _get_generic_file_response(entity_id: str, file_type: str):
+    """Busca e retorna um arquivo genérico como resposta."""
+    friendly_name_map = {'icon': 'Ícone', 'cover': 'Capa'}
+    friendly_name = friendly_name_map.get(file_type, 'Arquivo')
+
+    search_pattern = os.path.join(UPLOAD_DIR, f'{file_type}_{entity_id}.*')
+    found_files = glob.glob(search_pattern)
+
+    if not found_files:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail=f'{friendly_name} não encontrado.',
+        )
+
+    file_path = found_files[0]
+    return FileResponse(path=file_path)
+
+
+async def _delete_generic_file(entity_id: str, file_type: str):
+    """Deleta arquivos genéricos existentes."""
+    search_pattern = os.path.join(UPLOAD_DIR, f'{file_type}_{entity_id}.*')
+    existing_files = glob.glob(search_pattern)
+
+    if not existing_files:
+        return False
+
+    for file_path in existing_files:
+        try:
+            os.remove(file_path)
+        except OSError as e:
+            print(f'Erro ao deletar o arquivo antigo {file_path}: {e}')
+
+    return True
+
+
+async def _upload_generic_file(
+    entity_id: str, file_type: str, file: UploadFile
+):
+    """Salva um arquivo genérico, substituindo o antigo se existir."""
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+    await _delete_generic_file(entity_id, file_type)
+
+    extension = os.path.splitext(file.filename)[1]
+    filename = f'{file_type}_{entity_id}{extension}'
+    file_path = os.path.join(UPLOAD_DIR, filename)
+
+    try:
+        with open(file_path, 'wb') as f:
+            content = await file.read()
+            f.write(content)
+    except IOError as e:
+        raise HTTPException(
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+            detail=f'Não foi possível salvar o arquivo: {e}',
+        )
+
+    return {'filename': filename}
+
+
+# --- Endpoints para ÍCONE do usuário autenticado ---
+
+
+@router.get('/icon', response_class=FileResponse)
+async def get_user_icon(current_user: CurrentUser):
+    return await _get_generic_file_response(current_user.user_id, 'icon')
+
 
 @router.post('/icon', status_code=HTTPStatus.CREATED)
-async def upload_icon_image(
-    conn: Conn,
+async def upload_user_icon(
     current_user: CurrentUser,
     file: UploadFile = File(...),
 ):
-    if current_user.icon_url:
-        old_filename = os.path.basename(current_user.icon_url)
-        old_file_path = os.path.join(UPLOAD_DIR, old_filename)
-        try:
-            if os.path.exists(old_file_path):
-                os.remove(old_file_path)
-        except OSError as e:
-            print(f'Erro ao deletar o arquivo antigo {old_file_path}: {e}')
-
-    filename = f'{uuid4()}{os.path.splitext(file.filename)[1]}'
-    file_path = os.path.join(UPLOAD_DIR, filename)
-
-    with open(file_path, 'wb') as f:
-        f.write(await file.read())
-
-    public_path = f'/uploads/{filename}'
-    SCRIPT_SQL = """
-        UPDATE users
-        SET icon_url = %(public_path)s
-        WHERE user_id = %(user_id)s
-        """
-    await conn.exec(
-        SCRIPT_SQL,
-        params={'public_path': public_path, 'user_id': current_user.user_id},
-    )
-    return {'filename': file.filename, 'path': public_path}
+    return await _upload_generic_file(current_user.user_id, 'icon', file)
 
 
 @router.delete('/icon', status_code=HTTPStatus.OK)
-async def delete_icon_image(conn: Conn, current_user: CurrentUser):
-    if not current_user.icon_url:
+async def delete_user_icon(current_user: CurrentUser):
+    if not await _delete_generic_file(current_user.user_id, 'icon'):
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
             detail='Nenhum ícone para excluir.',
         )
-
-    filename = os.path.basename(current_user.icon_url)
-    file_path = os.path.join(UPLOAD_DIR, filename)
-
-    try:
-        if os.path.exists(file_path):
-            os.remove(file_path)
-    except OSError as e:
-        print(f'Erro ao deletar o arquivo {file_path}: {e}')
-
-    SCRIPT_SQL = """
-        UPDATE users
-        SET icon_url = NULL
-        WHERE user_id = %(user_id)s
-        """
-    await conn.exec(
-        SCRIPT_SQL,
-        params={'user_id': current_user.user_id},
-    )
     return {'message': 'Ícone excluído com sucesso.'}
 
 
+# --- Endpoints para CAPA do usuário autenticado ---
+
+
+@router.get('/cover', response_class=FileResponse)
+async def get_user_cover(current_user: CurrentUser):
+    return await _get_generic_file_response(current_user.user_id, 'cover')
+
+
 @router.post('/cover', status_code=HTTPStatus.CREATED)
-async def upload_cover_image(
-    conn: Conn,
+async def upload_user_cover(
     current_user: CurrentUser,
     file: UploadFile = File(...),
 ):
-    if current_user.cover_url:
-        old_filename = os.path.basename(current_user.cover_url)
-        old_file_path = os.path.join(UPLOAD_DIR, old_filename)
-        try:
-            if os.path.exists(old_file_path):
-                os.remove(old_file_path)
-        except OSError as e:
-            print(
-                f'Erro ao deletar o arquivo de capa antigo {old_file_path}: {e}'
-            )
-
-    filename = f'{uuid4()}{os.path.splitext(file.filename)[1]}'
-    file_path = os.path.join(UPLOAD_DIR, filename)
-
-    with open(file_path, 'wb') as f:
-        f.write(await file.read())
-
-    public_path = f'/uploads/{filename}'
-    SCRIPT_SQL = """
-        UPDATE users
-        SET cover_url = %(public_path)s
-        WHERE user_id = %(user_id)s
-        """
-    await conn.exec(
-        SCRIPT_SQL,
-        params={'public_path': public_path, 'user_id': current_user.user_id},
-    )
-    return {'filename': file.filename, 'path': public_path}
+    return await _upload_generic_file(current_user.user_id, 'cover', file)
 
 
 @router.delete('/cover', status_code=HTTPStatus.OK)
-async def delete_cover_image(conn: Conn, current_user: CurrentUser):
-    if not current_user.cover_url:
+async def delete_user_cover(current_user: CurrentUser):
+    if not await _delete_generic_file(current_user.user_id, 'cover'):
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
             detail='Nenhuma imagem de capa para excluir.',
         )
-
-    filename = os.path.basename(current_user.cover_url)
-    file_path = os.path.join(UPLOAD_DIR, filename)
-
-    try:
-        if os.path.exists(file_path):
-            os.remove(file_path)
-    except OSError as e:
-        print(f'Erro ao deletar o arquivo {file_path}: {e}')
-
-    SCRIPT_SQL = """
-        UPDATE users
-        SET cover_url = NULL
-        WHERE user_id = %(user_id)s
-        """
-    await conn.exec(
-        SCRIPT_SQL,
-        params={'user_id': current_user.user_id},
-    )
     return {'message': 'Imagem de capa excluída com sucesso.'}
