@@ -152,7 +152,8 @@ def researcher_basic_query(
             r.lattes_id,
             r.institution_id,
             r.created_at,
-            r.status
+            r.status,
+            r.extra_field
         FROM
             researcher r
         {where_clause}
@@ -175,6 +176,7 @@ def researcher_basic_query(
             "institution_id",
             "created_at",
             "status",
+            "extra_field",
         ],
     ).drop(columns=["created_at"])
 
