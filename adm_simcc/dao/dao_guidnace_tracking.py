@@ -319,6 +319,18 @@ def get_all_guidance_configs(data: dict):
         "updated_at",
     ]
     df = pd.DataFrame(records, columns=columns)
+    # Força conversão para string ou None
+    df["created_at"] = (
+        df["created_at"]
+        .dt.strftime("%Y-%m-%d %H:%M:%S")
+        .where(df["created_at"].notnull(), None)
+    )
+    df["updated_at"] = (
+        df["updated_at"]
+        .dt.strftime("%Y-%m-%d %H:%M:%S")
+        .where(df["updated_at"].notnull(), None)
+    )
+
     return df.to_dict(orient="records")
 
 
