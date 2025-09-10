@@ -63,9 +63,9 @@ def create_guidance_config_():
 
 
 @guidance_tracking_bp.route("/guidance_config/", methods=["PUT"])
-def update_guidance_config_(config_id):
+def update_guidance_config_():
     data = request.get_json()
-    return update_guidance_config(config_id, data)
+    return update_guidance_config(data)
 
 
 @guidance_tracking_bp.route(

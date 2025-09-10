@@ -22,7 +22,8 @@ def researcher_update(researcher):
             name = %(name)s,
             lattes_id = %(lattes_id)s,
             institution_id = %(institution_id)s,
-            status = %(status)s
+            status = %(status)s,
+            extra_field = %(extra_field)s
         WHERE researcher_id = %(researcher_id)s;
         """
     adm_database.exec(SCRIPT_SQL, researcher)
