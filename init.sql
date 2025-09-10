@@ -25,9 +25,6 @@ CREATE TABLE public.institution (
     acronym VARCHAR(16) UNIQUE,
     lattes_id VARCHAR(16),
 
-    icon_url TEXT,
-    cover_url TEXT,
-
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW(),
     deleted_at TIMESTAMP
@@ -48,8 +45,7 @@ CREATE TABLE IF NOT EXISTS users (
     lattes_id VARCHAR(16),
     linkedin VARCHAR(255),
 
-    icon_url TEXT,
-    cover_url TEXT,
+
 
     PRIMARY KEY (user_id),
     FOREIGN KEY (institution_id) REFERENCES public.institution (institution_id) ON DELETE SET NULL ON UPDATE CASCADE,
@@ -139,8 +135,7 @@ CREATE TABLE public.graduate_program (
     start DATE,
     phone VARCHAR(20),
     periodicity VARCHAR(50),
-    icon_url TEXT,
-    cover_url TEXT,
+
 
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW(),
@@ -166,8 +161,7 @@ CREATE TABLE IF NOT EXISTS research_group (
     category character varying(200),
     UNIQUE (name, institution),
     UNIQUE (group_identifier),
-    icon_url TEXT,
-    cover_url TEXT,
+
 
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW(),

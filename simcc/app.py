@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from simcc.config import Settings
-from simcc.core.database import conn, get_conn
+from simcc.core.database import conn
 from simcc.routers import auth, rbac, researcher
 from simcc.routers.features import chat, notification, star
 from simcc.routers.features.collection import collection
@@ -20,7 +20,6 @@ from simcc.routers.institution import uploads as i_uploads
 from simcc.routers.program import upload as p_uploads
 from simcc.routers.users import uploads as u_uploads
 from simcc.routers.users import user
-from simcc.security import get_current_user
 
 
 @asynccontextmanager
@@ -81,33 +80,35 @@ if Settings().PROD:
         response = await call_next(request)
 
         if response.status_code == HTTPStatus.NOT_FOUND:
-            method_protected = request.method in {'POST', 'PUT', 'DELETE'}
-
-            if method_protected:
-                auth_header = request.headers.get('Authorization')
-                if not auth_header or not auth_header.startswith('Bearer '):
-                    return Response(status_code=HTTPStatus.UNAUTHORIZED)
-
-                token = auth_header.removeprefix('Bearer ').strip()
-
-                try:
-                    await get_current_user(token=token, conn=await get_conn())
-                except Exception:
-                    return Response(status_code=HTTPStatus.UNAUTHORIZED)
-
             async with httpx.AsyncClient() as client:
+                headers = {
+                    k: v
+                    for k, v in request.headers.items()
+                    if k.lower() not in ['host', 'content-length']
+                }
                 proxy_response = await client.request(
                     method=request.method,
                     url=f'{Settings().PROXY_URL}{request.url.path}',
-                    params=request.query_params,
-                    headers=dict(request.headers),
+                    params=dict(request.query_params),
+                    headers=headers,
                     content=await request.body(),
                     timeout=None,
                 )
+                excluded_headers = [
+                    'content-encoding',
+                    'transfer-encoding',
+                    'connection',
+                ]
+                response_headers = {
+                    k: v
+                    for k, v in proxy_response.headers.items()
+                    if k.lower() not in excluded_headers
+                }
+
                 return Response(
                     content=proxy_response.content,
                     status_code=proxy_response.status_code,
-                    headers=dict(proxy_response.headers),
+                    headers=response_headers,
                 )
 
         return response

@@ -58,6 +58,7 @@ async def get_current_user(
     token: Annotated[str, Depends(get_token_from_request)],
     conn: Connection = Depends(get_conn),
 ):
+    print(token)
     credentials_exception = HTTPException(
         status_code=HTTPStatus.UNAUTHORIZED,
         detail='Could not validate credentials',

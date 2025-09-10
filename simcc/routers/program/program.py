@@ -7,4 +7,4 @@ router = APIRouter(prefix='/graduate-program')
 
 @router.post('/')
 async def create_program():
-    return await program_service.create_program(b)
+    return await program_service.create_program()
