@@ -18,11 +18,8 @@ router = APIRouter(prefix='/user/upload')
 Conn = Annotated[Connection, Depends(get_conn)]
 CurrentUser = Annotated[user_model.User, Depends(get_current_user)]
 
-# --- Funções Genéricas Reutilizáveis (Idênticas às anteriores) ---
-
 
 async def _get_generic_file_response(entity_id: str, file_type: str):
-    """Busca e retorna um arquivo genérico como resposta."""
     friendly_name_map = {'icon': 'Ícone', 'cover': 'Capa'}
     friendly_name = friendly_name_map.get(file_type, 'Arquivo')
 

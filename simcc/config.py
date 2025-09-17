@@ -22,7 +22,7 @@ class Settings(BaseSettings):
 
     REDIS: str = 'redis://localhost:6379/0'
 
-    ROOT_PATH: str = None
+    ROOT_PATH: str = str()
 
     class Config:
         env_file = '.env'
