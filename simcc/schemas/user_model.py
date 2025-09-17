@@ -80,3 +80,12 @@ class KeyResponse(BaseModel):
     name: str
     key: str
     created_at: datetime
+
+
+class KeyPublic(BaseModel):
+    key_id: UUID = Field(default_factory=uuid4)
+    name: str
+    user: dict
+    key: str = Field(default_factory=lambda: token_urlsafe(32))
+    created_at: datetime = Field(default_factory=datetime.now)
+    deleted_at: Optional[datetime] = None

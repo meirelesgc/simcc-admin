@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 
 from simcc.config import Settings
 from simcc.core.database import conn
-from simcc.routers import auth, rbac, researcher
+from simcc.routers import auth, keys, rbac, researcher
 from simcc.routers.departament import uploads as d_uploads
 from simcc.routers.features import chat, notification, star
 from simcc.routers.features.collection import collection
@@ -47,6 +47,7 @@ app.mount(
 
 app.include_router(auth.router, tags=['Authentication'])
 app.include_router(user.router, tags=['User Management'])
+app.include_router(keys.router, tags=['Key Management'])
 
 app.include_router(u_uploads.router, tags=['User Uploads'])
 app.include_router(i_uploads.router, tags=['Institution Uploads'])

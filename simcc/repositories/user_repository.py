@@ -98,7 +98,50 @@ async def delete_user(conn: Connection, user_id: UUID):
 async def key_post(conn: Connection, key):
     params = key.model_dump()
     SCRIPT_SQL = """
-        INSERT INTO keys (key_id, user_id, key, created_at)
-        VALUES (%(key_id)s, %(user_id)s, %(key)s, %(created_at)s);
+        INSERT INTO keys (key_id, user_id, name, key, created_at)
+        VALUES (%(key_id)s, %(user_id)s, %(name)s, %(key)s, %(created_at)s);
         """
     return await conn.exec(SCRIPT_SQL, params)
+
+
+async def key_delete(conn, key_id):
+    params = {'key_id': key_id}
+    SCRIPT_SQL = """
+        UPDATE keys SET deleted_at = NOW()
+        WHERE key_id = %(key_id)s;
+        """
+    return await conn.exec(SCRIPT_SQL, params)
+
+
+async def key_get(conn, user):
+    params = user.model_dump()
+    SCRIPT_SQL = """
+        WITH users AS (
+            SELECT user_id,
+                username,
+                email,
+                lattes_id,
+                institution_id,
+                provider,
+                linkedin,
+                verify,
+                orcid_id,
+                created_at,
+                updated_at,
+                icon_url,
+                cover_url
+            FROM public.users
+        )
+        SELECT
+            k.key_id,
+            row_to_json(u) AS "user",
+            LEFT(k.key, 10) || '...' AS key ,
+            k.name,
+            k.last_used,
+            k.created_at
+        FROM public.keys AS k
+        JOIN users AS u ON k.user_id = u.user_id 
+        WHERE k.deleted_at IS NULL
+        AND k.user_id = %(user_id)s;
+        """
+    return await conn.select(SCRIPT_SQL, params)

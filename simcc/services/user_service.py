@@ -145,3 +145,11 @@ async def key_post(conn, user, key):
     key = user_model.Key(**user.model_dump(), **key.model_dump())
     await user_repository.key_post(conn, key)
     return key
+
+
+async def key_get(conn, user):
+    return await user_repository.key_get(conn, user)
+
+
+async def key_delete(conn, key_id):
+    return await user_repository.key_delete(conn, key_id)
