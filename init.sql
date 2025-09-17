@@ -228,7 +228,6 @@ CREATE TABLE IF NOT EXISTS public.guidance_tracking
 CREATE SCHEMA IF NOT EXISTS ufmg;
 CREATE TABLE IF NOT EXISTS ufmg.researcher (
     researcher_id UUID PRIMARY KEY REFERENCES public.researcher(researcher_id) ON DELETE CASCADE ON UPDATE CASCADE,
-    
     -- Campos comuns
     full_name VARCHAR(255),
     gender VARCHAR(255),
@@ -302,6 +301,39 @@ CREATE TABLE IF NOT EXISTS ufmg.technician (
     updated_at TIMESTAMP,
     deleted_at TIMESTAMP
 );
+CREATE TABLE IF NOT EXISTS ufmg.departament (
+    dep_id varchar NOT NULL PRIMARY KEY,
+    org_cod varchar,
+    dep_nom varchar,
+    dep_des text,
+    dep_email varchar,
+    dep_site varchar,
+    dep_sigla varchar,
+    dep_tel varchar,
+    img_data bytea,
+    menagers text[],
+    icon_url TEXT,
+    cover_url TEXT,
+);
+CREATE TABLE IF NOT EXISTS ufmg.departament_researcher (
+    dep_id varchar NOT NULL,
+    researcher_id uuid NOT NULL,
+    PRIMARY KEY (dep_id, researcher_id),
+    FOREIGN KEY (dep_id) REFERENCES ufmg.departament(dep_id)
+        ON UPDATE CASCADE ON DELETE CASCADE,
+    FOREIGN KEY (researcher_id) REFERENCES public.researcher(researcher_id)
+        ON UPDATE CASCADE ON DELETE CASCADE
+);
+CREATE TABLE IF NOT EXISTS ufmg.departament_technician (
+    dep_id varchar NOT NULL,
+    technician_id uuid NOT NULL,
+    PRIMARY KEY (dep_id, technician_id),
+    FOREIGN KEY (dep_id) REFERENCES ufmg.departament(dep_id)
+        ON UPDATE CASCADE ON DELETE CASCADE,
+    FOREIGN KEY (technician_id) REFERENCES ufmg.technician(technician_id)
+        ON UPDATE CASCADE ON DELETE CASCADE
+);
+
 CREATE SCHEMA IF NOT EXISTS feature;
 CREATE TABLE IF NOT EXISTS feature.collection (
     collection_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

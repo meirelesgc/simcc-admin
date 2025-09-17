@@ -24,6 +24,8 @@ class Settings(BaseSettings):
 
     ROOT_PATH: str = str()
 
+    SECRET_KEY: str = 'your-secret-key'
+
     class Config:
         env_file = '.env'
         env_file_encoding = 'utf-8'

@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from http import HTTPStatus
-from typing import Annotated, List
+from typing import List, Optional
 from zoneinfo import ZoneInfo
 
 import httpx
@@ -8,6 +8,7 @@ from fastapi import (
     Depends,
     HTTPException,
     Request,
+    Security,
     WebSocket,
     WebSocketException,
     status,
@@ -25,45 +26,33 @@ from simcc.core.connection import Connection
 from simcc.core.database import get_conn
 from simcc.schemas import user_model
 
-SECRET_KEY = 'your-secret-key'  # Buscar do .env
+SECRET_KEY = Settings().SECRET_KEY
 ALGORITHM = 'HS256'
 ACCESS_TOKEN_EXPIRE_MINUTES = 10080
 pwd_context = PasswordHash.recommended()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl='token')
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/login', auto_error=False)
+
 
 ORCID_TOKEN_URL = 'https://orcid.org/oauth/token'
 ORCID_JWKS_URL = 'https://orcid.org/oauth/jwks'
 
 GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token'
-
-
-async def get_token_from_request(request: Request) -> str:
-    token = request.cookies.get('access_token')
-    if not token:
-        auth_header = request.headers.get('Authorization')
-        if auth_header and auth_header.startswith('Bearer '):
-            token = auth_header.split(' ', 1)[1]
-
-    if not token:
-        raise HTTPException(
-            status_code=HTTPStatus.UNAUTHORIZED,
-            detail='Not authenticated',
-            headers={'WWW-Authenticate': 'Bearer'},
-        )
-
-    return token
+ACCESS_TOKEN_COOKIE_NAME = 'access_token'
 
 
 async def get_current_user(
-    token: Annotated[str, Depends(get_token_from_request)],
+    request: Request,
+    token: Optional[str] = Security(oauth2_scheme),
     conn: Connection = Depends(get_conn),
 ):
-    print(token)
     credentials_exception = HTTPException(
         status_code=HTTPStatus.UNAUTHORIZED,
         detail='Could not validate credentials',
         headers={'WWW-Authenticate': 'Bearer'},
     )
+    token = token or request.cookies.get(ACCESS_TOKEN_COOKIE_NAME)
+    if not token:
+        raise credentials_exception
 
     try:
         payload = decode(token, SECRET_KEY, algorithms=[ALGORITHM])

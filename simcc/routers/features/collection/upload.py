@@ -126,3 +126,32 @@ async def delete_collection_cover(collection_id: str, conn: Conn):
         )
 
     return {'message': 'Imagem de capa excluída com sucesso.'}
+
+
+@router.get('/{collection_id}/icon', response_class=FileResponse)
+async def get_collection_icon(collection_id: str, conn: Conn):
+    await get_collection_and_check_existence(collection_id, conn)
+    return await _get_generic_file_response(collection_id, 'icon')
+
+
+@router.post('/{collection_id}/icon', status_code=HTTPStatus.CREATED)
+async def upload_collection_icon(
+    collection_id: str,
+    conn: Conn,
+    file: UploadFile = File(...),
+):
+    await get_collection_and_check_existence(collection_id, conn)
+    return await _upload_generic_file(collection_id, 'icon', file)
+
+
+@router.delete('/{collection_id}/icon', status_code=HTTPStatus.OK)
+async def delete_collection_icon(collection_id: str, conn: Conn):
+    await get_collection_and_check_existence(collection_id, conn)
+
+    if not await _delete_generic_file(collection_id, 'icon'):
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail='Nenhum ícone para excluir.',
+        )
+
+    return {'message': 'Ícone excluído com sucesso.'}

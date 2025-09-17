@@ -10,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from simcc.config import Settings
 from simcc.core.database import conn
 from simcc.routers import auth, rbac, researcher
+from simcc.routers.departament import uploads as d_uploads
 from simcc.routers.features import chat, notification, star
 from simcc.routers.features.collection import collection
 from simcc.routers.features.collection import upload as c_uploads
@@ -52,6 +53,7 @@ app.include_router(i_uploads.router, tags=['Institution Uploads'])
 app.include_router(c_uploads.router, tags=['Collection Uploads'])
 app.include_router(p_uploads.router, tags=['Program Uploads'])
 app.include_router(rg_uploads.router, tags=['Group Uploads'])
+app.include_router(d_uploads.router, tags=['Dep Uploads'])
 
 app.include_router(institution.router, tags=['Institution'])
 app.include_router(researcher.router, tags=['Researcher'])
