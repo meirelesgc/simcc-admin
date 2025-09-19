@@ -32,7 +32,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     lifespan=lifespan,
-    root_path=Settings().ROOT_PATH,
+    root_path=Settings().ROOT_PATH_ADMIN,
     docs_url='/swagger',
 )
 
@@ -87,11 +87,11 @@ if Settings().PROD:
                 headers = {
                     k: v
                     for k, v in request.headers.items()
-                    if k.lower() not in ['host', 'content-length']
+                    if k.lower() not in {'host', 'content-length'}
                 }
                 proxy_response = await client.request(
                     method=request.method,
-                    url=f'{Settings().PROXY_URL}{request.url.path}',
+                    url=f'{Settings().PROXY_ADMIN_URL}{request.url.path}',
                     params=dict(request.query_params),
                     headers=headers,
                     content=await request.body(),
