@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    DATABASE_URL: str
+    DATABASE_ADMIN_URL: str
 
     ORCID_CLIENT_ID: Optional[str] = None
     ORCID_REDIRECT_URI: Optional[str] = None
