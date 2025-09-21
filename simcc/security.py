@@ -37,7 +37,6 @@ ORCID_TOKEN_URL = 'https://orcid.org/oauth/token'
 ORCID_JWKS_URL = 'https://orcid.org/oauth/jwks'
 
 GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token'
-ACCESS_TOKEN_COOKIE_NAME = 'access_token'
 
 
 async def get_current_user(
@@ -50,9 +49,11 @@ async def get_current_user(
         detail='Could not validate credentials',
         headers={'WWW-Authenticate': 'Bearer'},
     )
-    token = token or request.cookies.get(ACCESS_TOKEN_COOKIE_NAME)
     if not token:
-        raise credentials_exception
+        token = request.cookies.get('Authorization')
+        token = token.replace('Bearer ', '', 1)
+        if not token:
+            raise credentials_exception
 
     try:
         payload = decode(token, SECRET_KEY, algorithms=[ALGORITHM])

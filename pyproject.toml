@@ -62,5 +62,6 @@ src_dir = "src"
 format = 'ruff check --fix; ruff format'
 run = 'fastapi dev simcc/app.py'
 test = 'PROD=false pytest -s -x --cov=simcc -vv'
+push-image = 'docker build -t gleidsoncosta/jade-admin:latest .; docker push gleidsoncosta/jade-admin:latest'
 cov = 'coverage html'
 debug = 'task format; pytest -s -x --cov=simcc -vv --lf'
