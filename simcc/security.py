@@ -30,7 +30,9 @@ SECRET_KEY = Settings().SECRET_KEY
 ALGORITHM = 'HS256'
 ACCESS_TOKEN_EXPIRE_MINUTES = 10080
 pwd_context = PasswordHash.recommended()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/login', auto_error=False)
+oauth2_scheme = OAuth2PasswordBearer(
+    tokenUrl=Settings().ROOT_PATH_ADMIN + '/login', auto_error=False
+)
 
 
 ORCID_TOKEN_URL = 'https://orcid.org/oauth/token'
