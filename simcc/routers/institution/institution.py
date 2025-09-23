@@ -30,7 +30,7 @@ async def post_institution(
     return await institution_service.post_institution(institution, conn)
 
 
-@router.put(
+@router.get(
     '/Query/Count',
     deprecated=True,
     include_in_schema=False,

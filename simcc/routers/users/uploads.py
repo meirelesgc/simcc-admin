@@ -22,7 +22,7 @@ CurrentUser = Annotated[user_model.User, Depends(get_current_user)]
 
 async def check_user_existence(user_id: str, conn: Conn):
     SCRIPT_SELECT = """
-        SELECT user_id FROM public.user WHERE user_id = %(user_id)s
+        SELECT user_id FROM public.users WHERE user_id = %(user_id)s
     """
     user = await conn.select(
         SCRIPT_SELECT, params={'user_id': user_id}, one=True
