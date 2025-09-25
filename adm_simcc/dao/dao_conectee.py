@@ -335,7 +335,6 @@ def post_ufmg_researcher(researcher):
     researcher = pd.DataFrame(researcher)
     researcher = normalize(researcher)
     researcher = normalize_researchers(researcher)
-    print(researcher)
     researcher["researcher_id"] = researcher["full_name"].apply(
         get_researcher_id
     )

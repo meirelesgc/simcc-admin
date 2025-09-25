@@ -98,7 +98,6 @@ def select_user(uid):
         WHERE u.uid = %(uid)s
         """
     registry = adm_database.select(SCRIPT_SQL, {"uid": uid})
-    print(SCRIPT_SQL, {"uid": uid})
 
     data_frame = pd.DataFrame(
         registry,

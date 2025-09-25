@@ -23,7 +23,8 @@ def researcher_update(researcher):
             lattes_id = %(lattes_id)s,
             institution_id = %(institution_id)s,
             status = %(status)s,
-            extra_field = %(extra_field)s
+            area = %(area)s,
+            focal_point = %(focal_point)s
         WHERE researcher_id = %(researcher_id)s;
         """
     adm_database.exec(SCRIPT_SQL, researcher)
@@ -147,14 +148,8 @@ def researcher_basic_query(
         params["rows"] = rows
 
     script_sql = f"""
-        SELECT DISTINCT
-            r.researcher_id,
-            r.name,
-            r.lattes_id,
-            r.institution_id,
-            r.created_at,
-            r.status,
-            r.extra_field AS 
+        SELECT DISTINCT r.researcher_id, r.name, r.lattes_id, r.institution_id,
+            r.created_at, r.status, r.area, r.focal_point
         FROM
             researcher r
         {where_clause}
@@ -177,7 +172,8 @@ def researcher_basic_query(
             "institution_id",
             "created_at",
             "status",
-            "extra_field",
+            "area",
+            "focal_point",
         ],
     ).drop(columns=["created_at"])
 
@@ -197,8 +193,6 @@ def researcher_count(institution_id: UUID4 = None):
 
     registry = adm_database.select(SCRIPT_SQL, parameters)
 
-    # psycopg2 retorna uma lista de truplas,
-    # quero apenas o primeiro valor da primeira lista
     return registry[0][0]
 
 
