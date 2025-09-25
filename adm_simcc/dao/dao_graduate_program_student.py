@@ -81,7 +81,8 @@ def student_basic_query(
             1 = 1
             {filter_graduate_program}
             {filter_institution}
-            {filter_lattes_id};
+            {filter_lattes_id}
+        ORDER BY r.name
     """
     registry = adm_database.select(SCRIPT_SQL)
     data_frame = pd.DataFrame(

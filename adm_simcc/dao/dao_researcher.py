@@ -154,7 +154,7 @@ def researcher_basic_query(
             r.institution_id,
             r.created_at,
             r.status,
-            r.extra_field
+            r.extra_field AS 
         FROM
             researcher r
         {where_clause}

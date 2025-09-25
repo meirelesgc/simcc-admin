@@ -106,6 +106,7 @@ def graduate_program_researcher_basic_query(
         FROM researcher r
         INNER JOIN gpr_cte
             ON r.researcher_id = gpr_cte.researcher_id
+        ORDER BY r.name
         """
 
     registry = adm_database.select(SCRIPT_SQL, parameters)
