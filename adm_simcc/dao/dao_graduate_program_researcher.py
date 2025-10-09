@@ -8,10 +8,6 @@ adm_database = Connection()
 
 
 def gpr_insert(gpr):
-    """
-    Insere registros na tabela graduate_program_researcher,
-    agora incluindo a coluna 'tag'.
-    """
     SCRIPT_SQL = """
         INSERT INTO graduate_program_researcher(
             graduate_program_id, researcher_id, year, type_, tag)
@@ -22,10 +18,6 @@ def gpr_insert(gpr):
 
 
 def graduate_program_researcher_insert_lattes(gpr):
-    """
-    Insere registros na tabela graduate_program_researcher a partir do lattes_id,
-    agora incluindo a coluna 'tag'.
-    """
     SCRIPT_SQL = """
         INSERT INTO graduate_program_researcher(
             graduate_program_id, researcher_id, year, type_, tag)
@@ -39,11 +31,12 @@ def graduate_program_researcher_insert_lattes(gpr):
 def gpr_delete(gpr):
     SCRIPT_SQL = """
         DELETE FROM graduate_program_researcher
-        WHERE researcher_id = %(researcher_id)s
-          AND graduate_program_id = %(graduate_program_id)s
-          AND year = %(year)s;
+        WHERE researcher_id = (SELECT researcher_id
+                               FROM researcher
+                               WHERE lattes_id = %(lattes_id)s)
+          AND graduate_program_id = %(graduate_program_id)s;
     """
-    return adm_database.execmany(SCRIPT_SQL, gpr)
+    return adm_database.exec(SCRIPT_SQL, gpr[0])
 
 
 def graduate_program_researcher_count(
