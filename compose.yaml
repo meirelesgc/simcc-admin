@@ -20,8 +20,6 @@ services:
     volumes:
       - jade_redis:/data
     restart: unless-stopped
-    networks:
-      - jade-network
     env_file: .env
   jade_admin_api:
     image: gleidsoncosta/jade-admin:latest
