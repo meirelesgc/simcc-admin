@@ -1,0 +1,5 @@
+services:
+  jade_admin_old:
+    image: gleidsoncosta/jade-admin-old:latest
+    env_file: ./.env
+    restart: unless-stopped
