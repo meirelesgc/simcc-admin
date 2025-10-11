@@ -1,30 +1,22 @@
 services:
   jade_admin_db:
     image: pgvector/pgvector:pg17
-    container_name: jade_admin_db
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
-    ports:
-      - "5434:5432"
     volumes:
-      - jade_db:/var/lib/postgresql/data
+      - jade_admin_db:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 10s
       timeout: 5s
       retries: 5
     restart: unless-stopped
-    networks:
-      - jade-network
     env_file: .env
 
   jade_redis:
     image: redis:latest
-    container_name: jade_redis
-    ports:
-      - "6379:6379"
     volumes:
       - jade_redis:/data
     restart: unless-stopped
@@ -33,26 +25,12 @@ services:
     env_file: .env
   jade_admin_api:
     image: gleidsoncosta/jade-admin:latest
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: jade_admin_api
-    ports:
-      - "9090:8000"
     depends_on:
       - jade_redis
       - jade_admin_db
     restart: unless-stopped
-    networks:
-      - jade-network
     env_file: .env
 
 volumes:
-  jade_db:
+  jade_admin_db:
   jade_redis:
-
-
-networks:
-  jade-network:
-    external: true
-    name: jade_network
