@@ -128,7 +128,8 @@ CREATE TABLE public.graduate_program (
     url_image VARCHAR(200),
     acronym VARCHAR(100),
     description TEXT,
-    is_visible BOOLEAN DEFAULT FALSE,
+    type VARCHAR,
+    visible BOOLEAN DEFAULT FALSE,
     site TEXT,
     coordinator VARCHAR(100),
     email VARCHAR(100),
@@ -313,7 +314,7 @@ CREATE TABLE IF NOT EXISTS ufmg.departament (
     img_data bytea,
     menagers text[],
     icon_url TEXT,
-    cover_url TEXT,
+    cover_url TEXT
 );
 CREATE TABLE IF NOT EXISTS ufmg.departament_researcher (
     dep_id varchar NOT NULL,
