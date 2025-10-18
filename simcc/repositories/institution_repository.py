@@ -64,9 +64,14 @@ async def get_institution(institution_id, conn: Connection):
             SELECT COUNT(*) AS count_t FROM ufmg.technician
         ),
         researchers AS (
-            SELECT ARRAY_AGG(r.lattes_id) AS researchers_list, r.institution_id
-            FROM researcher r
-            GROUP BY r.institution_id
+            WITH ranked AS (
+            SELECT lattes_id, institution_id, ROW_NUMBER() OVER (PARTITION BY institution_id ORDER BY random()) AS rn
+            FROM researcher
+            )
+            SELECT institution_id, ARRAY_AGG(lattes_id) AS researchers_list
+            FROM ranked
+            WHERE rn <= 20
+            GROUP BY institution_id
         )
         SELECT i.name, i.institution_id, COALESCE(r.count_r, 0) AS count_r,
             COALESCE(gp.count_gp, 0) AS count_gp, COALESCE(gpr.count_gpr, 0)
