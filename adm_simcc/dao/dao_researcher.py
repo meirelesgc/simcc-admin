@@ -17,14 +17,14 @@ client = Client("http://servicosweb.cnpq.br/srvcurriculo/WSCurriculo?wsdl")
 
 
 def researcher_update(researcher):
+    researcher["area"] = str(researcher["area"])
     SCRIPT_SQL = """
         UPDATE researcher SET
             name = %(name)s,
             lattes_id = %(lattes_id)s,
             institution_id = %(institution_id)s,
             status = %(status)s,
-            area = %(area)s,
-            focal_point = %(focal_point)s
+            area = %(area)s
         WHERE researcher_id = %(researcher_id)s;
         """
     adm_database.exec(SCRIPT_SQL, researcher)
