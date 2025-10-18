@@ -62,12 +62,17 @@ async def get_institution(institution_id, conn: Connection):
         ),
         technician_count AS (
             SELECT COUNT(*) AS count_t FROM ufmg.technician
+        ),
+        researchers AS (
+            SELECT ARRAY_AGG(r.lattes_id) AS researchers_list, r.institution_id
+            FROM researcher r
+            GROUP BY r.institution_id
         )
         SELECT i.name, i.institution_id, COALESCE(r.count_r, 0) AS count_r,
             COALESCE(gp.count_gp, 0) AS count_gp, COALESCE(gpr.count_gpr, 0)
             AS count_gpr, COALESCE(gps.count_gps, 0) AS count_gps,
             COALESCE(d.count_d, 0) AS count_d, COALESCE(t.count_t, 0)
-            AS count_t, i.acronym
+            AS count_t, i.acronym, COALESCE(rl.researchers_list, ARRAY[]::TEXT[]) AS researchers_list
         FROM institution i
             LEFT JOIN researcher_count r
                 ON r.institution_id = i.institution_id
@@ -79,6 +84,8 @@ async def get_institution(institution_id, conn: Connection):
                 ON gps.institution_id = i.institution_id
             LEFT JOIN ufmg_researcher_count d
                 ON d.institution_id = i.institution_id
+            LEFT JOIN researchers rl
+                ON rl.institution_id = i.institution_id
             CROSS JOIN technician_count t
         WHERE 1 = 1
             {filters}

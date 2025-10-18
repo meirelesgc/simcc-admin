@@ -34,6 +34,8 @@ class InstitutionStats(BaseModel):
     count_d: int
     count_t: int
 
+    researchers_list: list[str]
+
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: Optional[datetime] = None
     deleted_at: Optional[datetime] = None
