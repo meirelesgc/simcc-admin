@@ -1,5 +1,3 @@
-BEGIN;
-
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE EXTENSION IF NOT EXISTS unaccent;
@@ -365,7 +363,7 @@ CREATE TABLE IF NOT EXISTS ufmg.disciplines (
       PRIMARY KEY (dep_id, id),
       FOREIGN KEY (dep_id) REFERENCES ufmg.departament (dep_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
-
-COMMIT;
-
-ROLLBACK;
+CREATE TABLE IF NOT EXISTS public.tags(
+    id uuid NOT NULL DEFAULT uuid_generate_v4(),
+    name
+);
