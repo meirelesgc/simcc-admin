@@ -190,6 +190,7 @@ CREATE TABLE IF NOT EXISTS public.guidance_tracking (
     done_date_qualification date,
     planned_date_conclusion date NOT NULL,
     done_date_conclusion date,
+    course_suspension BOOLEAN DEFAULT FALSE,
     created_at timestamp without time zone NOT NULL DEFAULT now(),
     updated_at timestamp without time zone,
     deleted_at timestamp without time zone,
@@ -365,5 +366,5 @@ CREATE TABLE IF NOT EXISTS ufmg.disciplines (
 );
 CREATE TABLE IF NOT EXISTS public.tags(
     id uuid NOT NULL DEFAULT uuid_generate_v4(),
-    name
+    name VARCHAR
 );

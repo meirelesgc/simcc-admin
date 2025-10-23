@@ -3,6 +3,8 @@ from http import HTTPStatus
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
+from adm_simcc.rest import tag
+
 from .rest.conectee import conectee
 from .rest.guidance_tracking import guidance_tracking_bp
 from .rest.rest_graduate_program import rest_graduate_program
@@ -21,6 +23,7 @@ from .rest.rest_system_management import rest_system
 def create_app():
     app = Flask(__name__)
 
+    app.register_blueprint(tag.router)
     app.register_blueprint(rest_newsletter)
     app.register_blueprint(rest_researcher_group)
     app.register_blueprint(rest_institution)

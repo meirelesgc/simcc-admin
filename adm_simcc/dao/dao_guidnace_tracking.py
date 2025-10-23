@@ -32,6 +32,7 @@ def get_all_guidance_trackings(data):
             gt.done_date_qualification,
             gt.planned_date_conclusion,
             gt.done_date_conclusion,
+            gt.course_suspension,
             COALESCE(ARRAY_AGG(gcs.co_supervisor_researcher_id) FILTER (WHERE gcs.co_supervisor_researcher_id IS NOT NULL), '{{}}') as co_supervisor_ids
         FROM
             guidance_tracking gt
@@ -59,6 +60,7 @@ def get_all_guidance_trackings(data):
         "done_date_qualification",
         "planned_date_conclusion",
         "done_date_conclusion",
+        "course_suspension",
         "co_supervisor_ids",
     ]
     df = pd.DataFrame(records, columns=columns)
