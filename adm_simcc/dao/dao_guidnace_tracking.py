@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 
 import pandas as pd
@@ -32,12 +33,27 @@ def get_all_guidance_trackings(data):
             gt.done_date_qualification,
             gt.planned_date_conclusion,
             gt.done_date_conclusion,
-            gt.course_suspension,
-            COALESCE(ARRAY_AGG(gcs.co_supervisor_researcher_id) FILTER (WHERE gcs.co_supervisor_researcher_id IS NOT NULL), '{{}}') as co_supervisor_ids
+            COALESCE(ARRAY_AGG(DISTINCT gcs.co_supervisor_researcher_id)
+                     FILTER (WHERE gcs.co_supervisor_researcher_id IS NOT NULL), '{{}}') as co_supervisor_ids,
+            COALESCE(
+                JSON_AGG(
+                    DISTINCT JSONB_BUILD_OBJECT(
+                        'id', t.id,
+                        'name', t.name,
+                        'color_code', t.color_code,
+                        'created_at', t.created_at
+                    )
+                ) FILTER (WHERE t.id IS NOT NULL),
+                '[]'
+            ) as tags
         FROM
             guidance_tracking gt
         LEFT JOIN
             guidance_co_supervisors gcs ON gt.id = gcs.guidance_tracking_id
+        LEFT JOIN
+            guidance_tags gtg ON gt.id = gtg.guidance_tracking_id
+        LEFT JOIN
+            tags t ON gtg.tag_id = t.id
         WHERE
             gt.deleted_at IS NULL
             {filters}
@@ -60,8 +76,8 @@ def get_all_guidance_trackings(data):
         "done_date_qualification",
         "planned_date_conclusion",
         "done_date_conclusion",
-        "course_suspension",
         "co_supervisor_ids",
+        "tags",
     ]
     df = pd.DataFrame(records, columns=columns)
     if df.empty:
@@ -139,11 +155,27 @@ def get_guidance_tracking_by_id(guidance_id: UUID4):
             gt.created_at,
             gt.updated_at,
             gt.deleted_at,
-            COALESCE(ARRAY_AGG(gcs.co_supervisor_researcher_id) FILTER (WHERE gcs.co_supervisor_researcher_id IS NOT NULL), '{{}}') as co_supervisor_ids
+            COALESCE(ARRAY_AGG(DISTINCT gcs.co_supervisor_researcher_id)
+                     FILTER (WHERE gcs.co_supervisor_researcher_id IS NOT NULL), '{{}}') as co_supervisor_ids,
+            COALESCE(
+                JSON_AGG(
+                    DISTINCT JSONB_BUILD_OBJECT(
+                        'id', t.id,
+                        'name', t.name,
+                        'color_code', t.color_code,
+                        'created_at', t.created_at
+                    )
+                ) FILTER (WHERE t.id IS NOT NULL),
+                '[]'
+            ) as tags
         FROM
             guidance_tracking gt
         LEFT JOIN
             guidance_co_supervisors gcs ON gt.id = gcs.guidance_tracking_id
+        LEFT JOIN
+            guidance_tags gtg ON gt.id = gtg.guidance_tracking_id
+        LEFT JOIN
+            tags t ON gtg.tag_id = t.id
         WHERE gt.id = %(guidance_id)s AND gt.deleted_at IS NULL
         GROUP BY gt.id;
     """
@@ -168,16 +200,15 @@ def get_guidance_tracking_by_id(guidance_id: UUID4):
         "updated_at",
         "deleted_at",
         "co_supervisor_ids",
+        "tags",
     ]
     df = pd.DataFrame(result, columns=columns)
     return df.to_dict(orient="records")[0], 200
 
 
-import uuid
-
-
 def create_guidance_tracking(data: dict):
     co_supervisor_ids = data.pop("co_supervisor_ids", [])
+    tag_ids = data.pop("tag_ids", [])
     new_guidance_id = str(uuid.uuid4())
     data["id"] = new_guidance_id
 
@@ -209,6 +240,15 @@ def create_guidance_tracking(data: dict):
                 }
                 adm_database.exec(SQL_INSERT_CO_SUPERVISOR, params)
 
+        if tag_ids:
+            SQL_INSERT_TAGS = """
+                INSERT INTO guidance_tags (guidance_tracking_id, tag_id)
+                VALUES (%(guidance_id)s, %(tag_id)s);
+            """
+            for tag_id in tag_ids:
+                params = {"guidance_id": new_guidance_id, "tag_id": tag_id}
+                adm_database.exec(SQL_INSERT_TAGS, params)
+
         return {
             "message": "Registro criado com sucesso.",
             "id": new_guidance_id,
@@ -219,6 +259,7 @@ def create_guidance_tracking(data: dict):
 
 def update_guidance_tracking(guidance_id: UUID4, data: dict):
     co_supervisor_ids = data.pop("co_supervisor_ids", [])
+    tag_ids = data.pop("tag_ids", [])
     params = data.copy()
     params["guidance_id"] = guidance_id
 
@@ -240,9 +281,13 @@ def update_guidance_tracking(guidance_id: UUID4, data: dict):
         """
         adm_database.exec(SQL_UPDATE_GUIDANCE, params)
 
-        SQL_DELETE_CO_SUPERVISORS = "DELETE FROM guidance_co_supervisors WHERE guidance_tracking_id = %(guidance_id)s;"
         adm_database.exec(
-            SQL_DELETE_CO_SUPERVISORS, {"guidance_id": guidance_id}
+            "DELETE FROM guidance_co_supervisors WHERE guidance_tracking_id = %(guidance_id)s;",
+            {"guidance_id": guidance_id},
+        )
+        adm_database.exec(
+            "DELETE FROM guidance_tags WHERE guidance_tracking_id = %(guidance_id)s;",
+            {"guidance_id": guidance_id},
         )
 
         if co_supervisor_ids:
@@ -251,27 +296,28 @@ def update_guidance_tracking(guidance_id: UUID4, data: dict):
                 VALUES (%(guidance_id)s, %(co_supervisor_id)s);
             """
             for co_supervisor_id in co_supervisor_ids:
-                insert_params = {
-                    "guidance_id": guidance_id,
-                    "co_supervisor_id": co_supervisor_id,
-                }
-                adm_database.exec(SQL_INSERT_CO_SUPERVISOR, insert_params)
+                adm_database.exec(
+                    SQL_INSERT_CO_SUPERVISOR,
+                    {
+                        "guidance_id": guidance_id,
+                        "co_supervisor_id": co_supervisor_id,
+                    },
+                )
+
+        if tag_ids:
+            SQL_INSERT_TAGS = """
+                INSERT INTO guidance_tags (guidance_tracking_id, tag_id)
+                VALUES (%(guidance_id)s, %(tag_id)s);
+            """
+            for tag_id in tag_ids:
+                adm_database.exec(
+                    SQL_INSERT_TAGS,
+                    {"guidance_id": guidance_id, "tag_id": tag_id},
+                )
 
         return {"message": "Registro atualizado com sucesso."}, 200
     except Exception as e:
         return {"message": f"Erro ao atualizar registro: {e}"}, 500
-
-
-def delete_guidance_tracking(guidance_id: UUID4):
-    SCRIPT_SQL = """
-        UPDATE guidance_tracking
-        SET deleted_at = NOW()
-        WHERE id = %(guidance_id)s AND deleted_at IS NULL;
-    """
-    params = {"guidance_id": guidance_id}
-    adm_database.exec(SCRIPT_SQL, params)
-    return {"message": "Registro excluído com sucesso."}, 200
-
 
 def create_guidance_config(data: dict):
     SCRIPT_SQL = """
@@ -360,3 +406,9 @@ def delete_guidance_config(config_id: UUID4):
     params = {"config_id": config_id}
     adm_database.exec(SCRIPT_SQL, params)
     return {"message": "Configuração excluída com sucesso."}, 200
+
+def delete_guidance_tracking(guidance_id: UUID4): 
+    SCRIPT_SQL = """ UPDATE guidance_tracking SET deleted_at = NOW() WHERE id = %(guidance_id)s AND deleted_at IS NULL; """ 
+    params = {"guidance_id": guidance_id} 
+    adm_database.exec(SCRIPT_SQL, params) 
+    return {"message": "Registro excluído com sucesso."}, 200
