@@ -1,3 +1,4 @@
+import datetime
 from uuid import UUID, uuid4
 
 import pandas as pd
@@ -9,10 +10,11 @@ conn = Connection()
 
 def create_area(params: dict):
     params["id"] = uuid4()
+    params["created_at"] = datetime.datetime.now()
 
     SCRIPT_SQL = """
-        INSERT INTO public.areas(id, name)
-        VALUES (%(id)s, %(name)s);
+        INSERT INTO public.areas(id, name, created_at)
+        VALUES (%(id)s, %(name)s, %(created_at)s);
         """
     return conn.exec(SCRIPT_SQL, params)
 
@@ -32,7 +34,7 @@ def get_area(area_id_str: str = None):
         filters += " AND id = %(id)s"
 
     SCRIPT_SQL = f"""
-        SELECT id, name
+        SELECT id, name, created_at
         FROM public.areas
         WHERE 1 = 1
             {filters}
@@ -40,7 +42,7 @@ def get_area(area_id_str: str = None):
 
     result = conn.select(SCRIPT_SQL, params)
 
-    data = pd.DataFrame(result, columns=["id", "name"])
+    data = pd.DataFrame(result, columns=["id", "name", "created_at"])
 
     records = data.to_dict(orient="records")
 
