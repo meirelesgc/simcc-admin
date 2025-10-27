@@ -1,5 +1,3 @@
-import json
-
 import httpx
 import pandas as pd
 from pydantic import UUID4
@@ -23,41 +21,42 @@ class ConflictError(ValueError):
 
 
 def researcher_update(researcher):
-    area_data_str = researcher["area"]
+    area_ids = researcher.pop("area_ids", [])
+
+    if len(area_ids) != len(set(area_ids)):
+        raise ValueError("A lista de áreas (area_ids) contém IDs repetidos.")
 
     try:
-        area_data = json.loads(area_data_str)
-    except json.JSONDecodeError:
-        return {"message": "Erro na formatação JSON do campo 'area'."}, 400
-
-    area_leaders_encontrados = set()
-
-    for area in area_data:
-        area_leader = area.get("area_leader")
-
-        if not area_leader:
-            continue
-
-        if area_leader in area_leaders_encontrados:
-            raise ConflictError(
-                f"A área '{area_leader}' está repetida na lista."
-            )
-
-        area_leaders_encontrados.add(area_leader)
-
-    researcher["area"] = area_data_str
-
-    try:
-        SCRIPT_SQL = """
+        SCRIPT_SQL_UPDATE = """
             UPDATE researcher SET
                 name = %(name)s,
                 lattes_id = %(lattes_id)s,
                 institution_id = %(institution_id)s,
-                status = %(status)s,
-                area = %(area)s
+                status = %(status)s
             WHERE researcher_id = %(researcher_id)s;
             """
-        adm_database.exec(SCRIPT_SQL, researcher)
+        adm_database.exec(SCRIPT_SQL_UPDATE, researcher)
+
+        researcher_id = researcher["researcher_id"]
+
+        SQL_DELETE_AREAS = """
+            DELETE FROM researcher_area
+            WHERE researcher_id = %(researcher_id)s;
+            """
+        adm_database.exec(SQL_DELETE_AREAS, {"researcher_id": researcher_id})
+
+        if area_ids:
+            SQL_INSERT_AREAS = """
+                INSERT INTO researcher_area (researcher_id, area_id)
+                VALUES (%(researcher_id)s, %(area_id)s);
+                """
+
+            params_list = [
+                {"researcher_id": researcher_id, "area_id": a_id}
+                for a_id in area_ids
+            ]
+
+            adm_database.execmany(SQL_INSERT_AREAS, params_list)
 
         return {"message": "Pesquisador atualizado com sucesso."}, 200
 
@@ -185,10 +184,37 @@ def researcher_basic_query(
         params["rows"] = rows
 
     script_sql = f"""
-        SELECT DISTINCT r.researcher_id, r.name, r.lattes_id, r.institution_id,
-            r.created_at, r.status, r.area, r.focal_point
+        WITH researcher_areas AS (
+            SELECT
+                ra.researcher_id,
+                COALESCE(
+                    JSON_AGG(
+                        DISTINCT JSONB_BUILD_OBJECT(
+                            'id', a.id,
+                            'name', a.name
+                        )
+                    ) FILTER (WHERE a.id IS NOT NULL),
+                    '[]'
+                ) AS areas_json
+            FROM
+                public.researcher_area ra
+            INNER JOIN
+                public.areas a ON ra.area_id = a.id
+            GROUP BY
+                ra.researcher_id
+        )
+        SELECT
+            r.researcher_id,
+            r.name,
+            r.lattes_id,
+            r.institution_id,
+            r.created_at,
+            r.status,
+            ra.areas_json AS areas
         FROM
-            researcher r
+            public.researcher r
+        LEFT JOIN
+            researcher_areas ra ON r.researcher_id = ra.researcher_id
         {where_clause}
         ORDER BY
             r.created_at DESC
@@ -209,8 +235,7 @@ def researcher_basic_query(
             "institution_id",
             "created_at",
             "status",
-            "area",
-            "focal_point",
+            "areas",
         ],
     ).drop(columns=["created_at"])
 

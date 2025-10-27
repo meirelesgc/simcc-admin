@@ -366,5 +366,39 @@ CREATE TABLE IF NOT EXISTS ufmg.disciplines (
 );
 CREATE TABLE IF NOT EXISTS public.tags(
     id uuid NOT NULL DEFAULT uuid_generate_v4(),
+    name VARCHAR,
+    color_code VARCHAR
+);
+CREATE TABLE IF NOT EXISTS public.guidance_tags
+(
+    guidance_tracking_id uuid NOT NULL,
+    tag_id uuid NOT NULL,
+    CONSTRAINT guidance_tags_pkey PRIMARY KEY (guidance_tracking_id, tag_id),
+    CONSTRAINT guidance_tags_guidance_tracking_id_fkey FOREIGN KEY (guidance_tracking_id)
+        REFERENCES public.guidance_tracking (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE,
+    CONSTRAINT guidance_tags_tag_id_fkey FOREIGN KEY (tag_id)
+        REFERENCES public.tags (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE
+);
+CREATE TABLE IF NOT EXISTS public.areas (
+    id uuid NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
     name VARCHAR
+);
+CREATE TABLE IF NOT EXISTS public.researcher_area (
+    researcher_id uuid NOT NULL,
+    area_id uuid NOT NULL,
+    CONSTRAINT researcher_area_pkey PRIMARY KEY (researcher_id, area_id),
+    
+    CONSTRAINT researcher_area_researcher_id_fkey FOREIGN KEY (researcher_id)
+        REFERENCES public.researcher (researcher_id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE,
+    
+    CONSTRAINT researcher_area_area_id_fkey FOREIGN KEY (area_id)
+        REFERENCES public.areas (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE
 );
