@@ -212,6 +212,9 @@ def create_guidance_tracking(data: dict):
     new_guidance_id = str(uuid.uuid4())
     data["id"] = new_guidance_id
 
+    if len(tag_ids) != len(set(tag_ids)):
+        raise ValueError("A lista de tags contém IDs repetidos.")
+
     try:
         SQL_INSERT_GUIDANCE = """
             INSERT INTO guidance_tracking (
@@ -253,6 +256,8 @@ def create_guidance_tracking(data: dict):
             "message": "Registro criado com sucesso.",
             "id": new_guidance_id,
         }, 201
+    except ValueError as e:
+        return {"message": f"Erro de Conflito: {e}"}, 409  # 409 Conflict
     except Exception as e:
         return {"message": f"Erro ao criar registro: {e}"}, 500
 
@@ -262,6 +267,9 @@ def update_guidance_tracking(guidance_id: UUID4, data: dict):
     tag_ids = data.pop("tag_ids", [])
     params = data.copy()
     params["guidance_id"] = guidance_id
+
+    if len(tag_ids) != len(set(tag_ids)):
+        raise ValueError("A lista de tags contém IDs repetidos.")
 
     try:
         SQL_UPDATE_GUIDANCE = """
@@ -316,8 +324,11 @@ def update_guidance_tracking(guidance_id: UUID4, data: dict):
                 )
 
         return {"message": "Registro atualizado com sucesso."}, 200
+    except ValueError as e:
+        return {"message": f"Erro de Conflito: {e}"}, 409
     except Exception as e:
         return {"message": f"Erro ao atualizar registro: {e}"}, 500
+
 
 def create_guidance_config(data: dict):
     SCRIPT_SQL = """
@@ -407,8 +418,9 @@ def delete_guidance_config(config_id: UUID4):
     adm_database.exec(SCRIPT_SQL, params)
     return {"message": "Configuração excluída com sucesso."}, 200
 
-def delete_guidance_tracking(guidance_id: UUID4): 
-    SCRIPT_SQL = """ UPDATE guidance_tracking SET deleted_at = NOW() WHERE id = %(guidance_id)s AND deleted_at IS NULL; """ 
-    params = {"guidance_id": guidance_id} 
-    adm_database.exec(SCRIPT_SQL, params) 
+
+def delete_guidance_tracking(guidance_id: UUID4):
+    SCRIPT_SQL = """ UPDATE guidance_tracking SET deleted_at = NOW() WHERE id = %(guidance_id)s AND deleted_at IS NULL; """
+    params = {"guidance_id": guidance_id}
+    adm_database.exec(SCRIPT_SQL, params)
     return {"message": "Registro excluído com sucesso."}, 200

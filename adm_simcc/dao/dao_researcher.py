@@ -1,3 +1,5 @@
+import json
+
 import httpx
 import pandas as pd
 from pydantic import UUID4
@@ -16,18 +18,53 @@ adm_database = Connection()
 client = Client("http://servicosweb.cnpq.br/srvcurriculo/WSCurriculo?wsdl")
 
 
+class ConflictError(ValueError):
+    pass
+
+
 def researcher_update(researcher):
-    researcher["area"] = str(researcher["area"])
-    SCRIPT_SQL = """
-        UPDATE researcher SET
-            name = %(name)s,
-            lattes_id = %(lattes_id)s,
-            institution_id = %(institution_id)s,
-            status = %(status)s,
-            area = %(area)s
-        WHERE researcher_id = %(researcher_id)s;
-        """
-    adm_database.exec(SCRIPT_SQL, researcher)
+    area_data_str = researcher["area"]
+
+    try:
+        area_data = json.loads(area_data_str)
+    except json.JSONDecodeError:
+        return {"message": "Erro na formatação JSON do campo 'area'."}, 400
+
+    area_leaders_encontrados = set()
+
+    for area in area_data:
+        area_leader = area.get("area_leader")
+
+        if not area_leader:
+            continue
+
+        if area_leader in area_leaders_encontrados:
+            raise ConflictError(
+                f"A área '{area_leader}' está repetida na lista."
+            )
+
+        area_leaders_encontrados.add(area_leader)
+
+    researcher["area"] = area_data_str
+
+    try:
+        SCRIPT_SQL = """
+            UPDATE researcher SET
+                name = %(name)s,
+                lattes_id = %(lattes_id)s,
+                institution_id = %(institution_id)s,
+                status = %(status)s,
+                area = %(area)s
+            WHERE researcher_id = %(researcher_id)s;
+            """
+        adm_database.exec(SCRIPT_SQL, researcher)
+
+        return {"message": "Pesquisador atualizado com sucesso."}, 200
+
+    except ConflictError as e:
+        return {"message": f"Erro de Conflito: {e}"}, 409
+    except Exception as e:
+        return {"message": f"Erro ao atualizar pesquisador: {e}"}, 500
 
 
 def cpf_to_lattes(cpf: str):

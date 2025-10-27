@@ -1,3 +1,4 @@
+import json
 from http import HTTPStatus
 
 import psycopg2
@@ -36,9 +37,43 @@ def researcher_insert():
 
 @rest_researcher.route("/Update", methods=["PUT"])
 def researcher_update():
-    researcher = request.get_json()
-    dao_researcher.researcher_update(researcher[0])
-    return jsonify({"message": "ok"}), HTTPStatus.OK
+    researcher_data = request.get_json()
+
+    if (
+        not researcher_data
+        or not isinstance(researcher_data, list)
+        or not researcher_data[0]
+    ):
+        return jsonify(
+            {"message": "Dados de entrada inválidos."}
+        ), HTTPStatus.BAD_REQUEST
+
+    researcher = researcher_data[0]
+
+    try:
+        dao_researcher.researcher_update(researcher)
+
+        return jsonify(
+            {"message": "Registro atualizado com sucesso."}
+        ), HTTPStatus.OK
+
+    except dao_researcher.ConflictError as e:
+        return jsonify(
+            {"message": f"Erro de Conflito: {e}"}
+        ), HTTPStatus.CONFLICT
+
+    except json.JSONDecodeError:
+        return jsonify(
+            {
+                "message": "Erro na formatação JSON de algum campo no corpo da requisição."
+            }
+        ), HTTPStatus.BAD_REQUEST
+
+    except Exception as e:
+        print(f"Erro inesperado durante a atualização do pesquisador: {e}")
+        return jsonify(
+            {"message": "Erro interno do servidor ao atualizar o registro."}
+        ), HTTPStatus.INTERNAL_SERVER_ERROR
 
 
 @rest_researcher.route("/Delete", methods=["DELETE"])
