@@ -21,10 +21,13 @@ class ConflictError(ValueError):
 
 
 def researcher_update(researcher):
-    area_ids = researcher.pop("area_ids", [])
+    area_objects = researcher.pop("areas", [])
 
+    area_ids = [area.get("id") for area in area_objects if area.get("id")]
     if len(area_ids) != len(set(area_ids)):
-        raise ValueError("A lista de áreas (area_ids) contém IDs repetidos.")
+        return {
+            "message": "A lista de áreas (areas) contém IDs repetidos."
+        }, 400
 
     try:
         SCRIPT_SQL_UPDATE = """
@@ -45,15 +48,19 @@ def researcher_update(researcher):
             """
         adm_database.exec(SQL_DELETE_AREAS, {"researcher_id": researcher_id})
 
-        if area_ids:
+        if area_objects:
             SQL_INSERT_AREAS = """
-                INSERT INTO researcher_area (researcher_id, area_id)
-                VALUES (%(researcher_id)s, %(area_id)s);
+                INSERT INTO researcher_area (researcher_id, area_id, focal_point)
+                VALUES (%(researcher_id)s, %(area_id)s, %(focal_point)s);
                 """
 
             params_list = [
-                {"researcher_id": researcher_id, "area_id": a_id}
-                for a_id in area_ids
+                {
+                    "researcher_id": researcher_id,
+                    "area_id": area["id"],
+                    "focal_point": area.get("focal_point", False),
+                }
+                for area in area_objects
             ]
 
             adm_database.execmany(SQL_INSERT_AREAS, params_list)
@@ -191,7 +198,8 @@ def researcher_basic_query(
                     JSON_AGG(
                         DISTINCT JSONB_BUILD_OBJECT(
                             'id', a.id,
-                            'name', a.name
+                            'name', a.name,
+                            'focal_point', ra.focal_point
                         )
                     ) FILTER (WHERE a.id IS NOT NULL),
                     '[]'

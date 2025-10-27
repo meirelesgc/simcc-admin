@@ -390,6 +390,7 @@ CREATE TABLE IF NOT EXISTS public.areas (
 CREATE TABLE IF NOT EXISTS public.researcher_area (
     researcher_id uuid NOT NULL,
     area_id uuid NOT NULL,
+    focal_point BOOLEAN NOT NULL,
     CONSTRAINT researcher_area_pkey PRIMARY KEY (researcher_id, area_id),
     
     CONSTRAINT researcher_area_researcher_id_fkey FOREIGN KEY (researcher_id)
