@@ -4,199 +4,186 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE EXTENSION IF NOT EXISTS unaccent;
 
-DROP TYPE IF EXISTS RELATIONSHIP;
-CREATE TYPE RELATIONSHIP AS ENUM ('COLABORADOR', 'PERMANENTE');
+CREATE TYPE relationship AS ENUM ('COLABORADOR', 'PERMANENTE');
 
-DROP TYPE IF EXISTS NOTIFICATION_TYPE;
-CREATE TYPE NOTIFICATION_TYPE AS ENUM (
-    'NEW_PRODUCTION',
-    'USER_FOLLOWED',
-    'PRODUCTION_LIKED',
-    'LATTES_REMINDER',
-    'ORCID_REMINDER',
-    'NEW_LOGIN',
-    'MESSAGE',
-    'SYSTEM'
+CREATE TABLE IF NOT EXISTS public.institution(
+      institution_id uuid DEFAULT uuid_generate_v4(),
+      name VARCHAR(255) NOT NULL,
+      acronym VARCHAR(50) UNIQUE,
+      lattes_id CHAR(16),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (institution_id)
 );
 
-CREATE TABLE public.institution (
-    institution_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name VARCHAR(255) NOT NULL,
-    acronym VARCHAR(16) UNIQUE,
-    lattes_id VARCHAR(16),
-
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW(),
-    deleted_at TIMESTAMP
+CREATE TABLE IF NOT EXISTS public.researcher(
+      researcher_id uuid NOT NULL DEFAULT uuid_generate_v4() UNIQUE,
+      name VARCHAR(150) NOT NULL,
+      lattes_id VARCHAR(20),
+      institution_id uuid NOT NULL,
+      area VARCHAR(255),
+      focal_point VARCHAR(255),
+      status BOOL NOT NULL DEFAULT True,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (lattes_id, institution_id),
+      FOREIGN KEY (institution_id) REFERENCES institution (institution_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
-
-CREATE TABLE IF NOT EXISTS users (
-    user_id UUID NOT NULL,
-    orcid_id CHAR(20),
-    username VARCHAR(255) NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
-
-    provider VARCHAR(255),
-    verify BOOLEAN NOT NULL DEFAULT FALSE,
-    institution_id UUID,
-
-    photo_url TEXT,
-    lattes_id VARCHAR(16),
-    linkedin VARCHAR(255),
-
-
-
-    PRIMARY KEY (user_id),
-    FOREIGN KEY (institution_id) REFERENCES public.institution (institution_id) ON DELETE SET NULL ON UPDATE CASCADE,
-
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW(),
-    deleted_at TIMESTAMP
-);
-
-CREATE TABLE keys (
-    key_id UUID DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL,
-    key TEXT NOT NULL UNIQUE,
-    last_used TIMESTAMP,
-    PRIMARY KEY (key_id),
-    FOREIGN KEY (user_id) REFERENCES public.users (user_id) ON DELETE CASCADE ON UPDATE CASCADE,
-
-    created_at TIMESTAMP DEFAULT now(),
-    deleted_at TIMESTAMP
-);
-CREATE TABLE public.roles (
-    role_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name VARCHAR(255) NOT NULL UNIQUE,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP
-);
-CREATE TABLE public.permissions (
-    permission_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name VARCHAR(255),
-    display_name VARCHAR(255) NOT NULL UNIQUE,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP
-);
-CREATE TABLE public.user_roles (
-    user_id UUID NOT NULL,
-    role_id UUID NOT NULL,
-    PRIMARY KEY (user_id, role_id),
-    FOREIGN KEY (user_id) REFERENCES public.users (user_id) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (role_id) REFERENCES public.roles (role_id) ON DELETE CASCADE ON UPDATE CASCADE,
-    created_at TIMESTAMP DEFAULT NOW()
-);
-CREATE TABLE public.role_permissions (
-    role_id UUID NOT NULL,
-    permission_id UUID NOT NULL,
-    PRIMARY KEY (role_id, permission_id),
-    FOREIGN KEY (role_id) REFERENCES public.roles (role_id) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (permission_id) REFERENCES public.permissions (permission_id) ON DELETE CASCADE ON UPDATE CASCADE,
-    created_at TIMESTAMP DEFAULT NOW()
-);
-CREATE TABLE public.researcher (
-  researcher_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  name VARCHAR(150) NOT NULL,
-  lattes_id VARCHAR(20),
-  institution_id UUID NOT NULL,
-  extra_field VARCHAR(255),
-
-  status BOOLEAN NOT NULL DEFAULT TRUE,
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW(),
-  deleted_at TIMESTAMP,
-  
-  UNIQUE (lattes_id, institution_id),
-  FOREIGN KEY (institution_id) REFERENCES public.institution(institution_id) ON DELETE CASCADE ON UPDATE CASCADE
-);
-CREATE TABLE public.graduate_program (
-    graduate_program_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+CREATE TABLE IF NOT EXISTS public.graduate_program(
+    graduate_program_id uuid NOT NULL DEFAULT uuid_generate_v4(),
     code VARCHAR(100),
     name VARCHAR(100) NOT NULL,
     name_en VARCHAR(100),
-    basic_area VARCHAR(100),
+    basic_area VARCHAR(100), 
     cooperation_project VARCHAR(100),
     area VARCHAR(100) NOT NULL,
     modality VARCHAR(100) NOT NULL,
-    program_type VARCHAR(100),
+    TYPE VARCHAR(100) NULL,
     rating VARCHAR(5),
-    institution_id UUID NOT NULL,
-    state VARCHAR(4) DEFAULT 'BA',
-    city VARCHAR(100) DEFAULT 'Salvador',
-    region VARCHAR(100) DEFAULT 'Nordeste',
-    url_image VARCHAR(200),
-    acronym VARCHAR(100),
+    institution_id uuid NOT NULL,
+    state character varying(4) DEFAULT 'BA'::character varying,
+    city character varying(100) DEFAULT 'Salvador'::character varying,
+    region character varying(100) DEFAULT 'Nordeste'::character varying,
+    url_image VARCHAR(200) NULL,
+    acronym character varying(100),
     description TEXT,
-    type VARCHAR,
-    visible BOOLEAN DEFAULT FALSE,
+    visible bool DEFAULT FALSE,
     site TEXT,
-    coordinator VARCHAR(100),
+    coordinator VARCHAR(100), 
     email VARCHAR(100),
-    start DATE,
-    phone VARCHAR(20),
-    periodicity VARCHAR(50),
-
-
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW(),
-    deleted_at TIMESTAMP,
-    FOREIGN KEY (institution_id) REFERENCES public.institution(institution_id) ON DELETE CASCADE ON UPDATE CASCADE
+    start DATE, 
+    phone VARCHAR(20), 
+    periodicity VARCHAR(50), 
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (graduate_program_id),
+    FOREIGN KEY (institution_id) REFERENCES institution (institution_id) ON UPDATE CASCADE ON DELETE CASCADE
+);
+CREATE TABLE IF NOT EXISTS public.graduate_program_researcher(
+      graduate_program_id uuid NOT NULL,
+      researcher_id uuid NOT NULL,
+      year INT,
+      type_ relationship,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (graduate_program_id, researcher_id),
+      FOREIGN KEY (researcher_id) REFERENCES researcher (researcher_id) ON DELETE CASCADE ON UPDATE CASCADE,
+      FOREIGN KEY (graduate_program_id) REFERENCES graduate_program (graduate_program_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS research_group (
-    id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name character varying(200),
-    institution character varying(200),
-    first_leader character varying(200),
-    first_leader_id uuid,
-    second_leader character varying(200),
-    second_leader_id uuid,
-    area character varying(200),
-    census int,
-    start_of_collection character varying(200),
-    end_of_collection character varying(200),
-    group_identifier character varying(200),
-    year int,
-    institution_name character varying(200),
-    category character varying(200),
-    UNIQUE (name, institution),
-    UNIQUE (group_identifier),
+CREATE TABLE IF NOT EXISTS public.graduate_program_student(
+      graduate_program_id uuid NOT NULL,
+      researcher_id uuid NOT NULL,
+      year INT [],
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (graduate_program_id, researcher_id, year),
+      FOREIGN KEY (researcher_id) REFERENCES researcher (researcher_id) ON DELETE CASCADE ON UPDATE CASCADE,
+      FOREIGN KEY (graduate_program_id) REFERENCES graduate_program (graduate_program_id) ON DELETE CASCADE ON UPDATE CASCADE
+);
 
+CREATE TABLE IF NOT EXISTS public.weights (
+      institution_id uuid,
+      a1 numeric(20, 3),
+      a2 numeric(20, 3),
+      a3 numeric(20, 3),
+      a4 numeric(20, 3),
+      b1 numeric(20, 3),
+      b2 numeric(20, 3),
+      b3 numeric(20, 3),
+      b4 numeric(20, 3),
+      c numeric(20, 3),
+      sq numeric(20, 3),
+      book numeric(20, 3),
+      book_chapter numeric(20, 3),
+      software character varying,
+      patent_granted character varying,
+      patent_not_granted character varying,
+      report character varying,
+      f1 numeric(20, 3) DEFAULT 0,
+      f2 numeric(20, 3) DEFAULT 0,
+      f3 numeric(20, 3) DEFAULT 0,
+      f4 numeric(20, 3) DEFAULT 0,
+      f5 numeric(20, 3) DEFAULT 0,
+      PRIMARY KEY (institution_id),
+      FOREIGN KEY (institution_id) REFERENCES public.institution (institution_id) ON DELETE CASCADE ON UPDATE CASCADE
+);
 
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW(),
-    deleted_at TIMESTAMP
+CREATE TABLE IF NOT EXISTS public.roles (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      role VARCHAR(255) NOT NULL
 );
-CREATE TABLE public.graduate_program_researcher (
-  graduate_program_id UUID NOT NULL,
-  researcher_id UUID NOT NULL,
-  year INT[],
-  type_ RELATIONSHIP,
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW(),
-  deleted_at TIMESTAMP,
-  PRIMARY KEY (graduate_program_id, researcher_id),
-  FOREIGN KEY (researcher_id) REFERENCES public.researcher(researcher_id) ON DELETE CASCADE ON UPDATE CASCADE,
-  FOREIGN KEY (graduate_program_id) REFERENCES public.graduate_program(graduate_program_id) ON DELETE CASCADE ON UPDATE CASCADE
+
+CREATE TABLE IF NOT EXISTS public.permission (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      role_id UUID REFERENCES roles(id) ON DELETE CASCADE ON UPDATE CASCADE,
+      permission VARCHAR(255) NOT NULL
 );
-CREATE TABLE public.graduate_program_student (
-  graduate_program_id UUID NOT NULL,
-  researcher_id UUID NOT NULL,
-  year INT[],
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW(),
-  deleted_at TIMESTAMP,
-  PRIMARY KEY (graduate_program_id, researcher_id, year),
-  FOREIGN KEY (researcher_id) REFERENCES public.researcher(researcher_id) ON DELETE CASCADE ON UPDATE CASCADE,
-  FOREIGN KEY (graduate_program_id) REFERENCES public.graduate_program(graduate_program_id) ON DELETE CASCADE ON UPDATE CASCADE
+
+CREATE TABLE IF NOT EXISTS public.incite_graduate_program(
+      incite_graduate_program_id uuid NOT NULL DEFAULT uuid_generate_v4(),
+      name VARCHAR(255) NOT NULL,
+      description VARCHAR(500) NULL,
+      link VARCHAR(500) NULL,
+      institution_id uuid NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      visible bool DEFAULT FALSE,
+      PRIMARY KEY (incite_graduate_program_id),
+      FOREIGN KEY (institution_id) REFERENCES institution (institution_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
-CREATE TABLE IF NOT EXISTS public.guidance_tracking
-(
+
+CREATE TABLE IF NOT EXISTS public.incite_graduate_program_researcher(
+      incite_graduate_program_id uuid NOT NULL,
+      researcher_id uuid NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (incite_graduate_program_id, researcher_id),
+      FOREIGN KEY (researcher_id) REFERENCES researcher (researcher_id) ON DELETE CASCADE ON UPDATE CASCADE,
+      FOREIGN KEY (incite_graduate_program_id) REFERENCES incite_graduate_program (incite_graduate_program_id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS public.users (
+      user_id uuid NOT NULL DEFAULT uuid_generate_v4(),
+      display_name VARCHAR(255) NOT NULL,
+      email VARCHAR(255) UNIQUE NOT NULL,
+      uid VARCHAR(255) UNIQUE NOT NULL,
+      photo_url TEXT,
+      lattes_id VARCHAR(255),
+      institution_id uuid,
+      provider VARCHAR(255),
+      linkedin VARCHAR(255),
+      verify bool DEFAULT FALSE,
+      PRIMARY KEY (user_id),
+      FOREIGN KEY (institution_id) REFERENCES public.institution (institution_id) ON DELETE SET NULL ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS public.users_roles (
+      role_id UUID NOT NULL,
+      user_id UUID NOT NULL,
+      PRIMARY KEY (role_id, user_id),
+      FOREIGN KEY (role_id) REFERENCES public.roles (id) ON DELETE CASCADE ON UPDATE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES public.users (user_id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS public.newsletter_subscribers (
+      id uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
+      email VARCHAR(255) NOT NULL UNIQUE,
+      subscribed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS public.feedback (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    rating INTEGER CHECK (rating >= 0 AND rating <= 10) NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS public.guidance_tracking (
     id uuid NOT NULL DEFAULT uuid_generate_v4(),
     student_researcher_id uuid NOT NULL,
     supervisor_researcher_id uuid NOT NULL,
-    co_supervisor_researcher_id uuid NOT NULL,
     graduate_program_id uuid NOT NULL,
     start_date date NOT NULL,
     planned_date_project date NOT NULL,
@@ -209,10 +196,6 @@ CREATE TABLE IF NOT EXISTS public.guidance_tracking
     updated_at timestamp without time zone,
     deleted_at timestamp without time zone,
     CONSTRAINT guidance_tracking_pkey PRIMARY KEY (id),
-    CONSTRAINT "FKco_supervisor_researcher" FOREIGN KEY (co_supervisor_researcher_id)
-        REFERENCES public.researcher (researcher_id) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE CASCADE,
     CONSTRAINT "FKgraduate_program" FOREIGN KEY (graduate_program_id)
         REFERENCES public.graduate_program (graduate_program_id) MATCH SIMPLE
         ON UPDATE CASCADE
@@ -226,9 +209,48 @@ CREATE TABLE IF NOT EXISTS public.guidance_tracking
         ON UPDATE CASCADE
         ON DELETE CASCADE
 );
+CREATE TABLE IF NOT EXISTS public.tags(
+    id uuid NOT NULL uuid_generate_v4(),
+    name VARCHAR NOT NULL
+);
+CREATE UNIQUE INDEX unique_student_program_undel ON public.guidance_tracking (student_researcher_id, graduate_program_id)
+WHERE deleted_at IS NULL;
+CREATE TABLE IF NOT EXISTS public.guidance_co_supervisors
+(
+    guidance_tracking_id uuid NOT NULL,
+    co_supervisor_researcher_id uuid NOT NULL,
+    CONSTRAINT guidance_co_supervisors_pkey PRIMARY KEY (guidance_tracking_id, co_supervisor_researcher_id), 
+    CONSTRAINT "FK_guidance" FOREIGN KEY (guidance_tracking_id)
+        REFERENCES public.guidance_tracking (id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT "FK_co_supervisor" FOREIGN KEY (co_supervisor_researcher_id)
+        REFERENCES public.researcher (researcher_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+);
+CREATE TABLE IF NOT EXISTS guidance_config (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+
+    duration_project_months INT NOT NULL,
+    duration_qualification_months INT NOT NULL,
+    duration_conclusion_months INT NOT NULL,
+
+    config_name VARCHAR NOT NULL,
+
+    created_at timestamp without time zone NOT NULL DEFAULT now(),
+    updated_at timestamp without time zone,
+
+    CONSTRAINT duration_project_positive CHECK (duration_project_months >= 0),
+    CONSTRAINT duration_qualification_positive CHECK (duration_qualification_months >= 0),
+    CONSTRAINT duration_conclusion_positive CHECK (duration_conclusion_months >= 0)
+);
+
 CREATE SCHEMA IF NOT EXISTS ufmg;
+
 CREATE TABLE IF NOT EXISTS ufmg.researcher (
     researcher_id UUID PRIMARY KEY REFERENCES public.researcher(researcher_id) ON DELETE CASCADE ON UPDATE CASCADE,
+    
     -- Campos comuns
     full_name VARCHAR(255),
     gender VARCHAR(255),
@@ -258,12 +280,9 @@ CREATE TABLE IF NOT EXISTS ufmg.researcher (
     -- Campos que estavam só na tabela antiga
     registration_number VARCHAR(200),            
     ufmg_registration_number VARCHAR(200),       
-    semester_reference VARCHAR(6),
-
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP,
-    deleted_at TIMESTAMP     
+    semester_reference VARCHAR(6)                
 );
+
 CREATE TABLE IF NOT EXISTS ufmg.technician (
     technician_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 
@@ -296,157 +315,60 @@ CREATE TABLE IF NOT EXISTS ufmg.technician (
     -- Campos antigos
     registration_number VARCHAR(255),
     ufmg_registration_number VARCHAR(255),
-    semester_reference VARCHAR(6),
-
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP,
-    deleted_at TIMESTAMP
+    semester_reference VARCHAR(6)
 );
+
 CREATE TABLE IF NOT EXISTS ufmg.departament (
-    dep_id varchar NOT NULL PRIMARY KEY,
-    org_cod varchar,
-    dep_nom varchar,
-    dep_des text,
-    dep_email varchar,
-    dep_site varchar,
-    dep_sigla varchar,
-    dep_tel varchar,
-    img_data bytea,
-    menagers text[],
-    icon_url TEXT,
-    cover_url TEXT
+      dep_id VARCHAR(20),
+      org_cod VARCHAR(3),
+      dep_nom VARCHAR(100),
+      dep_des TEXT,
+      dep_email VARCHAR(100),
+      dep_site VARCHAR(100),
+      dep_sigla VARCHAR(30),
+      dep_tel VARCHAR(20),
+      img_data BYTEA,
+      PRIMARY KEY (dep_id)
 );
-CREATE TABLE IF NOT EXISTS ufmg.departament_researcher (
-    dep_id varchar NOT NULL,
-    researcher_id uuid NOT NULL,
-    PRIMARY KEY (dep_id, researcher_id),
-    FOREIGN KEY (dep_id) REFERENCES ufmg.departament(dep_id)
-        ON UPDATE CASCADE ON DELETE CASCADE,
-    FOREIGN KEY (researcher_id) REFERENCES public.researcher(researcher_id)
-        ON UPDATE CASCADE ON DELETE CASCADE
-);
+
 CREATE TABLE IF NOT EXISTS ufmg.departament_technician (
-    dep_id varchar NOT NULL,
-    technician_id uuid NOT NULL,
-    PRIMARY KEY (dep_id, technician_id),
-    FOREIGN KEY (dep_id) REFERENCES ufmg.departament(dep_id)
-        ON UPDATE CASCADE ON DELETE CASCADE,
-    FOREIGN KEY (technician_id) REFERENCES ufmg.technician(technician_id)
-        ON UPDATE CASCADE ON DELETE CASCADE
+      dep_id character varying(10),
+      technician_id uuid,
+      PRIMARY KEY (dep_id, technician_id),
+      FOREIGN KEY (dep_id) REFERENCES ufmg.departament (dep_id) ON DELETE CASCADE ON UPDATE CASCADE,
+      FOREIGN KEY (technician_id) REFERENCES ufmg.technician (technician_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-CREATE SCHEMA IF NOT EXISTS feature;
-CREATE TABLE IF NOT EXISTS feature.collection (
-    collection_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID,
-    name VARCHAR(255) NOT NULL,
-    description TEXT,
-    visible BOOLEAN DEFAULT TRUE,
-
-    icon_url TEXT,
-    cover_url TEXT,
-
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW(),
-    deleted_at TIMESTAMP,
-
-    FOREIGN KEY (user_id) REFERENCES public.users(user_id) ON DELETE CASCADE ON UPDATE CASCADE
-);
-CREATE TABLE IF NOT EXISTS feature.collection_entries(
-    collection_id UUID REFERENCES feature.collection(collection_id),
-    entry_id UUID NOT NULL,
-    type VARCHAR(255) NOT NULL,
-    FOREIGN KEY (collection_id) REFERENCES feature.collection(collection_id) ON DELETE CASCADE ON UPDATE CASCADE
-);
-CREATE TABLE IF NOT EXISTS feature.stars(
-    user_id UUID NOT NULL,
-    entry_id UUID NOT NULL,
-    type VARCHAR(255) NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES public.users(user_id) ON DELETE CASCADE ON UPDATE CASCADE
-);
-CREATE TABLE feature.notifications (
-  notification_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID NOT NULL,
-  sender_id UUID,
-  type NOTIFICATION_TYPE NOT NULL, 
-  data JSONB,
-  read BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMP DEFAULT NOW(),
-  read_at TIMESTAMP,
-
-  FOREIGN KEY (user_id) REFERENCES public.users(user_id) ON DELETE CASCADE ON UPDATE CASCADE,
-  FOREIGN KEY (sender_id) REFERENCES public.users(user_id) ON DELETE SET NULL ON UPDATE CASCADE
+CREATE TABLE IF NOT EXISTS ufmg.departament_researcher (
+      dep_id VARCHAR(20),
+      researcher_id uuid NOT NULL,
+      PRIMARY KEY (dep_id, researcher_id),
+      FOREIGN KEY (dep_id) REFERENCES ufmg.departament (dep_id) ON DELETE CASCADE ON UPDATE CASCADE,
+      FOREIGN KEY (researcher_id) REFERENCES public.researcher (researcher_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-CREATE TABLE feature.chats (
-    chat_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    chat_name VARCHAR,
-    is_group BOOLEAN NOT NULL DEFAULT FALSE,
-
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW(),
-    deleted_at TIMESTAMP
+CREATE TABLE IF NOT EXISTS ufmg.disciplines (
+      dep_id VARCHAR(20),
+      id VARCHAR(20),
+      semester VARCHAR(20),
+      department VARCHAR(255),
+      academic_activity_code VARCHAR(255),
+      academic_activity_name VARCHAR(255),
+      academic_activity_ch VARCHAR(255),
+      demanding_courses VARCHAR(255),
+      oft VARCHAR(50),
+      available_slots VARCHAR(50),
+      occupied_slots VARCHAR(50),
+      percent_occupied_slots VARCHAR(50),
+      schedule VARCHAR(255),
+      language VARCHAR(50),
+      researcher_id uuid [],
+      researcher_name VARCHAR [],
+      status VARCHAR(50),
+      workload VARCHAR [],
+      PRIMARY KEY (dep_id, id),
+      FOREIGN KEY (dep_id) REFERENCES ufmg.departament (dep_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
-CREATE TABLE feature.chat_participants (
-    chat_id UUID NOT NULL,
-    user_id UUID NOT NULL,
-    joined_at TIMESTAMP DEFAULT NOW(),
-    is_admin BOOLEAN NOT NULL DEFAULT FALSE,
-
-    PRIMARY KEY (chat_id, user_id),
-    FOREIGN KEY (chat_id) REFERENCES feature.chats (chat_id) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES public.users (user_id) ON DELETE CASCADE ON UPDATE CASCADE,
-
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW(),
-    deleted_at TIMESTAMP
-);
-
-CREATE TABLE feature.chat_messages (
-    message_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    chat_id UUID NOT NULL,
-    sender_id UUID NOT NULL,
-    content TEXT NOT NULL,
-    
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW(),
-    deleted_at TIMESTAMP,
-
-    FOREIGN KEY (chat_id) REFERENCES feature.chats (chat_id) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (sender_id) REFERENCES public.users (user_id) ON DELETE CASCADE ON UPDATE CASCADE
-);
-
-COMMIT;
-
-ROLLBACK;
-
-
---- Seeds
-BEGIN;
-
-INSERT INTO public.permissions (name, display_name) 
-VALUES 
-  ('ADMIN', 'administrativo'),
-  ('INSTITUTION', 'instituicoes'),
-  ('INSTITUTION', 'painel_instituicao'),
-  ('DEPARTMENT', 'departamentos'),
-  ('PROGRAM', 'programas'),
-  (NULL, 'grupos_pesquisa'),
-  ('RESEARCHER', 'pesquisadores'),
-  (NULL, 'barema'),
-  (NULL, 'notificacoes'),
-  (NULL, 'indicadores_instituicao'),
-  (NULL, 'indicadores_pos_graduacao'),
-  (NULL, 'indicadores_departamento'),
-  (NULL, 'indicadores_grupos_pesquisa'),
-  (NULL, 'configuracoes'),
-  ('ADMIN', 'apache_hop'),
-  ('ADMIN', 'cargos_funcoes'),
-  ('WEIGHTS', 'pesos_avaliacao'),
-  ('ADMIN', 'parâmetros'),
-  ('ADMIN', 'secao_pessoal');
-
-
 
 COMMIT;
 
