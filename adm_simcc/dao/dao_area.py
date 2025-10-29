@@ -48,7 +48,6 @@ def get_area(area_id_str: str = None):
 
     if one:
         return records[0] if records else {}
-
     return records
 
 
