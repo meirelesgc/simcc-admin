@@ -364,10 +364,11 @@ CREATE TABLE IF NOT EXISTS ufmg.disciplines (
       PRIMARY KEY (dep_id, id),
       FOREIGN KEY (dep_id) REFERENCES ufmg.departament (dep_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
-CREATE TABLE IF NOT EXISTS public.tags(
+CREATE TABLE IF NOT EXISTS public.tags (
     id uuid NOT NULL DEFAULT uuid_generate_v4(),
     name VARCHAR,
-    color_code VARCHAR
+    color_code VARCHAR,
+    PRIMARY KEY (id)
 );
 CREATE TABLE IF NOT EXISTS public.guidance_tags
 (
