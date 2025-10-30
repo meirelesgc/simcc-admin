@@ -228,7 +228,6 @@ def researcher_basic_query(
             r.created_at DESC
         {limit_clause};
     """
-    print(script_sql, params)
 
     registry = adm_database.select(script_sql, params)
 

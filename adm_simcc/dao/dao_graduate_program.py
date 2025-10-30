@@ -33,7 +33,7 @@ def graduate_program_insert(list_graduate_program: ListGraduateProgram):
             area, modality, type, rating, institution_id, state, city, region,
             url_image, acronym, description, visible, site, coordinator, email,
             start_date, phone, periodicity,
-            menagers -- Adicione o nome da coluna aqui
+            menagers
         ) VALUES (
             %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
             %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
