@@ -85,24 +85,24 @@ def graduate_program_basic_query(
 
     SCRIPT_SQL = f"""
         WITH permanent AS (
-            SELECT graduate_program_id, COUNT(*) AS qtd_permanente
+            SELECT graduate_program_id, COUNT(DISTINCT researcher_id) AS qtd_permanente
             FROM graduate_program_researcher
             WHERE type_ = 'PERMANENTE'
             GROUP BY graduate_program_id
         ),
         collaborators AS (
-            SELECT graduate_program_id, COUNT(*) AS qtd_colaborador
+            SELECT graduate_program_id, COUNT(DISTINCT researcher_id) AS qtd_colaborador
             FROM graduate_program_researcher
             WHERE type_ = 'COLABORADOR'
             GROUP BY graduate_program_id
         ),
         students AS (
-            SELECT graduate_program_id, COUNT(*) AS qtd_estudantes
+            SELECT graduate_program_id, COUNT(DISTINCT researcher_id) AS qtd_estudantes
             FROM graduate_program_student
             GROUP BY graduate_program_id
         ),
         researchers AS (
-            SELECT graduate_program_id, ARRAY_AGG(r.lattes_id) AS researchers
+            SELECT graduate_program_id, ARRAY_AGG(DISTINCT r.lattes_id) AS researchers
             FROM graduate_program_researcher gpr
                 LEFT JOIN researcher r ON gpr.researcher_id = r.researcher_id
             GROUP BY graduate_program_id
@@ -133,7 +133,8 @@ def graduate_program_basic_query(
             {filter_graduate_program}
             {filter_institution}
         ORDER BY gp.name
-    """
+        """
+
     registry = adm_database.select(SCRIPT_SQL, parameters)
     columns = [
         "graduate_program_id",
@@ -173,14 +174,10 @@ def graduate_program_basic_query(
     data_frame = pd.DataFrame(registry, columns=columns)
 
     SCRIPT_SQL_STUDENTS = """
-        SELECT
-            graduate_program_id,
-            COUNT(researcher_id) as qtr_discente
-        FROM
-            graduate_program_student
-        GROUP BY
-            graduate_program_id
-    """
+        SELECT graduate_program_id, COUNT(researcher_id) as qtr_discente
+        FROM graduate_program_student
+        GROUP BY graduate_program_id
+        """
     registry_students = adm_database.select(SCRIPT_SQL_STUDENTS)
 
     qtd_discentes = pd.DataFrame(
@@ -197,7 +194,9 @@ def graduate_program_basic_query(
     else:
         data_frame["qtd_discente"] = 0
 
-    data_frame.fillna(0, inplace=True)
+    data_frame["qtd_discente"] = data_frame["qtd_discente"].fillna(0)
+    data_frame["created_at"] = data_frame["created_at"].astype(object).fillna(0)
+    data_frame["updated_at"] = data_frame["updated_at"].astype(object).fillna(0)
 
     return data_frame.to_dict(orient="records")
 
