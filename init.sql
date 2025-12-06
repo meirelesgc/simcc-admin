@@ -2,7 +2,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE EXTENSION IF NOT EXISTS unaccent;
 
-CREATE TYPE relationship AS ENUM ('COLABORADOR', 'PERMANENTE');
+CREATE TYPE relationship AS ENUM ('COLABORADOR', 'PERMANENTE', 'EXTERNO');
 
 CREATE TABLE IF NOT EXISTS public.institution(
       institution_id uuid DEFAULT uuid_generate_v4(),
