@@ -1,36 +1,51 @@
 services:
-  jade_admin_db:
+  simcc-admin-db:
     image: pgvector/pgvector:pg17
+    volumes:
+      - simcc-admin-db:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
-    volumes:
-      - jade_admin_db:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 10s
       timeout: 5s
       retries: 5
     restart: unless-stopped
-    ports:
-      - '5434:5432'
-    env_file: .env
 
-  jade_redis:
+  simcc-cache:
     image: redis:latest
     volumes:
-      - jade_redis:/data
+      - simcc-cache:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
+
+  simcc-admin-back:
+    image: gleidsoncosta/simcc-admin-back:${JADE_ADMIN_TAG}
+    DATABASE_URL: postgresql://postgres:postgres@simcc-admin-db:5432/simcc
     env_file: .env
-  jade_admin_api:
-    image: gleidsoncosta/jade-admin:latest
     depends_on:
-      - jade_redis
-      - jade_admin_db
+      simcc-admin-db:
+        condition: service_healthy
+      simcc-cache:
+        condition: service_healthy
     restart: unless-stopped
+
+  simcc-admin-back-old:
+    image: gleidsoncosta/simcc-admin-back-old:${JADE_ADMIN_TAG}
     env_file: .env
+    depends_on:
+      simcc-admin-db:
+        condition: service_healthy
+      simcc-cache:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
-  jade_admin_db:
-  jade_redis:
+  simcc-admin-db:
+  simcc-cache:
