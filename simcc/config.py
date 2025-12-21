@@ -15,12 +15,9 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_SECRET: Optional[str] = None
     GOOGLE_REDIRECT_URI: Optional[str] = None
 
-    PROXY_ADMIN_URL: HttpUrl = 'http://localhost:9999'
-    FRONTEND_URL: HttpUrl = 'http://localhost:8080'
-
-    PROD: bool = True
-
-    REDIS: str = 'redis://localhost:6379/0'
+    PROXY_URL: HttpUrl = 'http://localhost:9999'
+    URL: HttpUrl = 'http://localhost:8080'
+    CACHE_URL: str = 'redis://localhost:6379/0'
 
     ROOT_PATH_ADMIN: str = str()
 

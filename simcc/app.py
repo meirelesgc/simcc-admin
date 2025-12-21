@@ -76,45 +76,43 @@ app.add_middleware(
 )
 
 
-if Settings().PROD:
+@app.middleware('http')
+async def reverse_proxy(request: Request, call_next):
+    response = await call_next(request)
 
-    @app.middleware('http')
-    async def reverse_proxy(request: Request, call_next):
-        response = await call_next(request)
+    if response.status_code == HTTPStatus.NOT_FOUND:
+        async with httpx.AsyncClient() as client:
+            headers = {
+                k: v
+                for k, v in request.headers.items()
+                if k.lower() not in {'host', 'content-length'}
+            }
+            proxy_response = await client.request(
+                method=request.method,
+                url=f'{Settings().PROXY_URL}{request.url.path}',
+                params=dict(request.query_params),
+                headers=headers,
+                content=await request.body(),
+                timeout=None,
+            )
+            excluded_headers = [
+                'content-encoding',
+                'transfer-encoding',
+                'connection',
+            ]
+            response_headers = {
+                k: v
+                for k, v in proxy_response.headers.items()
+                if k.lower() not in excluded_headers
+            }
 
-        if response.status_code == HTTPStatus.NOT_FOUND:
-            async with httpx.AsyncClient() as client:
-                headers = {
-                    k: v
-                    for k, v in request.headers.items()
-                    if k.lower() not in {'host', 'content-length'}
-                }
-                proxy_response = await client.request(
-                    method=request.method,
-                    url=f'{Settings().PROXY_ADMIN_URL}{request.url.path}',
-                    params=dict(request.query_params),
-                    headers=headers,
-                    content=await request.body(),
-                    timeout=None,
-                )
-                excluded_headers = [
-                    'content-encoding',
-                    'transfer-encoding',
-                    'connection',
-                ]
-                response_headers = {
-                    k: v
-                    for k, v in proxy_response.headers.items()
-                    if k.lower() not in excluded_headers
-                }
+            return Response(
+                content=proxy_response.content,
+                status_code=proxy_response.status_code,
+                headers=response_headers,
+            )
 
-                return Response(
-                    content=proxy_response.content,
-                    status_code=proxy_response.status_code,
-                    headers=response_headers,
-                )
-
-        return response
+    return response
 
 
 @app.get('/')

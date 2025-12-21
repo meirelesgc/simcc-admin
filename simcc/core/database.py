@@ -9,7 +9,7 @@ conn = Connection(
 )
 
 cache_conn = CacheConnection(
-    url=Settings().REDIS,
+    url=Settings().CACHE_URL,
 )
 
 

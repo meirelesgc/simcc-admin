@@ -27,7 +27,10 @@ services:
 
   simcc-admin-back:
     image: gleidsoncosta/simcc-admin-back:${JADE_ADMIN_TAG}
-    DATABASE_URL: postgresql://postgres:postgres@simcc-admin-db:5432/simcc
+    environment:
+      CACHE_URL: redis://simcc-cache:6379/0
+      PROXY_URL: http://simcc-admin-back-old:8000
+      DATABASE_URL: postgresql://postgres:postgres@simcc-admin-db:5432/simcc
     env_file: .env
     depends_on:
       simcc-admin-db:
@@ -38,6 +41,8 @@ services:
 
   simcc-admin-back-old:
     image: gleidsoncosta/simcc-admin-back-old:${JADE_ADMIN_TAG}
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@simcc-admin-db:5432/simcc
     env_file: .env
     depends_on:
       simcc-admin-db:

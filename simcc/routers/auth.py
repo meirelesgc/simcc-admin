@@ -70,7 +70,7 @@ async def orcid_callback(code: str, conn: Conn):
     user = await user_service.get_or_create_user_by_orcid(conn, orcid_claims)
     app_token = create_access_token(data={'sub': user.email})
 
-    URL = f'{Settings().FRONTEND_URL}authentication?token={app_token}'
+    URL = f'{Settings().URL}authentication?token={app_token}'
     response = RedirectResponse(url=URL, status_code=302)
 
     response.set_cookie(
@@ -109,7 +109,7 @@ async def shibboleth_login(
         conn, shib_user_data
     )
     app_token = create_access_token(data={'sub': user.email})
-    URL = f'{Settings().FRONTEND_URL}authentication?token={app_token}'
+    URL = f'{Settings().URL}authentication?token={app_token}'
     response = RedirectResponse(url=URL, status_code=302)
 
     response.set_cookie(
@@ -143,7 +143,7 @@ async def google_callback(code: str, conn: Conn):
     )
     access_token = create_access_token(data={'sub': user.email})
 
-    response = RedirectResponse(url=Settings().FRONTEND_URL, status_code=302)
+    response = RedirectResponse(url=Settings().URL, status_code=302)
 
     response.set_cookie(
         key='access_token',
