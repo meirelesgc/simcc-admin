@@ -30,7 +30,7 @@ services:
     environment:
       CACHE_URL: redis://simcc-cache:6379/0
       PROXY_URL: http://simcc-admin-back-old:8000
-      DATABASE_URL: postgresql://postgres:postgres@simcc-admin-db:5432/simcc
+      DATABASE_URL: postgresql://postgres:postgres@simcc-admin-db:5432/postgres
     env_file: .env
     depends_on:
       simcc-admin-db:
@@ -42,7 +42,7 @@ services:
   simcc-admin-back-old:
     image: gleidsoncosta/simcc-admin-back:${SIMCC_ADMIN_OLD_TAG}
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@simcc-admin-db:5432/simcc
+      DATABASE_URL: postgresql://postgres:postgres@simcc-admin-db:5432/postgres
     env_file: .env
     depends_on:
       simcc-admin-db:

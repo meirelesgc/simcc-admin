@@ -3,7 +3,7 @@ from simcc.core.cache_connection import CacheConnection
 from simcc.core.connection import Connection
 
 conn = Connection(
-    Settings().DATABASE_ADMIN_URL,
+    Settings().DATABASE_URL,
     max_size=20,
     timeout=10,
 )
