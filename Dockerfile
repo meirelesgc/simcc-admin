@@ -1,17 +1,44 @@
-FROM python:3.12.10-alpine3.20
+FROM python:3.12.10-alpine3.20 AS builder
 
-ENV POETRY_VIRTUALENVS_CREATE=false
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    POETRY_NO_INTERACTION=1 \
+    POETRY_VIRTUALENVS_CREATE=false
 
-RUN apk update && apk upgrade && apk add --no-cache postgresql-dev gcc python3-dev musl-dev linux-headers
+RUN apk add --no-cache \
+    postgresql-dev \
+    gcc \
+    python3-dev \
+    musl-dev \
+    linux-headers \
+    curl
 
 WORKDIR /app
 
-COPY . .
+RUN pip install --no-cache-dir poetry
 
-RUN pip install poetry && \
-    poetry config installer.max-workers 10 && \
-    poetry install --no-interaction --no-ansi --no-root
+COPY pyproject.toml poetry.lock ./
+
+RUN poetry install --only main --no-interaction --no-ansi --no-root
+
+FROM python:3.12.10-alpine3.20 AS runtime
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+RUN apk add --no-cache libpq
+
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+WORKDIR /app
+
+COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+COPY --chown=appuser:appgroup . .
+
+USER appuser
 
 EXPOSE 8080
 
-CMD ["poetry", "run", "gunicorn", "-b", "0.0.0.0:8080", "adm_simcc.app:create_app()"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "adm_simcc.app:create_app()"]
