@@ -2,7 +2,7 @@ name: CI/CD - simcc-admin-back-old
 
 on:
   push:
-    branches: [ "support/v2.x" ]
+    branches: [ "support/v1.x" ]
 
 env:
   IMAGE_NAME: gleidsoncosta/simcc-admin-back-old
