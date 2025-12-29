@@ -12,6 +12,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    ports: [ "${SIMCC_ADMIN_DB_PORT:-5432}" ]
     restart: unless-stopped
 
   simcc-cache:
@@ -37,6 +38,7 @@ services:
         condition: service_healthy
       simcc-cache:
         condition: service_healthy
+    ports: [ "${SIMCC_ADMIN_BACK_PORT:-8000}:8000" ]
     restart: unless-stopped
 
   simcc-admin-back-old:
