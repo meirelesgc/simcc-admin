@@ -4,6 +4,8 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
+    DATABASE_URL: Optional[str] = None
+
     ADM_DATABASE: str = "admin"
     ADM_USER: str = "postgres"
     ADM_HOST: str = "localhost"
