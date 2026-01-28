@@ -110,6 +110,7 @@ def validate_lattes(lattes_id):
 
 def researcher_insert(ListResearchers: ListResearchers):
     parameters = list()
+    p2 = []
     # fmt: off
     for researcher in ListResearchers.researcher_list:
         if researcher.cpf:
@@ -121,6 +122,7 @@ def researcher_insert(ListResearchers: ListResearchers):
             researcher.researcher_id, researcher.name, researcher.lattes_id,
             researcher.institution_id, researcher.status
         ))
+        p2.append({'r_id': researcher.researcher_id, 'area_id': 'f7e31243-a912-436a-a65e-c87f2c012bc0'})
 
     # fmt: on
     SCRIPT_SQL = """
@@ -130,10 +132,20 @@ def researcher_insert(ListResearchers: ListResearchers):
         """
     adm_database.execmany(SCRIPT_SQL, parameters)
 
+    SCRIPT_SQL = """
+        INSERT INTO researcher_area (researcher_id, area_id)
+        VALUES (%(r_id)s, %(area_id)s);
+        """
+
+    adm_database.execmany(SCRIPT_SQL, p2)
+
 
 def researcher_delete(researcher_id: UUID4):
     parameters = [researcher_id, researcher_id, researcher_id, researcher_id]
     SCRIPT_SQL = """
+        DELETE FROM researcher_area
+        WHERE researcher_id = %s;
+
         DELETE FROM ufmg.researcher
         WHERE researcher_id = %s;
 
@@ -347,7 +359,8 @@ def researcher_departament_basic_query(researcher_id):
 def researcher_departament_delete(researcher):
     SCRIPT_SQL = """
         DELETE FROM ufmg.departament_researcher
-        WHERE researcher_id = (SELECT researcher_id FROM researcher WHERE lattes_id = %s) 
+        WHERE researcher_id =
+            (SELECT researcher_id FROM researcher WHERE lattes_id = %s)
         AND dep_id = %s;
         """
     adm_database.exec(
