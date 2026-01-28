@@ -163,7 +163,7 @@ def researcher_basic_query(
 
     if not one:
         where_conditions.append(
-            "r.researcher_id NOT IN (SELECT researcher_id FROM graduate_program_student)"
+            "r.researcher_id IN (SELECT DISTINCT researcher_id FROM researcher_area)"
         )
 
     if institution_id:
@@ -228,6 +228,8 @@ def researcher_basic_query(
             r.created_at DESC
         {limit_clause};
     """
+
+    print(script_sql)
 
     registry = adm_database.select(script_sql, params)
 
