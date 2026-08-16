@@ -31,6 +31,25 @@ async def post_institution(
 
 
 @router.get(
+    '/institution',
+    response_model=institution_model.InstitutionStats | list,
+)
+async def get_institution(
+    institution_id: UUID = None,
+    conn: Connection = Depends(get_conn),
+):
+    institution = await institution_service.get_institution(
+        conn, institution_id
+    )
+    if institution is None:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail=f'Institution with ID {institution_id} not found.',
+        )
+    return institution
+
+
+@router.get(
     '/Query/Count',
     deprecated=True,
     include_in_schema=False,
@@ -39,7 +58,7 @@ async def post_institution(
     '/institution/{institution_id}/',
     response_model=institution_model.InstitutionStats,
 )
-async def get_institution(
+async def get_institutions(
     institution_id: UUID,
     conn: Connection = Depends(get_conn),
 ):

@@ -12,7 +12,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    ports: [ "${SIMCC_ADMIN_DB_PORT:-5432}" ]
+    ports: [ "${ADMIN_DB_PORT:-5432}" ]
     restart: unless-stopped
 
   simcc-cache:
@@ -27,25 +27,24 @@ services:
     restart: unless-stopped
 
   simcc-admin-back:
-    image: gleidsoncosta/simcc-admin-back:${SIMCC_ADMIN_TAG:-latest}
+    image: gleidsoncosta/simcc-admin-back:latest
     environment:
       CACHE_URL: redis://simcc-cache:6379/0
       PROXY_URL: http://simcc-admin-back-old:8000
       DATABASE_URL: postgresql://postgres:postgres@simcc-admin-db:5432/postgres
-    env_file: .env
     depends_on:
       simcc-admin-db:
         condition: service_healthy
       simcc-cache:
         condition: service_healthy
-    ports: [ "${SIMCC_ADMIN_BACK_PORT:-8000}:8000" ]
+    ports: 
+      - "${ADMIN_API_PORT}:8000"
     restart: unless-stopped
 
   simcc-admin-back-old:
-    image: gleidsoncosta/simcc-admin-back-old:${SIMCC_ADMIN_OLD_TAG:-latest}
+    image: gleidsoncosta/simcc-admin-back-old:latest
     environment:
       DATABASE_URL: postgresql://postgres:postgres@simcc-admin-db:5432/postgres
-    env_file: .env
     depends_on:
       simcc-admin-db:
         condition: service_healthy

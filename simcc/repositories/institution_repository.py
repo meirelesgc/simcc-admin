@@ -14,8 +14,10 @@ async def post_institution(institutions, conn: Connection):
 async def get_institution(institution_id, conn: Connection):
     params = {}
     filters = str()
+    one = False
 
     if institution_id:
+        one = True
         params['institution_id'] = institution_id
         filters += 'AND i.institution_id = %(institution_id)s'
 
@@ -94,10 +96,9 @@ async def get_institution(institution_id, conn: Connection):
                 ON rl.institution_id = i.institution_id
             CROSS JOIN technician_count t
         WHERE 1 = 1
-            {filters}
-            AND deleted_at IS NULL;
+            {filters};
     """
-    return await conn.select(SCRIPT_SQL, params, one=True)
+    return await conn.select(SCRIPT_SQL, params, one=one)
 
 
 async def put_institution(institution, conn: Connection):
